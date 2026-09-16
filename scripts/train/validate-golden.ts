@@ -1,5 +1,5 @@
-// ch10 pre-label quality gate: the label set must match exactly on >= 80% of golden samples
-// before batch pre-labeling is released. Run: make ch10-golden (requires chat upstream).
+// train pre-label quality gate: the label set must match exactly on >= 80% of golden samples
+// before batch pre-labeling is released. Run: make train-golden (requires chat upstream).
 // If it falls below the line, fix the prompt — do not edit the golden samples to inflate the score.
 // Writes reports/golden_report.json for the acceptance page (/acceptance); failures carry gold/pred contrast.
 import fs from "node:fs";
@@ -11,7 +11,7 @@ import { prelabelBatch } from "./prelabel.ts";
 
 import { settings } from "#/config.ts";
 
-const GOLDEN = path.join(settings.root, "scripts/ch10/golden_samples.jsonl");
+const GOLDEN = path.join(settings.root, "scripts/train/golden_samples.jsonl");
 const REPORTS = path.join(settings.root, "data/train/reports");
 const PASS_RATE = 0.8;
 
@@ -22,7 +22,8 @@ const goldenSampleSchema = z.object({
 type GoldenSample = z.infer<typeof goldenSampleSchema>;
 
 const sameSet = (a: string[], b: string[]): boolean =>
-  a.length === b.length && [...a].sort().every((v, i) => v === [...b].sort()[i]);
+  a.length === b.length &&
+  [...a].sort().every((v, i) => v === [...b].sort()[i]);
 
 async function main(): Promise<number> {
   const samples: GoldenSample[] = fs
@@ -40,7 +41,9 @@ async function main(): Promise<number> {
     if (ok) {
       hits += 1;
     } else {
-      console.log(`✗ ${s.text}\n    gold: ${s.labels.join(",")}  pred: ${pred.join(",")}`);
+      console.log(
+        `✗ ${s.text}\n    gold: ${s.labels.join(",")}  pred: ${pred.join(",")}`,
+      );
       failures.push({ text: s.text, gold: [...s.labels], pred: [...pred] });
     }
   });

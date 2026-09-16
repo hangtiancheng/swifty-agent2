@@ -10,7 +10,6 @@ import { Btn, MissingBox, PageShell } from "~/components/ui";
 import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
 
-
 /* Flywheel review queue: unanswerable questions → normalize & dedupe → human
    review → write back to the Knowledge Base. Status tabs ride the URL
    (?status=) so links are shareable; details (merged originals + recall
@@ -46,8 +45,7 @@ interface ReviewDetail {
 }
 
 type LoaderData =
-  | { ok: true; items: ReviewItem[] }
-  | { ok: false; error: string };
+  { ok: true; items: ReviewItem[] } | { ok: false; error: string };
 
 export async function clientLoader({
   request,
@@ -109,16 +107,16 @@ const TABS: [string, string][] = [
 function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
   if (chunks === null || chunks === undefined) {
     return (
-      <div className="border-2 border-dashed border-muted px-2.5 py-1.5 text-xs text-muted">
+      <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
         Retrieval never ran for this entry — no recall snapshots
       </div>
     );
   }
   if (!chunks.length) {
     return (
-      <div className="border-2 border-dashed border-muted px-2.5 py-1.5 text-xs text-muted">
-        Retrieval ran with zero hits — the Knowledge Base truly has no
-        relevant content
+      <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
+        Retrieval ran with zero hits — the Knowledge Base truly has no relevant
+        content
       </div>
     );
   }
@@ -129,16 +127,18 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
         return (
           <div
             key={i}
-            className="border-2 border-dashed border-ink bg-paper px-2.5 py-2 text-[12.5px]"
+            className="border-ink bg-paper border-2 border-dashed px-2.5 py-2 text-[12.5px]"
           >
             <div className="font-bold">{c.question || "(untitled)"}</div>
-            <div className="my-1 text-ink-soft">{c.answer ?? ""}</div>
-            <div className="flex items-center gap-2 text-[11.5px] text-muted">
+            <div className="text-ink-soft my-1">{c.answer ?? ""}</div>
+            <div className="text-muted flex items-center gap-2 text-[11.5px]">
               <span>Rerank score {score.toFixed(3)}</span>
-              <span className="h-2 w-35 border-2 border-ink bg-paper">
+              <span className="border-ink bg-paper h-2 w-35 border-2">
                 <span
-                  className="block h-full bg-coral"
-                  style={{ width: `${Math.min(100, Math.round(score * 100))}%` }}
+                  className="bg-coral block h-full"
+                  style={{
+                    width: `${Math.min(100, Math.round(score * 100))}%`,
+                  }}
                 />
               </span>
               {c.section_path ? <span>{c.section_path}</span> : null}
@@ -216,7 +216,9 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
         jsonPost({ approved_answer: answer.trim() }),
       );
       setApproving(null);
-      toast("Written back to the Knowledge Base — similar questions will now recall directly ✓");
+      toast(
+        "Written back to the Knowledge Base — similar questions will now recall directly ✓",
+      );
       void revalidate();
     } catch (e) {
       toast("Failed to write back: " + errMsg(e), true);
@@ -233,26 +235,38 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
       maxW="max-w-[1080px]"
       actions={
         <>
-          <div className="flex border-3 border-ink bg-paper">
+          <div className="border-ink bg-paper flex border-3">
             {TABS.map(([st, label], i) => (
               <button
                 key={label}
                 type="button"
                 className={cn(
-                  "cursor-pointer border-r-3 border-ink px-3 py-1.5 font-[inherit] text-[13px] last:border-r-0 hover:bg-fur-hover",
+                  "border-ink hover:bg-fur-hover cursor-pointer border-r-3 px-3 py-1.5 font-[inherit] text-[13px] last:border-r-0",
                   curStatus === st && "bg-fur font-bold",
                   i === 0 && "rounded-none",
                 )}
-                onClick={() => { setParams(st ? new URLSearchParams({ status: st }) : new URLSearchParams()); }
-                }
+                onClick={() => {
+                  setParams(
+                    st
+                      ? new URLSearchParams({ status: st })
+                      : new URLSearchParams(),
+                  );
+                }}
               >
                 {label}
               </button>
             ))}
           </div>
-          <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+          <Btn
+            onClick={() => {
+              void revalidate();
+            }}
+            disabled={state === "loading"}
+          >
             <RefreshCw
-              className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+              className={
+                state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"
+              }
               aria-hidden
             />
             Refresh
@@ -260,7 +274,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
         </>
       }
     >
-      <div className="mt-4 border-3 border-dashed border-ink bg-paper px-3.5 py-2.5 text-[12.5px] leading-[1.8] [&_b]:mr-1 [&_b]:border-2 [&_b]:border-ink [&_b]:bg-fur [&_b]:px-1.5">
+      <div className="border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-4 border-3 border-dashed px-3.5 py-2.5 text-[12.5px] leading-[1.8] [&_b]:mr-1 [&_b]:border-2 [&_b]:px-1.5">
         Run three gates before reviewing: <b>① Spam filter</b> gibberish, stray
         test input, inappropriate content → reject; <b>② Timeliness</b>{" "}
         time-sensitive questions (promo deadlines) expire as soon as they are
@@ -271,7 +285,9 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
       </div>
 
       {!loaderData.ok ? (
-        <MissingBox className="mt-4">Failed to load: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load: {loaderData.error}
+        </MissingBox>
       ) : !loaderData.items.length ? (
         <MissingBox className="mt-4">No items in this status yet</MissingBox>
       ) : (
@@ -286,10 +302,10 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="border-4 border-ink bg-cream shadow-hard"
+                className="border-ink bg-cream shadow-hard border-4"
               >
                 <div
-                  className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-paper"
+                  className="hover:bg-paper flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
                   onClick={() => {
                     void toggleDetail(it.id);
                   }}
@@ -306,7 +322,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                   <div className="min-w-60 flex-1 text-[14.5px] font-bold">
                     {it.normalized_question}
                   </div>
-                  <div className="hidden max-w-80 truncate text-xs text-muted lg:block">
+                  <div className="text-muted hidden max-w-80 truncate text-xs lg:block">
                     {it.ai_suggested_answer ?? "(no suggested answer)"}
                   </div>
                   <span
@@ -318,7 +334,12 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                     {ST_LABEL[it.review_status] ?? it.review_status}
                   </span>
                   {it.review_status === "pending_review" ? (
-                    <div className="flex gap-2" onClick={(e) => { e.stopPropagation(); }}>
+                    <div
+                      className="flex gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
                       <Btn
                         size="sm"
                         variant="ok"
@@ -349,39 +370,41 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden border-t-3 border-ink"
+                      className="border-ink overflow-hidden border-t-3"
                     >
                       <div className="bg-paper px-4 py-3.5">
                         {loadingId === it.id && !detail ? (
-                          <div className="text-xs text-muted">Loading details…</div>
+                          <div className="text-muted text-xs">
+                            Loading details…
+                          </div>
                         ) : detailErr[it.id] ? (
-                          <div className="text-xs text-error">
+                          <div className="text-error text-xs">
                             Failed to load details: {detailErr[it.id]}
                           </div>
                         ) : detail ? (
                           <>
-                            <div className="mb-2.5 text-xs text-muted">
+                            <div className="text-muted mb-2.5 text-xs">
                               Judge from the snapshots: is the Knowledge Base
-                              truly missing this, or does it have the answer
-                              but fail to recall it? Merged original questions:{" "}
+                              truly missing this, or does it have the answer but
+                              fail to recall it? Merged original questions:{" "}
                               {detail.raws.length} ↓
                             </div>
                             {detail.raws.length ? (
                               detail.raws.map((r, i) => (
                                 <div
                                   key={i}
-                                  className="mb-3 border-3 border-ink bg-cream p-2.5 last:mb-0"
+                                  className="border-ink bg-cream mb-3 border-3 p-2.5 last:mb-0"
                                 >
                                   <div className="mb-1.5 flex flex-wrap items-center gap-2">
                                     <span
                                       className={cn(
-                                        "border-2 border-ink px-1.5 py-px text-[11.5px] font-bold",
+                                        "border-ink border-2 px-1.5 py-px text-[11.5px] font-bold",
                                         SRC_CLS[r.source] ?? "bg-paper",
                                       )}
                                     >
                                       {SRC_LABEL[r.source] ?? r.source}
                                     </span>
-                                    <span className="text-[11.5px] text-muted">
+                                    <span className="text-muted text-[11.5px]">
                                       {(r.created_at ?? "")
                                         .replace("T", " ")
                                         .slice(0, 16)}
@@ -394,7 +417,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                                 </div>
                               ))
                             ) : (
-                              <div className="border-2 border-dashed border-muted px-2.5 py-1.5 text-xs text-muted">
+                              <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
                                 No merged originals yet (backfilled after the
                                 flywheel batch runs)
                               </div>
@@ -415,7 +438,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
       <AnimatePresence>
         {approving ? (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-5"
+            className="bg-ink/45 fixed inset-0 z-50 flex items-center justify-center p-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -430,7 +453,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
               role="dialog"
               aria-modal="true"
               aria-label="Approve & write back to Knowledge Base"
-              className="w-[min(560px,92vw)] border-4 border-ink bg-cream p-4.5 shadow-hard-lg"
+              className="border-ink bg-cream shadow-hard-lg w-[min(560px,92vw)] border-4 p-4.5"
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -439,18 +462,26 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
               <h3 className="text-[15px] font-bold">
                 Approve & write back to Knowledge Base
               </h3>
-              <div className="mt-1 mb-2.5 text-[13px] text-ink-soft">
+              <div className="text-ink-soft mt-1 mb-2.5 text-[13px]">
                 Normalized question: {approving.normalized_question}
               </div>
               <textarea
                 autoFocus
-                className="min-h-32 w-full resize-y border-3 border-ink bg-paper p-2.5 text-[13px] outline-none focus:bg-paper"
+                className="border-ink bg-paper focus:bg-paper min-h-32 w-full resize-y border-3 p-2.5 text-[13px] outline-none"
                 placeholder="Approved answer (prefilled with the AI suggestion — review it before submitting)"
                 value={answer}
-                onChange={(e) => { setAnswer(e.target.value); }}
+                onChange={(e) => {
+                  setAnswer(e.target.value);
+                }}
               />
               <div className="mt-3 flex justify-end gap-2.5">
-                <Btn onClick={() => { setApproving(null); }}>Cancel</Btn>
+                <Btn
+                  onClick={() => {
+                    setApproving(null);
+                  }}
+                >
+                  Cancel
+                </Btn>
                 <Btn
                   variant="ok"
                   disabled={submitting}

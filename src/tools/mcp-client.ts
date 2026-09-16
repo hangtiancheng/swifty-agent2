@@ -12,7 +12,6 @@ import type { ResultFormatter, ToolSpec } from "./registry.ts";
 import { settings } from "#/config.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("tools.mcp");
 
 function connections(): Record<string, string> {
@@ -112,7 +111,9 @@ const FORMATTERS: Record<string, ResultFormatter> = {
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => { reject(new Error("MCP request timed out")); }, ms);
+    timer = setTimeout(() => {
+      reject(new Error("MCP request timed out"));
+    }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {

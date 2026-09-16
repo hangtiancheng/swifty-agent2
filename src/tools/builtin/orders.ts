@@ -6,7 +6,10 @@ import { defineTool, register } from "#/tools/registry.ts";
 
 // A missing order and someone else's order return the same message: different wording
 // would turn the tool into an enumeration oracle.
-const NOT_OWNED = { error: "No such order was found for you", code: "order_not_owned" };
+const NOT_OWNED = {
+  error: "No such order was found for you",
+  code: "order_not_owned",
+};
 
 const queryOrderSchema = z.object({
   order_id: z.string().describe("Order number, e.g. 1001"),
@@ -39,7 +42,8 @@ const queryProductSchema = z.object({
 register(
   defineTool({
     name: "query_product",
-    description: "Query a product's price, stock, and specifications. Use it when the user asks whether an item is in stock or how much it costs.",
+    description:
+      "Query a product's price, stock, and specifications. Use it when the user asks whether an item is in stock or how much it costs.",
     schema: queryProductSchema,
     handler: (args) => {
       const { product_name } = queryProductSchema.parse(args);

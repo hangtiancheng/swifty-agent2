@@ -1,4 +1,4 @@
-"""ch10 inference pure functions: threshold application and empty-label fallback.
+"""train inference pure functions: threshold application and empty-label fallback.
 
 Shared by evaluate.py (Python) and the TS serving path (src/train/inference-lib.ts) — the two
 implementations must behave identically. Light dependency (numpy only).

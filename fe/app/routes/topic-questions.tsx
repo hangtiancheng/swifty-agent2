@@ -9,8 +9,6 @@ import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
 
-
-
 /* Class and page live in the URL (?label=…&page=…): this page is a shareable
    link, paging goes through the URL, and a refresh lands back on the same
    page. All data comes from /api/topics/questions — nothing is filtered
@@ -53,8 +51,19 @@ interface QuestionsPage {
 
 type LoaderData =
   | { kind: "nolabel" }
-  | { kind: "ok"; label: string; page: number; d: QuestionsPage; dist: TopicDistribution | null }
-  | { kind: "error"; label: string; error: string; dist: TopicDistribution | null };
+  | {
+      kind: "ok";
+      label: string;
+      page: number;
+      d: QuestionsPage;
+      dist: TopicDistribution | null;
+    }
+  | {
+      kind: "error";
+      label: string;
+      error: string;
+      dist: TopicDistribution | null;
+    };
 
 export async function clientLoader({
   request,
@@ -93,19 +102,19 @@ export function meta() {
 
 function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
   return (
-    <div className="mt-2.5 border-3 border-ink bg-paper p-3 shadow-hard-sm">
+    <div className="border-ink bg-paper shadow-hard-sm mt-2.5 border-3 p-3">
       <div className="text-[13.5px] leading-6 font-bold">
-        <span className="mr-1.5 text-[11px] font-normal text-muted">
+        <span className="text-muted mr-1.5 text-[11px] font-normal">
           #{it.question_id}
         </span>
         {it.text}
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px] text-ink-soft">
+      <div className="text-ink-soft mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px]">
         {(it.labels ?? []).map((lb) => (
           <span
             key={lb}
             className={cn(
-              "border-2 border-ink bg-cream px-1 text-[11px]",
+              "border-ink bg-cream border-2 px-1 text-[11px]",
               lb === label && "bg-fur font-bold",
             )}
           >
@@ -114,9 +123,7 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
         ))}
         <span>
           Source{" "}
-          <b className="text-ink">
-            {SOURCE_LABEL[it.source] ?? it.source}
-          </b>
+          <b className="text-ink">{SOURCE_LABEL[it.source] ?? it.source}</b>
         </span>
         <span>
           Synonym merge{" "}
@@ -141,8 +148,10 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
       </div>
       {/* Merged questions show the normalized phrasing; keep the user's original wording visible so the entry's origin stays clear */}
       {it.normalized && it.raw_question && it.raw_question !== it.text ? (
-        <div className="mt-1.5 text-xs leading-6 text-ink-soft">
-          <span className="block text-[10.5px] text-muted">Original wording</span>
+        <div className="text-ink-soft mt-1.5 text-xs leading-6">
+          <span className="text-muted block text-[10.5px]">
+            Original wording
+          </span>
           {it.raw_question}
         </div>
       ) : null}
@@ -181,7 +190,12 @@ export default function TopicQuestionsPage({
       actions={
         <>
           <BtnLink to="/topics">← Back to Topic Distribution</BtnLink>
-          <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+          <Btn
+            onClick={() => {
+              void revalidate();
+            }}
+            disabled={state === "loading"}
+          >
             <RefreshCw
               className={
                 state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"
@@ -206,7 +220,7 @@ export default function TopicQuestionsPage({
                   "&page=1"
                 }
                 className={cn(
-                  "border-3 border-ink bg-paper px-2.5 py-1 text-xs no-underline shadow-hard-xs hover:bg-fur-hover",
+                  "border-ink bg-paper shadow-hard-xs hover:bg-fur-hover border-3 px-2.5 py-1 text-xs no-underline",
                   c.label === label && "bg-fur font-bold",
                   c.count === 0 && "opacity-45",
                 )}
@@ -214,7 +228,7 @@ export default function TopicQuestionsPage({
                 {c.label}
                 <span
                   className={cn(
-                    "ml-1.5 text-muted",
+                    "text-muted ml-1.5",
                     c.label === label && "text-ink",
                   )}
                 >
@@ -231,14 +245,16 @@ export default function TopicQuestionsPage({
           name to get here.
         </MissingBox>
       ) : loaderData.kind === "error" ? (
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       ) : loaderData.d.total === 0 ? (
         <MissingBox className="mt-4">
           No questions have been classified into this class yet. Try another
           class, or run the bypass batch classification first.
         </MissingBox>
       ) : (
-        <div className="mt-4 border-4 border-ink bg-cream p-3.5 shadow-hard sm:p-4">
+        <div className="border-ink bg-cream shadow-hard mt-4 border-4 p-3.5 sm:p-4">
           <h2 className="flex flex-wrap items-center gap-2.5 text-sm font-bold">
             {loaderData.d.label}
             <Pill tone="info">
@@ -246,27 +262,35 @@ export default function TopicQuestionsPage({
               {loaderData.d.pages}
             </Pill>
           </h2>
-          <p className="mt-1 mb-1 text-[12.5px] leading-7 text-ink-soft">
+          <p className="text-ink-soft mt-1 mb-1 text-[12.5px] leading-7">
             Lists the questions the classifier grouped into this class;
             multi-label questions appear under every class they hit. The
-            phrasing shown is the normalized question from the merge stage —
-            the original wording is on the line below.
+            phrasing shown is the normalized question from the merge stage — the
+            original wording is on the line below.
           </p>
           {loaderData.d.items.map((it) => (
-            <QuestionRow key={it.question_id} it={it} label={loaderData.label} />
+            <QuestionRow
+              key={it.question_id}
+              it={it}
+              label={loaderData.label}
+            />
           ))}
           <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <Btn
               size="sm"
               disabled={loaderData.d.page <= 1}
-              onClick={() => { go(loaderData.d.label, loaderData.d.page - 1); }}
+              onClick={() => {
+                go(loaderData.d.label, loaderData.d.page - 1);
+              }}
             >
               ← Previous
             </Btn>
             <Btn
               size="sm"
               disabled={loaderData.d.page >= loaderData.d.pages}
-              onClick={() => { go(loaderData.d.label, loaderData.d.page + 1); }}
+              onClick={() => {
+                go(loaderData.d.label, loaderData.d.page + 1);
+              }}
             >
               Next →
             </Btn>

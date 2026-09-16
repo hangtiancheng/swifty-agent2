@@ -10,13 +10,20 @@ import { FLYWHEEL_NORMALIZE_PROMPT } from "./prompts.ts";
 import * as repository from "#/db/repository.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("flywheel");
 
 const normalizeSchema = z.object({
   normalized_question: z.string().describe("FAQ-style standard question"),
-  matched_question_id: z.number().int().nullable().default(null).describe("Matched candidate id; null when no candidate is the same kind"),
-  ai_suggested_answer: z.string().default("").describe("Sample answer for reference"),
+  matched_question_id: z
+    .number()
+    .int()
+    .nullable()
+    .default(null)
+    .describe("Matched candidate id; null when no candidate is the same kind"),
+  ai_suggested_answer: z
+    .string()
+    .default("")
+    .describe("Sample answer for reference"),
 });
 
 export interface ProcessStats {
@@ -28,14 +35,21 @@ export interface ProcessStats {
 
 export async function processPending(limit = 50): Promise<ProcessStats> {
   const rows = await repository.fetchUnmatchedLowConf(limit);
-  const stats: ProcessStats = { processed: 0, merged: 0, created: 0, skipped: 0 };
+  const stats: ProcessStats = {
+    processed: 0,
+    merged: 0,
+    created: 0,
+    skipped: 0,
+  };
   for (const row of rows) {
     // Fetch per row so rows created in this batch are candidate matches.
     const fetched = await repository.listReviewCandidates(201);
     const truncated = fetched.length > 200;
     const candidates = fetched.slice(0, 200);
     const candidateText =
-      candidates.map((c) => `- id=${c.id}: ${c.normalized_question}`).join("\n") || "(no candidates)";
+      candidates
+        .map((c) => `- id=${c.id}: ${c.normalized_question}`)
+        .join("\n") || "(no candidates)";
     let result: z.infer<typeof normalizeSchema>;
     try {
       const model = structured(normalizeSchema);
@@ -44,7 +58,10 @@ export async function processPending(limit = 50): Promise<ProcessStats> {
         candidates: candidateText,
       });
     } catch (error) {
-      log.warn({ err: error, lcq: row.id }, "flywheel normalization failed; retrying next round");
+      log.warn(
+        { err: error, lcq: row.id },
+        "flywheel normalization failed; retrying next round",
+      );
       stats.skipped += 1;
       continue;
     }
@@ -52,7 +69,10 @@ export async function processPending(limit = 50): Promise<ProcessStats> {
     let reviewId: number;
     if (matchedId !== null) {
       if (!candidates.some((c) => c.id === matchedId)) {
-        log.warn({ matched_id: matchedId, lcq: row.id }, "flywheel hallucinated id; retrying next round");
+        log.warn(
+          { matched_id: matchedId, lcq: row.id },
+          "flywheel hallucinated id; retrying next round",
+        );
         stats.skipped += 1;
         continue;
       }
@@ -60,7 +80,10 @@ export async function processPending(limit = 50): Promise<ProcessStats> {
       reviewId = matchedId;
       stats.merged += 1;
     } else {
-      reviewId = await repository.insertReviewItem(result.normalized_question, result.ai_suggested_answer || null);
+      reviewId = await repository.insertReviewItem(
+        result.normalized_question,
+        result.ai_suggested_answer || null,
+      );
       stats.created += 1;
     }
     await repository.setMatchedReview(row.id, reviewId);

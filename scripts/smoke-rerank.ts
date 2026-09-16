@@ -21,7 +21,9 @@ async function main(): Promise<void> {
   const [topIndex, topScore] = ranked[0];
   console.log(`most relevant index=${topIndex} score=${topScore.toFixed(4)}`);
   if (topIndex !== 1) {
-    throw new Error("the return-shipping question should hit the second document (buyer pays)");
+    throw new Error(
+      "the return-shipping question should hit the second document (buyer pays)",
+    );
   }
   console.log("GO: rerank path is live");
 }

@@ -2,7 +2,6 @@
 // One batch produces one new segment; existing segments are never re-summarized.
 import { z } from "zod";
 
-
 import * as budget from "./budget.ts";
 import { structured } from "./llm.ts";
 import * as memory from "./memory.ts";
@@ -15,12 +14,17 @@ import { childLogger } from "#/logger.ts";
 const log = childLogger("summarizer");
 
 const summarySchema = z.object({
-  summary: z.string().describe("Rolling summary of early conversation; facts and requests only"),
+  summary: z
+    .string()
+    .describe("Rolling summary of early conversation; facts and requests only"),
 });
 
 const running = new Map<number, Promise<void>>();
 
-export async function summarizeDialog(oldSummary: string, dialog: string): Promise<string> {
+export async function summarizeDialog(
+  oldSummary: string,
+  dialog: string,
+): Promise<string> {
   // old_summary is background only: the output is a new segment, so order ids and
   // similar facts are compressed exactly once.
   const model = structured(summarySchema, { slot: "summary" });
@@ -41,7 +45,10 @@ export async function runSummary(conversationId: number): Promise<void> {
   const oldUpto = conv.summaryUptoMsgId ?? 0;
   const boundary = conv.layer1FromMsgId ?? 0;
   if (boundary <= oldUpto) {
-    log.info({ conv: conversationId, boundary, upto: oldUpto }, "summary skipped: layer 2 is empty");
+    log.info(
+      { conv: conversationId, boundary, upto: oldUpto },
+      "summary skipped: layer 2 is empty",
+    );
     return;
   }
   const seg = msgs.filter((m) => m.id > oldUpto && m.id <= boundary);
@@ -57,14 +64,28 @@ export async function runSummary(conversationId: number): Promise<void> {
   if (!summary) {
     throw new Error("summary is empty; aborting update");
   }
-  const seq = await repository.appendSummarySegment(conversationId, oldUpto + 1, boundary, summary);
+  const seq = await repository.appendSummarySegment(
+    conversationId,
+    oldUpto + 1,
+    boundary,
+    summary,
+  );
   log.info(
-    { conv: conversationId, seq, upto: boundary, length: summary.length, cost_ms: Date.now() - started },
+    {
+      conv: conversationId,
+      seq,
+      upto: boundary,
+      length: summary.length,
+      cost_ms: Date.now() - started,
+    },
     "summary done",
   );
 }
 
-async function shouldSummarize(conversationId: number, conv: NonNullable<Awaited<ReturnType<typeof repository.getConversation>>>): Promise<boolean> {
+async function shouldSummarize(
+  conversationId: number,
+  conv: NonNullable<Awaited<ReturnType<typeof repository.getConversation>>>,
+): Promise<boolean> {
   const upto = conv.summaryUptoMsgId ?? 0;
   const layer1From = conv.layer1FromMsgId ?? 0;
   if (layer1From <= upto) {
@@ -72,17 +93,26 @@ async function shouldSummarize(conversationId: number, conv: NonNullable<Awaited
   }
   const msgs = await repository.listDialogMessages(conversationId);
   const layer2Tokens = memory.charsToTokens(
-    msgs.filter((m) => m.id > upto && m.id <= layer1From).reduce((sum, m) => sum + (m.content?.length ?? 0), 0),
+    msgs
+      .filter((m) => m.id > upto && m.id <= layer1From)
+      .reduce((sum, m) => sum + (m.content?.length ?? 0), 0),
   );
-  const l2Budget = Math.floor(budget.compute().sliding * (1 - settings.layer1Ratio));
+  const l2Budget = Math.floor(
+    budget.compute().sliding * (1 - settings.layer1Ratio),
+  );
   if (layer2Tokens <= l2Budget) {
     return false;
   }
-  log.info({ conv: conversationId, layer2_tokens: layer2Tokens, budget: l2Budget }, "summary triggered");
+  log.info(
+    { conv: conversationId, layer2_tokens: layer2Tokens, budget: l2Budget },
+    "summary triggered",
+  );
   return true;
 }
 
-export async function maybeScheduleSummary(conversationId: number): Promise<void> {
+export async function maybeScheduleSummary(
+  conversationId: number,
+): Promise<void> {
   // Called after a turn; runs in the background and never blocks the reply.
   try {
     if (running.has(conversationId)) {
@@ -110,6 +140,9 @@ export async function maybeScheduleSummary(conversationId: number): Promise<void
         }
       });
   } catch (error) {
-    log.error({ conv: conversationId, err: error }, "summary trigger check failed");
+    log.error(
+      { conv: conversationId, err: error },
+      "summary trigger check failed",
+    );
   }
 }

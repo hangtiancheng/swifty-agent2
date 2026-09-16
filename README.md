@@ -5,16 +5,16 @@ migrated backend of the Python project in `~/Downloads/python` (the static pages
 It is not wire-compatible with the Python service; capabilities are aligned, response shapes are
 kept close.
 
-- ch01 => chat
-- ch02 => tool
-- ch03 => db
-- ch04 => rag
-- ch05 => workflow
-- ch06 => intent
-- ch07 => context
-- ch08 => mcp
-- ch09 => observability
-- ch10 => train
+- chat => chat
+- tool => tool
+- db => db
+- rag => rag
+- workflow => workflow
+- intent => intent
+- context => context
+- mcp => mcp
+- observability => observability
+- train => train
 
 ## Stack
 
@@ -40,19 +40,19 @@ The Python project used MySQL + Milvus. This server uses a single SQLite databas
   vector database;
 - the LangGraph checkpointer uses `CHECKPOINTER_DB_PATH`.
 
-## ch10 topic classifier (hybrid Python/TypeScript)
+## train topic classifier (hybrid Python/TypeScript)
 
-Full-parameter transformer train has no JavaScript equivalent, so the ch10 pipeline is split:
+Full-parameter transformer train has no JavaScript equivalent, so the train pipeline is split:
 
-- **TypeScript** (`scripts/ch10/*.ts`, `src/train/`): corpus building, dataset split/augmentation,
+- **TypeScript** (`scripts/train/*.ts`, `src/train/`): corpus building, dataset split/augmentation,
   golden-sample gate, threshold-scan replay, bypass batch classification, and the ONNX inference
-  service (`scripts/ch10/serve.ts`, `onnxruntime-node` + `@huggingface/tokenizers`, port `:8110`).
-- **Python** (`scripts/ch10/py/*.py`, run via `uv run --group ml`): the three torch-dependent steps —
+  service (`scripts/train/serve.ts`, `onnxruntime-node` + `@huggingface/tokenizers`, port `:8110`).
+- **Python** (`scripts/train/py/*.py`, run via `uv run --group ml`): the three torch-dependent steps —
   `train.py` (fine-tune), `evaluate.py` (per-class P/R/F1 + confusion matrix + red lines),
   `export_onnx.py` (torch → ONNX with a consistency check). See `pyproject.toml`'s `ml` group.
 
 The authoritative 17-class taxonomy lives in `src/core/taxonomy.ts`. The corpus step exports it to
-`data/train/taxonomy.json`, which the Python side reads (`scripts/ch10/py/taxonomy.py`), so label
+`data/train/taxonomy.json`, which the Python side reads (`scripts/train/py/taxonomy.py`), so label
 ids/names/severity have a single source of truth and cannot drift.
 
 All artifacts land under `data/train/` (gitignored). The acceptance API (`src/api/acceptance.ts`,

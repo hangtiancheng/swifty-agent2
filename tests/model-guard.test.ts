@@ -12,7 +12,10 @@ describe("model guard", () => {
 
   it("flags models missing from the evidence", () => {
     expect(
-      unsupportedModels("Available: MH-CAM1 and MH-CAD1", "Specs: MH-CAM1 supports 2K"),
+      unsupportedModels(
+        "Available: MH-CAM1 and MH-CAD1",
+        "Specs: MH-CAM1 supports 2K",
+      ),
     ).toEqual(["MH-CAD1"]);
     expect(
       unsupportedModels("Available: MH-CAM1", "Specs: MH-CAM1 supports 2K"),

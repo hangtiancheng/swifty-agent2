@@ -27,7 +27,9 @@ async function main(): Promise<void> {
     total += ids.length;
     console.log(`  ${fname}: ${ids.length} chunks`);
   }
-  console.log(`✅ KB built (pending): ${total} chunks in total. Next step: vectorize-kb`);
+  console.log(
+    `✅ KB built (pending): ${total} chunks in total. Next step: vectorize-kb`,
+  );
 }
 
 await main();

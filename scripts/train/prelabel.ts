@@ -1,4 +1,4 @@
-// ch10 pre-labeling: the LLM assigns multi-labels to a question following the authoritative
+// train pre-labeling: the LLM assigns multi-labels to a question following the authoritative
 // terminology table. First half of the compromise route — pre-label, then human spot-review.
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
@@ -8,7 +8,9 @@ import { LABEL2ID, terminologyTable } from "#/core/taxonomy.ts";
 import { mapPool } from "#/train/concurrency.ts";
 
 const labeledSchema = z.object({
-  labels: z.array(z.string()).describe("Hit class names, taken verbatim from the terminology table"),
+  labels: z
+    .array(z.string())
+    .describe("Hit class names, taken verbatim from the terminology table"),
 });
 
 const PRELABEL_PROMPT = ChatPromptTemplate.fromMessages([
@@ -34,7 +36,10 @@ const FALLBACK = "other";
 export async function prelabelOne(text: string): Promise<string[]> {
   const model = structured(labeledSchema);
   try {
-    const r = await PRELABEL_PROMPT.pipe(model).invoke({ terminology: terminologyTable(), text });
+    const r = await PRELABEL_PROMPT.pipe(model).invoke({
+      terminology: terminologyTable(),
+      text,
+    });
     const labels = r.labels.filter((lb) => lb in LABEL2ID);
     return labels.length > 0 ? labels : [FALLBACK];
   } catch (error) {
@@ -47,6 +52,9 @@ export async function prelabelOne(text: string): Promise<string[]> {
   }
 }
 
-export async function prelabelBatch(texts: string[], concurrency = 8): Promise<string[][]> {
+export async function prelabelBatch(
+  texts: string[],
+  concurrency = 8,
+): Promise<string[][]> {
   return mapPool(texts, concurrency, (t) => prelabelOne(t));
 }

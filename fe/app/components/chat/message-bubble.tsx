@@ -33,7 +33,7 @@ function TypingDots() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="h-2 w-2 animate-blink bg-coral"
+          className="animate-blink bg-coral h-2 w-2"
           style={{ animationDelay: `${i * 0.2}s` }}
         />
       ))}
@@ -66,8 +66,9 @@ function FbBtn({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "press-sm grid h-7 w-8 cursor-pointer place-items-center border-2 border-ink bg-paper text-ink shadow-hard-xs hover:bg-fur-hover",
-        active && "translate-x-0.5 translate-y-0.5 bg-coral text-white shadow-none hover:bg-coral",
+        "press-sm border-ink bg-paper text-ink shadow-hard-xs hover:bg-fur-hover grid h-7 w-8 cursor-pointer place-items-center border-2",
+        active &&
+          "bg-coral hover:bg-coral translate-x-0.5 translate-y-0.5 text-white shadow-none",
         dim && "opacity-40",
         disabled && "cursor-default",
       )}
@@ -96,7 +97,9 @@ function FeedbackBar({
         dim={given === "down"}
         disabled={given !== undefined}
         label="This reply was helpful"
-        onClick={() => { onFeedback(msg.id, "up"); }}
+        onClick={() => {
+          onFeedback(msg.id, "up");
+        }}
       />
       <FbBtn
         down
@@ -104,10 +107,12 @@ function FeedbackBar({
         dim={given === "up"}
         disabled={given !== undefined}
         label="This reply was not helpful"
-        onClick={() => { onFeedback(msg.id, "down"); }}
+        onClick={() => {
+          onFeedback(msg.id, "down");
+        }}
       />
       {given ? (
-        <span className="text-[11px] tracking-wide text-muted">
+        <span className="text-muted text-[11px] tracking-wide">
           Thanks for your feedback!
         </span>
       ) : null}
@@ -143,10 +148,10 @@ export function OrderCards({
               type="button"
               disabled={locked}
               className={cn(
-                "press-sm cursor-pointer border-3 border-ink bg-cream px-3 py-2 text-left shadow-hard-sm hover:bg-fur-hover",
+                "press-sm border-ink bg-cream shadow-hard-sm hover:bg-fur-hover cursor-pointer border-3 px-3 py-2 text-left",
                 "disabled:cursor-not-allowed disabled:opacity-55",
                 picked === o.order_id &&
-                  "bg-picked opacity-100 hover:bg-picked",
+                  "bg-picked hover:bg-picked opacity-100",
               )}
               onClick={() => {
                 setPicked(o.order_id);
@@ -155,7 +160,7 @@ export function OrderCards({
             >
               <div className="text-[13px] font-bold">Order {o.order_id}</div>
               <div className="mt-0.5 text-[12.5px]">{o.product ?? ""}</div>
-              <div className="mt-0.5 text-[11.5px] text-muted">
+              <div className="text-muted mt-0.5 text-[11.5px]">
                 {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
               </div>
             </button>
@@ -180,7 +185,7 @@ function TicketConfirm({
   return (
     <div
       className={cn(
-        "mt-2.5 border-3 border-ink bg-cream p-3 shadow-hard-sm",
+        "border-ink bg-cream shadow-hard-sm mt-2.5 border-3 p-3",
         decided && "opacity-75",
       )}
     >
@@ -189,7 +194,7 @@ function TicketConfirm({
         Ticket preview
       </div>
       <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="shrink-0 text-muted">Ticket type</span>
+        <span className="text-muted shrink-0">Ticket type</span>
         <span>
           {preview.ticket_type
             ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type)
@@ -197,14 +202,27 @@ function TicketConfirm({
         </span>
       </div>
       <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="shrink-0 text-muted">Description</span>
+        <span className="text-muted shrink-0">Description</span>
         <span className="break-words">{preview.description ?? ""}</span>
       </div>
       <div className="mt-2.5 flex gap-2">
-        <Btn size="sm" variant="go" disabled={decided} onClick={() => { onDecide(true); }}>
+        <Btn
+          size="sm"
+          variant="go"
+          disabled={decided}
+          onClick={() => {
+            onDecide(true);
+          }}
+        >
           Confirm & submit
         </Btn>
-        <Btn size="sm" disabled={decided} onClick={() => { onDecide(false); }}>
+        <Btn
+          size="sm"
+          disabled={decided}
+          onClick={() => {
+            onDecide(false);
+          }}
+        >
           Cancel
         </Btn>
       </div>
@@ -228,7 +246,9 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
           key="select_order"
           orders={a.orders ?? []}
           decided={msg.decided}
-          onPick={(o) => { cb.onPickOrderAsk(msg.id, o); }}
+          onPick={(o) => {
+            cb.onPickOrderAsk(msg.id, o);
+          }}
         />,
       );
       continue;
@@ -253,7 +273,9 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
           key="ticket"
           size="sm"
           disabled={msg.acted}
-          onClick={() => { cb.onCreateTicket(msg.id); }}
+          onClick={() => {
+            cb.onCreateTicket(msg.id);
+          }}
         >
           Create ticket
         </Btn>,
@@ -264,7 +286,9 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
           key="refund"
           size="sm"
           disabled={msg.acted}
-          onClick={() => { cb.onRefund(msg.id, a.draft ?? {}); }}
+          onClick={() => {
+            cb.onRefund(msg.id, a.draft ?? {});
+          }}
         >
           Submit refund ticket
         </Btn>,
@@ -292,8 +316,8 @@ export const MessageBubble = memo(function MessageBubble({
 }) {
   if (msg.role === "user") {
     return (
-      <div className="flex animate-pop-in items-end justify-end gap-2.5">
-        <div className="max-w-[85%] border-3 border-ink bg-coral px-3.5 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap break-words text-white shadow-hard-sm sm:max-w-[74%]">
+      <div className="animate-pop-in flex items-end justify-end gap-2.5">
+        <div className="border-ink bg-coral shadow-hard-sm max-w-[85%] border-3 px-3.5 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap text-white sm:max-w-[74%]">
           {msg.text}
         </div>
       </div>
@@ -305,72 +329,75 @@ export const MessageBubble = memo(function MessageBubble({
       ? new Map(m.citations.map((c) => [String(c.n), c]))
       : undefined;
   return (
-    <div className="flex animate-pop-in items-end justify-start gap-2.5">
-      <div className="hidden shrink-0 border-3 border-ink bg-paper p-1 shadow-hard-xs sm:block">
-        <Cat className="h-[34px] w-[34px]" strokeWidth={1.5} />
+    <div className="animate-pop-in flex items-end justify-start gap-2.5">
+      <div className="border-ink bg-paper shadow-hard-xs hidden shrink-0 border-3 p-1 sm:block">
+        <Cat className="h-8.5 w-8.5" strokeWidth={1.5} />
       </div>
       <div
         className={cn(
-          "max-w-[85%] border-3 border-ink px-3.5 py-2.5 text-[14.5px] leading-relaxed shadow-hard-sm sm:max-w-[74%]",
+          "border-ink shadow-hard-sm max-w-[85%] border-3 px-3.5 py-2.5 text-[14.5px] leading-relaxed sm:max-w-[74%]",
           m.error ? "bg-error-bg text-error" : "bg-paper text-ink",
         )}
       >
-        {m.error ? (
-          m.error
-        ) : m.plain ? (
-          <span className="whitespace-pre-wrap break-words">{m.raw}</span>
-        ) : (
-          <>
-            {m.tools.length ? (
-              <div className="mb-1.5 flex flex-col items-start gap-1">
-                {m.tools.map((t, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-muted bg-ink/5 px-2 py-px text-xs text-muted"
-                  >
-                    <Wrench className="h-3 w-3" aria-hidden />
-                    Called {t}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {m.interrupt ? (
-              m.interrupt.kind === "confirm_ticket" ? (
-                <TicketConfirm
-                  preview={m.interrupt.preview ?? {}}
-                  decided={m.decided}
-                  onDecide={(confirmed) => { cb.onConfirmTicket(m.id, confirmed); }}
-                />
-              ) : (
-                <OrderCards
-                  orders={m.interrupt.orders ?? []}
-                  decided={m.decided}
-                  onPick={(o) => { cb.onPickOrderResume(m.id, o); }}
-                />
-              )
-            ) : (
-              <>
-                {m.streaming && m.raw === "" ? (
-                  <TypingDots />
-                ) : m.raw === "" ? (
-                  <span>(No reply)</span>
-                ) : (
-                  <Markdown
-                    text={m.raw}
-                    citations={citeMap}
-                    onCite={cb.onCite}
+        {m.error ??
+          (m.plain ? (
+            <span className="break-words whitespace-pre-wrap">{m.raw}</span>
+          ) : (
+            <>
+              {m.tools.length ? (
+                <div className="mb-1.5 flex flex-col items-start gap-1">
+                  {m.tools.map((t, i) => (
+                    <span
+                      key={i}
+                      className="border-muted bg-ink/5 text-muted inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-px text-xs"
+                    >
+                      <Wrench className="h-3 w-3" aria-hidden />
+                      Called {t}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {m.interrupt ? (
+                m.interrupt.kind === "confirm_ticket" ? (
+                  <TicketConfirm
+                    preview={m.interrupt.preview ?? {}}
+                    decided={m.decided}
+                    onDecide={(confirmed) => {
+                      cb.onConfirmTicket(m.id, confirmed);
+                    }}
                   />
-                )}
-                {!m.streaming && m.actions.length ? (
-                  <ActionBar msg={m} cb={cb} />
-                ) : null}
-                {!m.streaming && m.raw !== "" ? (
-                  <FeedbackBar msg={m} onFeedback={cb.onFeedback} />
-                ) : null}
-              </>
-            )}
-          </>
-        )}
+                ) : (
+                  <OrderCards
+                    orders={m.interrupt.orders ?? []}
+                    decided={m.decided}
+                    onPick={(o) => {
+                      cb.onPickOrderResume(m.id, o);
+                    }}
+                  />
+                )
+              ) : (
+                <>
+                  {m.streaming && m.raw === "" ? (
+                    <TypingDots />
+                  ) : m.raw === "" ? (
+                    <span>(No reply)</span>
+                  ) : (
+                    <Markdown
+                      text={m.raw}
+                      citations={citeMap}
+                      onCite={cb.onCite}
+                    />
+                  )}
+                  {!m.streaming && m.actions.length ? (
+                    <ActionBar msg={m} cb={cb} />
+                  ) : null}
+                  {!m.streaming && m.raw !== "" ? (
+                    <FeedbackBar msg={m} onFeedback={cb.onFeedback} />
+                  ) : null}
+                </>
+              )}
+            </>
+          ))}
       </div>
     </div>
   );

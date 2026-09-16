@@ -61,7 +61,8 @@ export function evidenceTokens(topK: number | null = null): number {
 export function turnPeakTokens(): number {
   return (
     settings.maxUserInputTokens +
-    settings.maxAgentSteps * (settings.toolResultMaxTokens + settings.agentStepAiTokens)
+    settings.maxAgentSteps *
+      (settings.toolResultMaxTokens + settings.agentStepAiTokens)
   );
 }
 
@@ -98,13 +99,31 @@ export function compute(window: number | null = null): ContextBudget {
 
   const room = w - fixed - peak;
   if (room <= 0) {
-    return { window: w, fixed, sliding: 0, turns: 0, peak, limitedBy: "window", healthy: false, perTurn };
+    return {
+      window: w,
+      fixed,
+      sliding: 0,
+      turns: 0,
+      peak,
+      limitedBy: "window",
+      healthy: false,
+      perTurn,
+    };
   }
   const byTurns = settings.contextBudgetTurns * perTurn;
   const sliding = Math.min(byTurns, room);
   const limitedBy = sliding === byTurns ? "turns" : "window";
   const turns = Math.floor(sliding / perTurn);
-  return { window: w, fixed, sliding, turns, peak, limitedBy, healthy: turns >= 1, perTurn };
+  return {
+    window: w,
+    fixed,
+    sliding,
+    turns,
+    peak,
+    limitedBy,
+    healthy: turns >= 1,
+    perTurn,
+  };
 }
 
 export function describe(b: ContextBudget): string {

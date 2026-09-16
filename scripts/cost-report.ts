@@ -109,7 +109,9 @@ function aggregate(rows: Record<string, unknown>[]): IntentRow[] {
 async function main(): Promise<void> {
   const config = langfuseConfig();
   if (config === null) {
-    console.log("Langfuse is not configured (three .env variables); there is no bill to read.");
+    console.log(
+      "Langfuse is not configured (three .env variables); there is no bill to read.",
+    );
     process.exitCode = 1;
     return;
   }
@@ -132,7 +134,9 @@ async function main(): Promise<void> {
     );
   });
   if (rows.length === 0) {
-    lines.push("(No traces with an intent tag inside the window — chat a bit first)");
+    lines.push(
+      "(No traces with an intent tag inside the window — chat a bit first)",
+    );
   }
   const out = lines.join("\n");
   console.log(out);
@@ -153,7 +157,10 @@ async function main(): Promise<void> {
     rows.length > 0
       ? await readNotes.generate("cost_by_intent", payload)
       : null;
-  console.log("\nRead note: " + (note ?? "none this round (the page uses its fallback sentence)"));
+  console.log(
+    "\nRead note: " +
+      (note ?? "none this round (the page uses its fallback sentence)"),
+  );
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT, `${out}\n`, "utf8");
@@ -178,7 +185,9 @@ async function main(): Promise<void> {
     )}\n`,
     "utf8",
   );
-  console.log("\nReport written to data/observability/reports/cost_by_intent.txt and .json");
+  console.log(
+    "\nReport written to data/observability/reports/cost_by_intent.txt and .json",
+  );
 }
 
 await main();

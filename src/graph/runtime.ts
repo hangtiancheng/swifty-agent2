@@ -2,7 +2,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { AIMessage, BaseMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
+import {
+  AIMessage,
+  BaseMessage,
+  HumanMessage,
+  ToolMessage,
+} from "@langchain/core/messages";
 import { Command, INTERRUPT, isInterrupted } from "@langchain/langgraph";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { z } from "zod";
@@ -18,11 +23,14 @@ import { maybeScheduleSummary } from "#/core/summarizer.ts";
 import * as repository from "#/db/repository.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("graph.runtime");
 
 const ANSWER_NODES = new Set(["main_agent"]);
-const DETERMINISTIC_ANSWER_NODES = new Set(["script_reply", "complaint_reply", "fallback_reply"]);
+const DETERMINISTIC_ANSWER_NODES = new Set([
+  "script_reply",
+  "complaint_reply",
+  "fallback_reply",
+]);
 const CITATION_NODES = new Set(["retrieve_knowledge", "retrieve_policy"]);
 
 type Graph = ReturnType<typeof buildGraph>;
@@ -49,7 +57,9 @@ export function closeGraph(): void {
 
 function getGraph(): Graph {
   if (graph === null) {
-    throw new Error("graph is not initialized; call initGraph() during startup");
+    throw new Error(
+      "graph is not initialized; call initGraph() during startup",
+    );
   }
   return graph;
 }
@@ -87,9 +97,13 @@ function baseMessages(value: unknown): BaseMessage[] {
   return value.filter((m): m is BaseMessage => BaseMessage.isInstance(m));
 }
 
-export async function getTurnSnapshot(conversationId: number): Promise<{ question: string; snapshot: unknown[] }> {
+export async function getTurnSnapshot(
+  conversationId: number,
+): Promise<{ question: string; snapshot: unknown[] }> {
   // Best-effort snapshot for thumbs-down feedback; the caller only uses it on a question match.
-  const state = await getGraph().getState({ configurable: { thread_id: String(conversationId) } });
+  const state = await getGraph().getState({
+    configurable: { thread_id: String(conversationId) },
+  });
   const values = parseStateValues(state.values);
   let question = "";
   const messages = baseMessages(values.messages);
@@ -100,7 +114,12 @@ export async function getTurnSnapshot(conversationId: number): Promise<{ questio
       break;
     }
   }
-  return { question, snapshot: Array.isArray(values.retrievedSnapshot) ? values.retrievedSnapshot : [] };
+  return {
+    question,
+    snapshot: Array.isArray(values.retrievedSnapshot)
+      ? values.retrievedSnapshot
+      : [],
+  };
 }
 
 export function dedupActions(actions: SuggestedAction[]): SuggestedAction[] {
@@ -190,7 +209,9 @@ function interruptPayload(state: unknown): InterruptValue | null {
 }
 
 async function finalState(cid: number): Promise<StateValues> {
-  const snap = await getGraph().getState({ configurable: { thread_id: String(cid) } });
+  const snap = await getGraph().getState({
+    configurable: { thread_id: String(cid) },
+  });
   return parseStateValues(snap.values);
 }
 
@@ -208,7 +229,12 @@ function answerFromValues(values: StateValues): string {
   return "";
 }
 
-function recordFromValues(cid: number, input: unknown, values: StateValues, fallbackOutput = ""): void {
+function recordFromValues(
+  cid: number,
+  input: unknown,
+  values: StateValues,
+  fallbackOutput = "",
+): void {
   recordTurn({
     sessionId: cid,
     input,
@@ -232,7 +258,9 @@ export async function settleLayers(
     if (msgs.length === 0) {
       return;
     }
-    const l1Budget = Math.floor(budget.compute().sliding * settings.layer1Ratio);
+    const l1Budget = Math.floor(
+      budget.compute().sliding * settings.layer1Ratio,
+    );
     const [, layer1Tok] = memory.layerTokens(msgs, summaryUpto, layer1From);
     if (layer1Tok <= l1Budget) {
       return;
@@ -240,10 +268,22 @@ export async function settleLayers(
     const newFrom = memory.nextLayer1From(msgs, summaryUpto, l1Budget);
     if (newFrom > layer1From) {
       await repository.updateLayer1From(cid, newFrom);
-      log.info({ conv: cid, from: layer1From, to: newFrom, layer1_tokens: layer1Tok, budget: l1Budget }, "layer 1 degraded");
+      log.info(
+        {
+          conv: cid,
+          from: layer1From,
+          to: newFrom,
+          layer1_tokens: layer1Tok,
+          budget: l1Budget,
+        },
+        "layer 1 degraded",
+      );
     }
   } catch (error) {
-    log.error({ conv: cid, err: error }, "layer settlement failed (reply unaffected)");
+    log.error(
+      { conv: cid, err: error },
+      "layer settlement failed (reply unaffected)",
+    );
   }
 }
 
@@ -253,14 +293,26 @@ export interface TurnResult {
   interrupt: InterruptValue | null;
 }
 
-export async function runTurn(userId: string, message: string, conversationId: number | null): Promise<TurnResult> {
-  const { cid, summary, upto, layer1 } = await ensureConversation(userId, conversationId);
-  const msgId = await repository.appendMessage(cid, "user", { content: message });
+export async function runTurn(
+  userId: string,
+  message: string,
+  conversationId: number | null,
+): Promise<TurnResult> {
+  const { cid, summary, upto, layer1 } = await ensureConversation(
+    userId,
+    conversationId,
+  );
+  const msgId = await repository.appendMessage(cid, "user", {
+    content: message,
+  });
   const config = {
     configurable: { thread_id: String(cid) },
     metadata: { langfuse_session_id: String(cid) },
   };
-  const final = await getGraph().invoke(graphInput(userId, message, cid, msgId, summary, upto, layer1), config);
+  const final = await getGraph().invoke(
+    graphInput(userId, message, cid, msgId, summary, upto, layer1),
+    config,
+  );
   recordFromValues(cid, { message }, final);
   await settleLayers(cid, final, upto, layer1);
   await maybeScheduleSummary(cid);
@@ -271,7 +323,10 @@ export async function runTurn(userId: string, message: string, conversationId: n
   };
 }
 
-export async function resumeTurn(conversationId: number, resumeValue: unknown): Promise<TurnResult> {
+export async function resumeTurn(
+  conversationId: number,
+  resumeValue: unknown,
+): Promise<TurnResult> {
   if ((await repository.getConversation(conversationId)) === null) {
     throw new ConversationNotFound(conversationId);
   }
@@ -279,7 +334,10 @@ export async function resumeTurn(conversationId: number, resumeValue: unknown): 
     configurable: { thread_id: String(conversationId) },
     metadata: { langfuse_session_id: String(conversationId) },
   };
-  const final = await getGraph().invoke(new Command({ resume: resumeValue }), config);
+  const final = await getGraph().invoke(
+    new Command({ resume: resumeValue }),
+    config,
+  );
   recordFromValues(conversationId, { resume: true }, final);
   await maybeScheduleSummary(conversationId);
   return {
@@ -290,7 +348,10 @@ export async function resumeTurn(conversationId: number, resumeValue: unknown): 
 }
 
 const streamTupleSchema = z.tuple([z.string(), z.unknown()]);
-const messagesChunkSchema = z.tuple([z.unknown(), z.object({ langgraph_node: z.string().optional() })]);
+const messagesChunkSchema = z.tuple([
+  z.unknown(),
+  z.object({ langgraph_node: z.string().optional() }),
+]);
 const updatesChunkSchema = z.record(z.string(), z.unknown());
 const actionSchema = z
   .object({
@@ -302,7 +363,10 @@ const actionSchema = z
 
 type StreamSource = Parameters<Graph["stream"]>[0];
 
-async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<StreamEvent> {
+async function* streamEvents(
+  cid: number,
+  source: StreamSource,
+): AsyncGenerator<StreamEvent> {
   const streamModes: ("messages" | "updates")[] = ["messages", "updates"];
   const config = {
     configurable: { thread_id: String(cid) },
@@ -323,7 +387,10 @@ async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<
         continue;
       }
       const [msg, meta] = messageChunk.data;
-      if (ANSWER_NODES.has(meta.langgraph_node ?? "") && BaseMessage.isInstance(msg)) {
+      if (
+        ANSWER_NODES.has(meta.langgraph_node ?? "") &&
+        BaseMessage.isInstance(msg)
+      ) {
         const text = memory.contentToString(msg.content);
         if (text) {
           yield { type: "delta", text };
@@ -336,7 +403,9 @@ async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<
       }
       const update = updateParsed.data;
       if (isInterrupted(update)) {
-        const parsedValue = interruptValueSchema.safeParse(update[INTERRUPT][0]?.value);
+        const parsedValue = interruptValueSchema.safeParse(
+          update[INTERRUPT][0]?.value,
+        );
         const data = parsedValue.success ? parsedValue.data : {};
         const event: StreamEvent = {
           type: "interrupt",
@@ -358,10 +427,18 @@ async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<
           continue;
         }
         const fields = upd.data;
-        if (DETERMINISTIC_ANSWER_NODES.has(node) && typeof fields.answer === "string" && fields.answer) {
+        if (
+          DETERMINISTIC_ANSWER_NODES.has(node) &&
+          typeof fields.answer === "string" &&
+          fields.answer
+        ) {
           yield { type: "delta", text: fields.answer };
         }
-        if (CITATION_NODES.has(node) && Array.isArray(fields.citations) && fields.citations.length > 0) {
+        if (
+          CITATION_NODES.has(node) &&
+          Array.isArray(fields.citations) &&
+          fields.citations.length > 0
+        ) {
           yield { type: "citations", items: fields.citations };
         }
         if (node === "agent_tools" && Array.isArray(fields.messages)) {
@@ -404,10 +481,18 @@ export async function* streamTurn(
   message: string,
   conversationId: number | null,
 ): AsyncGenerator<StreamEvent> {
-  const { cid, summary, upto, layer1 } = await ensureConversation(userId, conversationId);
-  const msgId = await repository.appendMessage(cid, "user", { content: message });
+  const { cid, summary, upto, layer1 } = await ensureConversation(
+    userId,
+    conversationId,
+  );
+  const msgId = await repository.appendMessage(cid, "user", {
+    content: message,
+  });
   let answer = "";
-  for await (const ev of streamEvents(cid, graphInput(userId, message, cid, msgId, summary, upto, layer1))) {
+  for await (const ev of streamEvents(
+    cid,
+    graphInput(userId, message, cid, msgId, summary, upto, layer1),
+  )) {
     if (ev.type === "delta" && ev.text) {
       answer += ev.text;
     }
@@ -418,18 +503,29 @@ export async function* streamTurn(
   await maybeScheduleSummary(cid);
 }
 
-export async function* streamResume(conversationId: number, resumeValue: unknown): AsyncGenerator<StreamEvent> {
+export async function* streamResume(
+  conversationId: number,
+  resumeValue: unknown,
+): AsyncGenerator<StreamEvent> {
   if ((await repository.getConversation(conversationId)) === null) {
     throw new ConversationNotFound(conversationId);
   }
   let answer = "";
-  for await (const ev of streamEvents(conversationId, new Command({ resume: resumeValue }))) {
+  for await (const ev of streamEvents(
+    conversationId,
+    new Command({ resume: resumeValue }),
+  )) {
     if (ev.type === "delta" && ev.text) {
       answer += ev.text;
     }
     yield ev;
   }
-  recordFromValues(conversationId, { resume: true }, await finalState(conversationId), answer);
+  recordFromValues(
+    conversationId,
+    { resume: true },
+    await finalState(conversationId),
+    answer,
+  );
   await maybeScheduleSummary(conversationId);
 }
 

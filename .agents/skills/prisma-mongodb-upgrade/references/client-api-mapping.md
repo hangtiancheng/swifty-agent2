@@ -41,10 +41,13 @@ await db.transaction(async (tx) => { ... });          // no such method on the M
 ```typescript
 // Raw lane under its Next name:
 const raw = mongoRaw(db);
-await raw.users.aggregate([{ $match: { status: 'active' } }]);
+await raw.users.aggregate([{ $match: { status: "active" } }]);
 
 // Aggregation through the typed pipeline builder:
-const stats = await db.query.from('users').group({ _id: '$role', n: { $count: {} } }).build();
+const stats = await db.query
+  .from("users")
+  .group({ _id: "$role", n: { $count: {} } })
+  .build();
 
 // Multi-document atomicity today: the mongodb driver (a direct dependency of the
 // project) exposes sessions and transactions as usual:

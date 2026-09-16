@@ -10,7 +10,9 @@ import * as repository from "#/db/repository.ts";
 const CONCURRENCY = 5;
 
 const faithSchema = z.object({
-  faithful: z.boolean().describe("Whether the answer is faithful to the evidence"),
+  faithful: z
+    .boolean()
+    .describe("Whether the answer is faithful to the evidence"),
   reason: z.string().default("").describe("One-sentence justification"),
 });
 

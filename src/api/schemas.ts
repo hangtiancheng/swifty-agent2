@@ -24,7 +24,13 @@ export const createTicketRequestSchema = z.object({
 export const createRefundRequestSchema = z.object({
   conversation_id: z.number().int().positive(),
   order_id: z.string().min(1),
-  reason: z.enum(["no_reason_7_day", "quality_issue", "wrong_item", "no_longer_wanted", "other"]),
+  reason: z.enum([
+    "no_reason_7_day",
+    "quality_issue",
+    "wrong_item",
+    "no_longer_wanted",
+    "other",
+  ]),
 });
 
 export const resumeRequestSchema = z.object({
@@ -41,9 +47,18 @@ export const extractRequestSchema = z.object({
 const PLACEHOLDER_ORDER_IDS = new Set(["", "null", "none", "n/a"]);
 
 export const afterSalesTicketSchema = z.object({
-  order_id: z.string().nullable().describe("Order number; null when it does not appear in the text; never fabricate it"),
-  request_type: z.enum(["refund", "exchange", "repair", "complaint", "other"]).describe("Type of the user's request"),
-  expected_solution: z.string().describe("The resolution the user expects, summarized in one sentence"),
+  order_id: z
+    .string()
+    .nullable()
+    .describe(
+      "Order number; null when it does not appear in the text; never fabricate it",
+    ),
+  request_type: z
+    .enum(["refund", "exchange", "repair", "complaint", "other"])
+    .describe("Type of the user's request"),
+  expected_solution: z
+    .string()
+    .describe("The resolution the user expects, summarized in one sentence"),
 });
 export type AfterSalesTicket = z.infer<typeof afterSalesTicketSchema>;
 
@@ -67,8 +82,15 @@ export const approveRequestSchema = z.object({
 });
 
 export const faithCaseStatusRequestSchema = z.object({
-  status: z.enum(["unresolved", "resolved", "dismissed"]).describe("Handling status"),
-  resolution: z.string().max(300).nullable().default(null).describe("Handling notes"),
+  status: z
+    .enum(["unresolved", "resolved", "dismissed"])
+    .describe("Handling status"),
+  resolution: z
+    .string()
+    .max(300)
+    .nullable()
+    .default(null)
+    .describe("Handling notes"),
 });
 
 export const previewRequestSchema = z.object({
@@ -89,6 +111,8 @@ export const stagingReviewRequestSchema = z.object({
 
 export const searchRequestSchema = z.object({
   q: z.string(),
-  strategy: z.enum(["vector", "bm25", "hybrid", "hybrid_rerank"]).default("vector"),
+  strategy: z
+    .enum(["vector", "bm25", "hybrid", "hybrid_rerank"])
+    .default("vector"),
   top_k: z.number().int().min(1).max(20).default(5),
 });

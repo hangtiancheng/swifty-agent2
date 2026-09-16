@@ -1,9 +1,13 @@
 // Data access layer. JSON-ish columns are stored as text and validated on read.
 import { z } from "zod";
 
-
 import { prisma } from "./client.ts";
-import { numberArraySchema, parseWith, stringArraySchema, toJson } from "./json.ts";
+import {
+  numberArraySchema,
+  parseWith,
+  stringArraySchema,
+  toJson,
+} from "./json.ts";
 
 import { settings } from "#/config.ts";
 
@@ -54,14 +58,26 @@ export async function appendMessage(
 }
 
 export async function listMessages(conversationId: number) {
-  return prisma.message.findMany({ where: { conversationId }, orderBy: { id: "asc" } });
+  return prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { id: "asc" },
+  });
 }
 
-export async function createTicket(conversationId: number, description: string, ticketType: string): Promise<string> {
+export async function createTicket(
+  conversationId: number,
+  description: string,
+  ticketType: string,
+): Promise<string> {
   const ticketNo = genTicketNo();
   await prisma.$transaction([
-    prisma.ticket.create({ data: { ticketNo, conversationId, description, ticketType } }),
-    prisma.conversation.updateMany({ where: { id: conversationId }, data: { status: "transferred" } }),
+    prisma.ticket.create({
+      data: { ticketNo, conversationId, description, ticketType },
+    }),
+    prisma.conversation.updateMany({
+      where: { id: conversationId },
+      data: { status: "transferred" },
+    }),
   ]);
   return ticketNo;
 }
@@ -74,7 +90,10 @@ export interface ConversationListItem {
   updated_at: string;
 }
 
-export async function listConversations(userId: string, limit = 50): Promise<ConversationListItem[]> {
+export async function listConversations(
+  userId: string,
+  limit = 50,
+): Promise<ConversationListItem[]> {
   const convs = await prisma.conversation.findMany({
     where: { userId },
     orderBy: { id: "desc" },
@@ -100,7 +119,10 @@ export async function listConversations(userId: string, limit = 50): Promise<Con
 
 // ---------- conversation context (sliding window / summaries) ----------
 
-export async function countMessagesAfter(conversationId: number, afterId: number | null): Promise<number> {
+export async function countMessagesAfter(
+  conversationId: number,
+  afterId: number | null,
+): Promise<number> {
   return prisma.message.count({
     where: { conversationId, ...(afterId ? { id: { gt: afterId } } : {}) },
   });
@@ -113,14 +135,21 @@ export async function listDialogMessages(conversationId: number) {
   });
 }
 
-export async function updateConversationSummary(conversationId: number, summary: string, uptoMsgId: number): Promise<void> {
+export async function updateConversationSummary(
+  conversationId: number,
+  summary: string,
+  uptoMsgId: number,
+): Promise<void> {
   await prisma.conversation.updateMany({
     where: { id: conversationId },
     data: { summary, summaryUptoMsgId: uptoMsgId },
   });
 }
 
-export async function updateLayer1From(conversationId: number, msgId: number): Promise<void> {
+export async function updateLayer1From(
+  conversationId: number,
+  msgId: number,
+): Promise<void> {
   await prisma.conversation.updateMany({
     where: { id: conversationId },
     data: { layer1FromMsgId: msgId },
@@ -140,7 +169,9 @@ export async function appendSummarySegment(
     select: { seq: true, content: true },
   });
   const seq = (prev[0]?.seq ?? 0) + 1;
-  const projection = [...prev.map((r) => r.content).reverse(), content].join("\n");
+  const projection = [...prev.map((r) => r.content).reverse(), content].join(
+    "\n",
+  );
   await prisma.$transaction([
     prisma.conversationSummary.create({
       data: { conversationId, seq, fromMsgId, uptoMsgId, content },
@@ -153,7 +184,10 @@ export async function appendSummarySegment(
   return seq;
 }
 
-export async function listSummarySegments(conversationId: number, limit?: number): Promise<string[]> {
+export async function listSummarySegments(
+  conversationId: number,
+  limit?: number,
+): Promise<string[]> {
   const n = limit ?? settings.summaryInjectSegments;
   const rows = await prisma.conversationSummary.findMany({
     where: { conversationId },
@@ -175,7 +209,9 @@ export interface InsertChunkInput {
   isKeyClause?: number;
 }
 
-export async function insertKnowledgeChunk(input: InsertChunkInput): Promise<number> {
+export async function insertKnowledgeChunk(
+  input: InsertChunkInput,
+): Promise<number> {
   const row = await prisma.knowledgeChunk.create({
     data: {
       category: input.category,
@@ -196,14 +232,22 @@ export async function listPendingChunks() {
   });
 }
 
-export async function markChunkVectorized(chunkId: number, vectorId: string, embedding: number[]): Promise<void> {
+export async function markChunkVectorized(
+  chunkId: number,
+  vectorId: string,
+  embedding: number[],
+): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
     data: { vectorId, vectorizeStatus: "done", embedding: toJson(embedding) },
   });
 }
 
-export async function setChunkNeighbors(chunkId: number, prevId: number | null, nextId: number | null): Promise<void> {
+export async function setChunkNeighbors(
+  chunkId: number,
+  prevId: number | null,
+  nextId: number | null,
+): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
     data: { prevChunkId: prevId, nextChunkId: nextId },
@@ -217,10 +261,20 @@ export async function listChunksByContentTypes(contentTypes: Iterable<string>) {
   });
 }
 
-export async function rependChunkText(chunkId: number, questions: string, answer: string): Promise<void> {
+export async function rependChunkText(
+  chunkId: number,
+  questions: string,
+  answer: string,
+): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
-    data: { questions, answer, vectorizeStatus: "pending", embedding: null, vectorId: null },
+    data: {
+      questions,
+      answer,
+      vectorizeStatus: "pending",
+      embedding: null,
+      vectorId: null,
+    },
   });
 }
 
@@ -229,12 +283,18 @@ export async function countChunksByStatus(status: string): Promise<number> {
 }
 
 export async function listAllQuestions(): Promise<string[]> {
-  const rows = await prisma.knowledgeChunk.findMany({ select: { questions: true } });
+  const rows = await prisma.knowledgeChunk.findMany({
+    select: { questions: true },
+  });
   return rows.map((r) => r.questions);
 }
 
-export async function countChunksByContentTypes(contentTypes: Iterable<string>): Promise<number> {
-  return prisma.knowledgeChunk.count({ where: { contentType: { in: [...contentTypes] } } });
+export async function countChunksByContentTypes(
+  contentTypes: Iterable<string>,
+): Promise<number> {
+  return prisma.knowledgeChunk.count({
+    where: { contentType: { in: [...contentTypes] } },
+  });
 }
 
 export interface KnowledgeStats {
@@ -248,12 +308,22 @@ export interface KnowledgeStats {
 export async function knowledgeStats(): Promise<KnowledgeStats> {
   const [total, statusRows, typeRows, keyClause] = await Promise.all([
     prisma.knowledgeChunk.count(),
-    prisma.knowledgeChunk.groupBy({ by: ["vectorizeStatus"], _count: { _all: true } }),
-    prisma.knowledgeChunk.groupBy({ by: ["contentType"], _count: { _all: true } }),
+    prisma.knowledgeChunk.groupBy({
+      by: ["vectorizeStatus"],
+      _count: { _all: true },
+    }),
+    prisma.knowledgeChunk.groupBy({
+      by: ["contentType"],
+      _count: { _all: true },
+    }),
     prisma.knowledgeChunk.count({ where: { isKeyClause: 1 } }),
   ]);
-  const byStatus = Object.fromEntries(statusRows.map((r) => [r.vectorizeStatus, r._count._all]));
-  const byType = Object.fromEntries(typeRows.map((r) => [r.contentType ?? "untagged", r._count._all]));
+  const byStatus = Object.fromEntries(
+    statusRows.map((r) => [r.vectorizeStatus, r._count._all]),
+  );
+  const byType = Object.fromEntries(
+    typeRows.map((r) => [r.contentType ?? "untagged", r._count._all]),
+  );
   return {
     total,
     pending: byStatus.pending ?? 0,
@@ -264,11 +334,16 @@ export async function knowledgeStats(): Promise<KnowledgeStats> {
 }
 
 export async function listRecentChunks(limit = 20) {
-  return prisma.knowledgeChunk.findMany({ orderBy: { id: "desc" }, take: limit });
+  return prisma.knowledgeChunk.findMany({
+    orderBy: { id: "desc" },
+    take: limit,
+  });
 }
 
 export async function listChunkPairs(): Promise<[string, string][]> {
-  const rows = await prisma.knowledgeChunk.findMany({ select: { questions: true, answer: true } });
+  const rows = await prisma.knowledgeChunk.findMany({
+    select: { questions: true, answer: true },
+  });
   return rows.map((r) => [r.questions, r.answer]);
 }
 
@@ -306,10 +381,19 @@ export interface StagingStats {
 }
 
 export async function stagingStats(): Promise<StagingStats> {
-  const rows = await prisma.qaExtractionStaging.groupBy({ by: ["status"], _count: { _all: true } });
+  const rows = await prisma.qaExtractionStaging.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
   const counts = Object.fromEntries(rows.map((r) => [r.status, r._count._all]));
-  const batches = await prisma.qaExtractionStaging.findMany({ distinct: ["batchNo"], select: { batchNo: true } });
-  const latest = await prisma.qaExtractionStaging.findFirst({ orderBy: { id: "desc" }, select: { batchNo: true } });
+  const batches = await prisma.qaExtractionStaging.findMany({
+    distinct: ["batchNo"],
+    select: { batchNo: true },
+  });
+  const latest = await prisma.qaExtractionStaging.findFirst({
+    orderBy: { id: "desc" },
+    select: { batchNo: true },
+  });
   return {
     counts: {
       extracted: counts.extracted ?? 0,
@@ -322,7 +406,12 @@ export async function stagingStats(): Promise<StagingStats> {
   };
 }
 
-export async function insertStaging(batchNo: string, sourceRef: string | null, question: string, answer: string): Promise<number> {
+export async function insertStaging(
+  batchNo: string,
+  sourceRef: string | null,
+  question: string,
+  answer: string,
+): Promise<number> {
   const row = await prisma.qaExtractionStaging.create({
     data: { batchNo, sourceRef, question, answer },
   });
@@ -330,10 +419,16 @@ export async function insertStaging(batchNo: string, sourceRef: string | null, q
 }
 
 export async function listStagingByStatus(status: string) {
-  return prisma.qaExtractionStaging.findMany({ where: { status }, orderBy: { id: "asc" } });
+  return prisma.qaExtractionStaging.findMany({
+    where: { status },
+    orderBy: { id: "asc" },
+  });
 }
 
-export async function listStagingByIds(ids: number[], status: string | null = null) {
+export async function listStagingByIds(
+  ids: number[],
+  status: string | null = null,
+) {
   if (ids.length === 0) {
     return [];
   }
@@ -343,11 +438,17 @@ export async function listStagingByIds(ids: number[], status: string | null = nu
   });
 }
 
-export async function setStagingStatus(ids: number[], status: string): Promise<void> {
+export async function setStagingStatus(
+  ids: number[],
+  status: string,
+): Promise<void> {
   if (ids.length === 0) {
     return;
   }
-  await prisma.qaExtractionStaging.updateMany({ where: { id: { in: ids } }, data: { status } });
+  await prisma.qaExtractionStaging.updateMany({
+    where: { id: { in: ids } },
+    data: { status },
+  });
 }
 
 // ---------- low confidence pool ----------
@@ -365,15 +466,22 @@ export async function insertLowConfidence(
       rawQuestion,
       source,
       reason,
-      retrievedChunks: retrievedChunks === undefined ? null : toJson(retrievedChunks),
+      retrievedChunks:
+        retrievedChunks === undefined ? null : toJson(retrievedChunks),
     },
   });
   return row.id;
 }
 
 export async function listConversationsWithMessages() {
-  const convIds = await prisma.conversation.findMany({ orderBy: { id: "asc" }, select: { id: true } });
-  const out: { id: number; messages: Awaited<ReturnType<typeof listMessages>> }[] = [];
+  const convIds = await prisma.conversation.findMany({
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  const out: {
+    id: number;
+    messages: Awaited<ReturnType<typeof listMessages>>;
+  }[] = [];
   for (const { id } of convIds) {
     out.push({ id, messages: await listMessages(id) });
   }
@@ -390,16 +498,24 @@ export async function fetchUnmatchedLowConf(limit: number) {
   });
 }
 
-export async function listReviewCandidates(limit = 200): Promise<{ id: number; normalized_question: string }[]> {
+export async function listReviewCandidates(
+  limit = 200,
+): Promise<{ id: number; normalized_question: string }[]> {
   const rows = await prisma.reviewQueue.findMany({
     orderBy: { updatedAt: "desc" },
     take: limit,
     select: { id: true, normalizedQuestion: true },
   });
-  return rows.map((r) => ({ id: r.id, normalized_question: r.normalizedQuestion }));
+  return rows.map((r) => ({
+    id: r.id,
+    normalized_question: r.normalizedQuestion,
+  }));
 }
 
-export async function insertReviewItem(normalizedQuestion: string, aiSuggestedAnswer: string | null): Promise<number> {
+export async function insertReviewItem(
+  normalizedQuestion: string,
+  aiSuggestedAnswer: string | null,
+): Promise<number> {
   const row = await prisma.reviewQueue.create({
     data: { normalizedQuestion, aiSuggestedAnswer },
   });
@@ -413,7 +529,10 @@ export async function incrementOccurrence(reviewId: number): Promise<void> {
   });
 }
 
-export async function setMatchedReview(lcqId: number, reviewId: number): Promise<void> {
+export async function setMatchedReview(
+  lcqId: number,
+  reviewId: number,
+): Promise<void> {
   await prisma.lowConfidenceQuestion.updateMany({
     where: { id: lcqId },
     data: { matchedReviewId: reviewId },
@@ -439,14 +558,21 @@ export async function getReviewDetail(reviewId: number) {
   return { item, raws };
 }
 
-export async function updateReviewStatus(reviewId: number, status: string, approvedAnswer: string | null = null): Promise<boolean> {
+export async function updateReviewStatus(
+  reviewId: number,
+  status: string,
+  approvedAnswer: string | null = null,
+): Promise<boolean> {
   const row = await prisma.reviewQueue.findUnique({ where: { id: reviewId } });
   if (row?.reviewStatus !== "pending_review") {
     return false;
   }
   await prisma.reviewQueue.update({
     where: { id: reviewId },
-    data: { reviewStatus: status, ...(approvedAnswer !== null ? { approvedAnswer } : {}) },
+    data: {
+      reviewStatus: status,
+      ...(approvedAnswer !== null ? { approvedAnswer } : {}),
+    },
   });
   return true;
 }
@@ -468,7 +594,11 @@ export interface EvalRunRow {
   createdAt: Date;
 }
 
-export async function insertEvalRun(triggeredBy: string, datasetSize: number, metrics: Record<string, number>): Promise<number> {
+export async function insertEvalRun(
+  triggeredBy: string,
+  datasetSize: number,
+  metrics: Record<string, number>,
+): Promise<number> {
   const row = await prisma.evalRun.create({
     data: { triggeredBy, datasetSize, metrics: toJson(metrics) ?? "" },
   });
@@ -476,7 +606,10 @@ export async function insertEvalRun(triggeredBy: string, datasetSize: number, me
 }
 
 export async function listEvalRuns(limit = 10): Promise<EvalRunRow[]> {
-  const rows = await prisma.evalRun.findMany({ orderBy: { id: "desc" }, take: limit });
+  const rows = await prisma.evalRun.findMany({
+    orderBy: { id: "desc" },
+    take: limit,
+  });
   return rows.map((r) => ({
     id: r.id,
     triggeredBy: r.triggeredBy,
@@ -536,12 +669,20 @@ export async function listPoolTexts(): Promise<PoolText[]> {
     },
     orderBy: { id: "asc" },
   });
-  return rows.map((r) => ({ question_id: r.id, text: r.matchedReview?.normalizedQuestion || r.rawQuestion }));
+  return rows.map((r) => ({
+    question_id: r.id,
+    text: r.matchedReview?.normalizedQuestion || r.rawQuestion,
+  }));
 }
 
-export async function listUnclassifiedQuestions(limit = 500): Promise<PoolText[]> {
+export async function listUnclassifiedQuestions(
+  limit = 500,
+): Promise<PoolText[]> {
   const rows = await prisma.lowConfidenceQuestion.findMany({
-    where: { matchedReviewId: { not: null }, topicClassifications: { none: {} } },
+    where: {
+      matchedReviewId: { not: null },
+      topicClassifications: { none: {} },
+    },
     select: {
       id: true,
       rawQuestion: true,
@@ -550,12 +691,20 @@ export async function listUnclassifiedQuestions(limit = 500): Promise<PoolText[]
     orderBy: { id: "asc" },
     take: limit,
   });
-  return rows.map((r) => ({ question_id: r.id, text: r.matchedReview?.normalizedQuestion || r.rawQuestion }));
+  return rows.map((r) => ({
+    question_id: r.id,
+    text: r.matchedReview?.normalizedQuestion || r.rawQuestion,
+  }));
 }
 
-export async function insertTopicClassifications(rows: { question_id: number; labels: string[] }[]): Promise<number> {
+export async function insertTopicClassifications(
+  rows: { question_id: number; labels: string[] }[],
+): Promise<number> {
   await prisma.topicClassification.createMany({
-    data: rows.map((r) => ({ questionId: r.question_id, labels: toJson(r.labels) ?? "" })),
+    data: rows.map((r) => ({
+      questionId: r.question_id,
+      labels: toJson(r.labels) ?? "",
+    })),
   });
   return rows.length;
 }
@@ -566,20 +715,33 @@ export interface TopicDistribution {
   classes: { label: string; count: number; samples: string[] }[];
 }
 
-export async function topicDistribution(samplesPerClass = 3): Promise<TopicDistribution> {
+export async function topicDistribution(
+  samplesPerClass = 3,
+): Promise<TopicDistribution> {
   const { TOPIC_NAMES } = await import("../core/taxonomy.ts");
   const rows = await prisma.topicClassification.findMany({
     select: {
       labels: true,
       classifiedAt: true,
-      question: { select: { rawQuestion: true, matchedReview: { select: { normalizedQuestion: true } } } },
+      question: {
+        select: {
+          rawQuestion: true,
+          matchedReview: { select: { normalizedQuestion: true } },
+        },
+      },
     },
   });
-  const counts: Record<string, number> = Object.fromEntries(TOPIC_NAMES.map((n) => [n, 0]));
-  const samples: Record<string, string[]> = Object.fromEntries(TOPIC_NAMES.map((n) => [n, []]));
+  const counts: Record<string, number> = Object.fromEntries(
+    TOPIC_NAMES.map((n) => [n, 0]),
+  );
+  const samples: Record<string, string[]> = Object.fromEntries(
+    TOPIC_NAMES.map((n) => [n, []]),
+  );
   let latest: Date | null = null;
   for (const row of rows) {
-    const text = row.question.matchedReview?.normalizedQuestion || row.question.rawQuestion;
+    const text =
+      row.question.matchedReview?.normalizedQuestion ||
+      row.question.rawQuestion;
     if (latest === null || row.classifiedAt > latest) {
       latest = row.classifiedAt;
     }
@@ -588,7 +750,10 @@ export async function topicDistribution(samplesPerClass = 3): Promise<TopicDistr
         continue;
       }
       counts[label] += 1;
-      if (samples[label].length < samplesPerClass && !samples[label].includes(text)) {
+      if (
+        samples[label].length < samplesPerClass &&
+        !samples[label].includes(text)
+      ) {
         samples[label].push(text);
       }
     }
@@ -596,7 +761,11 @@ export async function topicDistribution(samplesPerClass = 3): Promise<TopicDistr
   return {
     total: rows.length,
     latest: latest ? latest.toISOString() : null,
-    classes: TOPIC_NAMES.map((n) => ({ label: n, count: counts[n], samples: samples[n] })),
+    classes: TOPIC_NAMES.map((n) => ({
+      label: n,
+      count: counts[n],
+      samples: samples[n],
+    })),
   };
 }
 
@@ -622,7 +791,11 @@ export interface TopicQuestionsPage {
   items: TopicQuestionItem[];
 }
 
-export async function topicQuestions(label: string, page = 1, size = 20): Promise<TopicQuestionsPage> {
+export async function topicQuestions(
+  label: string,
+  page = 1,
+  size = 20,
+): Promise<TopicQuestionsPage> {
   const rows = await prisma.topicClassification.findMany({
     select: {
       questionId: true,
@@ -633,33 +806,50 @@ export async function topicQuestions(label: string, page = 1, size = 20): Promis
           rawQuestion: true,
           source: true,
           createdAt: true,
-          matchedReview: { select: { normalizedQuestion: true, occurrenceCount: true, reviewStatus: true } },
+          matchedReview: {
+            select: {
+              normalizedQuestion: true,
+              occurrenceCount: true,
+              reviewStatus: true,
+            },
+          },
         },
       },
     },
     orderBy: { questionId: "desc" },
   });
-  const hit = rows.filter((r) => (parseWith(stringArraySchema, r.labels) ?? []).includes(label));
+  const hit = rows.filter((r) =>
+    (parseWith(stringArraySchema, r.labels) ?? []).includes(label),
+  );
   const pageSize = Math.max(1, Math.min(size, 100));
   const pages = Math.max(1, Math.ceil(hit.length / pageSize));
   const current = Math.max(1, Math.min(page, pages));
-  const items = hit.slice((current - 1) * pageSize, current * pageSize).map((r) => {
-    const q = r.question;
-    const norm = q.matchedReview?.normalizedQuestion ?? null;
-    return {
-      question_id: r.questionId,
-      labels: parseWith(stringArraySchema, r.labels) ?? [],
-      text: norm || q.rawQuestion,
-      raw_question: q.rawQuestion,
-      normalized: norm !== null,
-      source: q.source,
-      occurrence_count: q.matchedReview?.occurrenceCount ?? null,
-      review_status: q.matchedReview?.reviewStatus ?? null,
-      asked_at: q.createdAt.toISOString(),
-      classified_at: r.classifiedAt.toISOString(),
-    };
-  });
-  return { label, total: hit.length, page: current, size: pageSize, pages, items };
+  const items = hit
+    .slice((current - 1) * pageSize, current * pageSize)
+    .map((r) => {
+      const q = r.question;
+      const norm = q.matchedReview?.normalizedQuestion ?? null;
+      return {
+        question_id: r.questionId,
+        labels: parseWith(stringArraySchema, r.labels) ?? [],
+        text: norm || q.rawQuestion,
+        raw_question: q.rawQuestion,
+        normalized: norm !== null,
+        source: q.source,
+        occurrence_count: q.matchedReview?.occurrenceCount ?? null,
+        review_status: q.matchedReview?.reviewStatus ?? null,
+        asked_at: q.createdAt.toISOString(),
+        classified_at: r.classifiedAt.toISOString(),
+      };
+    });
+  return {
+    label,
+    total: hit.length,
+    page: current,
+    size: pageSize,
+    pages,
+    items,
+  };
 }
 
 // ---------- faith case ledger ----------
@@ -709,7 +899,9 @@ export async function upsertFaithCase(
       reason,
       strategy: options.strategy ?? "hybrid_rerank",
       judgeModel: options.judgeModel ?? null,
-      ...(options.citations !== undefined ? { citations: toJson(options.citations) } : {}),
+      ...(options.citations !== undefined
+        ? { citations: toJson(options.citations) }
+        : {}),
       seenCount: row.seenCount + 1,
       lastSeenAt: now,
       status: "unresolved",
@@ -724,11 +916,22 @@ export interface FaithCounts {
   dismissed: number;
 }
 
-export async function listFaithCases(status: string | null = null, page = 1, size = 5) {
+export async function listFaithCases(
+  status: string | null = null,
+  page = 1,
+  size = 5,
+) {
   const counts: FaithCounts = { unresolved: 0, resolved: 0, dismissed: 0 };
-  const grouped = await prisma.faithCase.groupBy({ by: ["status"], _count: { _all: true } });
+  const grouped = await prisma.faithCase.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
   for (const g of grouped) {
-    if (g.status === "unresolved" || g.status === "resolved" || g.status === "dismissed") {
+    if (
+      g.status === "unresolved" ||
+      g.status === "resolved" ||
+      g.status === "dismissed"
+    ) {
       counts[g.status] = g._count._all;
     }
   }
@@ -751,11 +954,17 @@ export async function listFaithCases(status: string | null = null, page = 1, siz
 }
 
 export async function faithCaseStatusMap(): Promise<Record<string, string>> {
-  const rows = await prisma.faithCase.findMany({ select: { evalId: true, status: true } });
+  const rows = await prisma.faithCase.findMany({
+    select: { evalId: true, status: true },
+  });
   return Object.fromEntries(rows.map((r) => [r.evalId, r.status]));
 }
 
-export async function setFaithCaseStatus(caseId: number, status: string, resolution: string | null = null) {
+export async function setFaithCaseStatus(
+  caseId: number,
+  status: string,
+  resolution: string | null = null,
+) {
   const row = await prisma.faithCase.findUnique({ where: { id: caseId } });
   if (!row) {
     return null;

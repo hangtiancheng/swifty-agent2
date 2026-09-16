@@ -9,7 +9,11 @@ import {
 } from "react";
 
 type ToastKind = "info" | "error";
-interface ToastItem { id: number; msg: string; kind: ToastKind }
+interface ToastItem {
+  id: number;
+  msg: string;
+  kind: ToastKind;
+}
 export type ToastFn = (msg: string, isErr?: boolean) => void;
 
 const ToastCtx = createContext<ToastFn>(() => undefined);
@@ -26,7 +30,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback<ToastFn>((msg, isErr) => {
     const id = nextId.current++;
-    setItems((xs) => [...xs.slice(-2), { id, msg, kind: isErr ? "error" : "info" }]);
+    setItems((xs) => [
+      ...xs.slice(-2),
+      { id, msg, kind: isErr ? "error" : "info" },
+    ]);
     window.setTimeout(() => {
       setItems((xs) => xs.filter((x) => x.id !== id));
     }, 3600);
@@ -46,7 +53,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.18 }}
               className={
-                "max-w-[84vw] border-3 px-4 py-2.5 text-[13px] font-bold shadow-hard-sm " +
+                "shadow-hard-sm max-w-[84vw] border-3 px-4 py-2.5 text-[13px] font-bold " +
                 (t.kind === "error"
                   ? "border-ink bg-error text-white"
                   : "border-ink bg-ink text-cream")

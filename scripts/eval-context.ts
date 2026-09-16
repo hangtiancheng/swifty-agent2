@@ -1,5 +1,5 @@
-// ch07 summary-prompt labeled-sample validation (a pure prompt task uses eval instead of TDD).
-// Requires the chat upstream to be reachable. Run: node scripts/eval-ch07.ts
+// context summary-prompt labeled-sample validation (a pure prompt task uses eval instead of TDD).
+// Requires the chat upstream to be reachable. Run: node scripts/eval-context.ts
 // Asserts: strict JSON (guaranteed by structured output), key facts kept, no fabricated
 // entities, length within bounds, greetings dropped.
 import { summarizeDialog } from "#/core/summarizer.ts";
@@ -42,12 +42,18 @@ interface CheckOptions {
   srcDigits?: string;
 }
 
-function check(name: string, summary: string, options: CheckOptions = {}): boolean {
+function check(
+  name: string,
+  summary: string,
+  options: CheckOptions = {},
+): boolean {
   let ok = true;
   const problems: string[] = [];
   if (summary.length < MIN_LEN || summary.length > MAX_LEN) {
     ok = false;
-    problems.push(`length ${summary.length} out of bounds [${MIN_LEN}, ${MAX_LEN}]`);
+    problems.push(
+      `length ${summary.length} out of bounds [${MIN_LEN}, ${MAX_LEN}]`,
+    );
   }
   for (const kw of options.must ?? []) {
     if (!summary.includes(kw)) {
@@ -89,7 +95,12 @@ async function main(): Promise<void> {
     }),
   );
   const s2 = await summarizeDialog("", CASE2_DIALOG);
-  results.push(check("Case 2 no fabrication (numeric entities ⊆ source)", s2, { must: ["2002"], srcDigits: CASE2_DIALOG }));
+  results.push(
+    check("Case 2 no fabrication (numeric entities ⊆ source)", s2, {
+      must: ["2002"],
+      srcDigits: CASE2_DIALOG,
+    }),
+  );
   const s3 = await summarizeDialog(CASE3_OLD, CASE3_DIALOG);
   results.push(
     check("Case 3 rolling merge keeps old facts", s3, {

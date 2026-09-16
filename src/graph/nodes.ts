@@ -1,16 +1,30 @@
 // Graph nodes: reference resolution, intent routing, retrieval, the ReAct loop and the
 // deterministic exits (complaint / script / fallback) plus audit logging.
-import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import {
+  AIMessage,
+  HumanMessage,
+  SystemMessage,
+  ToolMessage,
+} from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import { interrupt } from "@langchain/langgraph";
 import type { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { z } from "zod";
 
 import { INTENT_TO_ROUTE } from "./routing.ts";
-import type { Citation, GraphState, GraphUpdate, OrderData, SuggestedAction } from "./state.ts";
+import type {
+  Citation,
+  GraphState,
+  GraphUpdate,
+  OrderData,
+  SuggestedAction,
+} from "./state.ts";
 
 import { settings } from "#/config.ts";
-import { computeEvidenceConfidence, snapshotFromHits } from "#/core/confidence.ts";
+import {
+  computeEvidenceConfidence,
+  snapshotFromHits,
+} from "#/core/confidence.ts";
 import * as coref from "#/core/coref.ts";
 import * as intentMod from "#/core/intent.ts";
 import { getChatModel } from "#/core/llm.ts";
@@ -77,13 +91,17 @@ export function fetchOrder(state: GraphState): GraphUpdate {
   // Refund flow step 1: resolve the order id, asking the UI for a selection when needed.
   // Only read-only work happens before interrupt; the node restarts from the top on resume.
   const uid = state.userId ?? "";
-  let oid: string | null = state.orderId || extractOrderId(state.resolvedQuery || userText(state));
+  let oid: string | null =
+    state.orderId || extractOrderId(state.resolvedQuery || userText(state));
   for (;;) {
     if (oid !== null && business.ownsOrder(uid, oid)) {
       break;
     }
     const orders = business.listUserOrders(uid);
-    const resumed = interrupt<{ type: string; orders: business.UserOrder[] }, unknown>({
+    const resumed = interrupt<
+      { type: string; orders: business.UserOrder[] },
+      unknown
+    >({
       type: "select_order",
       orders,
     });
@@ -101,16 +119,27 @@ export async function retrievePolicy(state: GraphState): Promise<GraphUpdate> {
   const seed = `${base} ${orderData.status ?? ""}`.trim();
   const queries = await queryUnderstanding.expandQueries(seed);
 
-  const merged = new Map<number, Awaited<ReturnType<typeof retrieval.searchKnowledge>>[number]>();
+  const merged = new Map<
+    number,
+    Awaited<ReturnType<typeof retrieval.searchKnowledge>>[number]
+  >();
   for (const q of queries) {
-    for (const hit of await retrieval.searchKnowledge(q, { strategy: "hybrid_rerank", bm25Text: q })) {
+    for (const hit of await retrieval.searchKnowledge(q, {
+      strategy: "hybrid_rerank",
+      bm25Text: q,
+    })) {
       const current = merged.get(hit.id);
-      if (current === undefined || (hit.rerank_score ?? 0) > (current.rerank_score ?? 0)) {
+      if (
+        current === undefined ||
+        (hit.rerank_score ?? 0) > (current.rerank_score ?? 0)
+      ) {
         merged.set(hit.id, hit);
       }
     }
   }
-  const ranked = [...merged.values()].sort((a, b) => (b.rerank_score ?? 0) - (a.rerank_score ?? 0));
+  const ranked = [...merged.values()].sort(
+    (a, b) => (b.rerank_score ?? 0) - (a.rerank_score ?? 0),
+  );
   const arranged = retrieval.arrangeHeadTail(ranked);
   const citations: Citation[] = arranged.map((h, i) => ({
     n: i + 1,
@@ -120,14 +149,19 @@ export async function retrievePolicy(state: GraphState): Promise<GraphUpdate> {
     answer: h.answer,
     content_type: h.content_type,
   }));
-  const evidence = citations.map((c) => `[${c.n}] ${c.question}: ${c.answer}`).join("\n");
-  const trace: Record<string, unknown> = { retrieve_policy: { queries, hits: ranked.length } };
+  const evidence = citations
+    .map((c) => `[${c.n}] ${c.question}: ${c.answer}`)
+    .join("\n");
+  const trace: Record<string, unknown> = {
+    retrieve_policy: { queries, hits: ranked.length },
+  };
   return { evidence, citations, trace };
 }
 
 export function scriptReply(state: GraphState): GraphUpdate {
   // Deterministic exit for chitchat / other intents: pick the script by intent.
-  const text = state.intent === "other" ? SCRIPT_REPLY_OTHER : SCRIPT_REPLY_CHITCHAT;
+  const text =
+    state.intent === "other" ? SCRIPT_REPLY_OTHER : SCRIPT_REPLY_CHITCHAT;
   const trace: Record<string, unknown> = { route: "fallback_script" };
   return { answer: text, trace };
 }
@@ -135,7 +169,10 @@ export function scriptReply(state: GraphState): GraphUpdate {
 export function complaintReply(state: GraphState): GraphUpdate {
   const actions: SuggestedAction[] = [
     { type: "transfer_human" },
-    { type: "create_ticket", draft: { description: userText(state), ticket_type: "complaint" } },
+    {
+      type: "create_ticket",
+      draft: { description: userText(state), ticket_type: "complaint" },
+    },
   ];
   const trace: Record<string, unknown> = { route: "complaint" };
   return { answer: COMPLAINT_REPLY, suggestedActions: actions, trace };
@@ -161,16 +198,27 @@ export async function fallbackReply(state: GraphState): Promise<GraphUpdate> {
     snapshot,
   );
   const trace: Record<string, unknown> = { route: "fallback" };
-  return { answer: FALLBACK_REPLY, suggestedActions: [{ type: "transfer_human" }], trace };
+  return {
+    answer: FALLBACK_REPLY,
+    suggestedActions: [{ type: "transfer_human" }],
+    trace,
+  };
 }
 
-export async function resolveReference(state: GraphState): Promise<GraphUpdate> {
+export async function resolveReference(
+  state: GraphState,
+): Promise<GraphUpdate> {
   const query = userText(state);
   const history = historyText(state);
   // Observable per turn: the summary line plus the sliding window.
-  log.info({ conv: state.conversationId, history: history || "(no history)" }, "history_ctx");
+  log.info(
+    { conv: state.conversationId, history: history || "(no history)" },
+    "history_ctx",
+  );
   const resolved = await coref.resolve(query, history);
-  const trace: Record<string, unknown> = { coref: resolved !== query ? "rewrite" : "passthrough" };
+  const trace: Record<string, unknown> = {
+    coref: resolved !== query ? "rewrite" : "passthrough",
+  };
   return { resolvedQuery: resolved, trace };
 }
 
@@ -178,18 +226,33 @@ export async function classifyIntent(state: GraphState): Promise<GraphUpdate> {
   const query = state.resolvedQuery || userText(state);
   const result = await intentMod.classify(query, historyText(state));
   const route = INTENT_TO_ROUTE[result.intent] ?? "business";
-  const trace: Record<string, unknown> = { intent: result.intent, intent_confidence: result.confidence, route };
-  return { intent: result.intent, intentConfidence: result.confidence, route, trace };
+  const trace: Record<string, unknown> = {
+    intent: result.intent,
+    intent_confidence: result.confidence,
+    route,
+  };
+  return {
+    intent: result.intent,
+    intentConfidence: result.confidence,
+    route,
+    trace,
+  };
 }
 
-export async function retrieveKnowledge(state: GraphState): Promise<GraphUpdate> {
+export async function retrieveKnowledge(
+  state: GraphState,
+): Promise<GraphUpdate> {
   // Knowledge-intent forced retrieval with the calibrated confidence gate.
   const queryRaw = userText(state);
   const u = await queryUnderstanding.understand(queryRaw);
   const query = u.standard;
-  const bm25Text = u.expanded.length > 0 ? `${query} ${u.expanded.join(" ")}` : query;
+  const bm25Text =
+    u.expanded.length > 0 ? `${query} ${u.expanded.join(" ")}` : query;
 
-  const hits = await retrieval.searchKnowledge(query, { strategy: "hybrid_rerank", bm25Text });
+  const hits = await retrieval.searchKnowledge(query, {
+    strategy: "hybrid_rerank",
+    bm25Text,
+  });
   const conf = computeEvidenceConfidence(hits);
   const base: GraphUpdate = {
     evidenceConfidence: conf.score,
@@ -197,8 +260,17 @@ export async function retrieveKnowledge(state: GraphState): Promise<GraphUpdate>
   };
 
   if (conf.score < settings.evidenceConfidenceThreshold) {
-    const trace: Record<string, unknown> = { forced_rag: true, evidence_confidence: conf.score, confidence_signals: conf.signals };
-    return { ...base, evidenceStrong: false, fallbackSource: "retrieval_low_conf", trace };
+    const trace: Record<string, unknown> = {
+      forced_rag: true,
+      evidence_confidence: conf.score,
+      confidence_signals: conf.signals,
+    };
+    return {
+      ...base,
+      evidenceStrong: false,
+      fallbackSource: "retrieval_low_conf",
+      trace,
+    };
   }
 
   const evTexts = hits.map((h) => `${h.question} ${h.answer}`);
@@ -210,7 +282,12 @@ export async function retrieveKnowledge(state: GraphState): Promise<GraphUpdate>
       confidence_signals: conf.signals,
       self_check: check.reason,
     };
-    return { ...base, evidenceStrong: false, fallbackSource: "self_check", trace };
+    return {
+      ...base,
+      evidenceStrong: false,
+      fallbackSource: "self_check",
+      trace,
+    };
   }
 
   const arranged = retrieval.arrangeHeadTail(hits);
@@ -222,14 +299,22 @@ export async function retrieveKnowledge(state: GraphState): Promise<GraphUpdate>
     answer: h.answer,
     content_type: h.content_type,
   }));
-  const evidence = citations.map((c) => `[${c.n}] ${c.question}: ${c.answer}`).join("\n");
-  const trace: Record<string, unknown> = { forced_rag: true, evidence_confidence: conf.score, confidence_signals: conf.signals };
+  const evidence = citations
+    .map((c) => `[${c.n}] ${c.question}: ${c.answer}`)
+    .join("\n");
+  const trace: Record<string, unknown> = {
+    forced_rag: true,
+    evidence_confidence: conf.score,
+    confidence_signals: conf.signals,
+  };
   return { ...base, evidenceStrong: true, evidence, citations, trace };
 }
 
 export function confidenceCheck(state: GraphState): GraphUpdate {
   // Entity node recording the gate decision; the actual split is the conditional edge.
-  const trace: Record<string, unknown> = { confidence: state.evidenceStrong ? "strong" : "weak" };
+  const trace: Record<string, unknown> = {
+    confidence: state.evidenceStrong ? "strong" : "weak",
+  };
   return { trace };
 }
 
@@ -256,7 +341,10 @@ function turnContext(state: GraphState): string {
 
 export const TURN_CTX_ID = "turn-ctx";
 
-function withTurnContext(window: BaseMessage[], turnCtx: string): BaseMessage[] {
+function withTurnContext(
+  window: BaseMessage[],
+  turnCtx: string,
+): BaseMessage[] {
   // Insert after the last user message so the ReAct steps keep a stable cacheable prefix.
   const msg = new HumanMessage({ content: turnCtx, id: TURN_CTX_ID });
   for (let i = window.length - 1; i >= 0; i -= 1) {
@@ -284,33 +372,48 @@ function agentMessages(state: GraphState): BaseMessage[] {
 
 function logModelContext(state: GraphState, msgs: BaseMessage[]): void {
   const ctxBlock = msgs.find((m) => m.id === TURN_CTX_ID);
-  const window = msgs.filter((m) => !(m instanceof SystemMessage) && m.id !== TURN_CTX_ID);
-  const lines = window.map((m) => `  [${m.type}] ${memory.contentToString(m.content).slice(0, 40)}`);
+  const window = msgs.filter(
+    (m) => !(m instanceof SystemMessage) && m.id !== TURN_CTX_ID,
+  );
+  const lines = window.map(
+    (m) => `  [${m.type}] ${memory.contentToString(m.content).slice(0, 40)}`,
+  );
   log.info(
     {
       conv: state.conversationId,
       step: state.steps ?? 0,
       summary: state.summary || "(none)",
       window: window.length,
-      turn_material: ctxBlock ? `${memory.contentToString(ctxBlock.content).length} chars` : "none",
+      turn_material: ctxBlock
+        ? `${memory.contentToString(ctxBlock.content).length} chars`
+        : "none",
       tokens: memory.countTokens(msgs),
     },
     `model_ctx\n${lines.join("\n")}`,
   );
 }
 
-export async function mainAgent(state: GraphState, config: LangGraphRunnableConfig): Promise<GraphUpdate> {
+export async function mainAgent(
+  state: GraphState,
+  config: LangGraphRunnableConfig,
+): Promise<GraphUpdate> {
   // ReAct reasoning step: bind tools and invoke. Token usage is accumulated step by step.
   const specs = await registry.getAllSpecs();
   const toolDefs = specs.map((s) => ({
     type: "function" as const,
-    function: { name: s.name, description: s.description, parameters: s.jsonSchema },
+    function: {
+      name: s.name,
+      description: s.description,
+      parameters: s.jsonSchema,
+    },
   }));
   const model = getChatModel({ streaming: true }).bindTools(toolDefs);
   const msgs = agentMessages(state);
   logModelContext(state, msgs);
   const ai = await model.invoke(msgs, config);
-  const usageParsed = AIMessage.isInstance(ai) ? usageSchema.safeParse(ai.usage_metadata) : undefined;
+  const usageParsed = AIMessage.isInstance(ai)
+    ? usageSchema.safeParse(ai.usage_metadata)
+    : undefined;
   const usage = usageParsed?.success === true ? usageParsed.data : undefined;
   const used = usage?.total_tokens ?? 0;
   const cached = usage?.input_token_details?.cache_read ?? 0;
@@ -338,7 +441,9 @@ const usageSchema = z.object({
   input_tokens: z.number().optional(),
   output_tokens: z.number().optional(),
   total_tokens: z.number().optional(),
-  input_token_details: z.object({ cache_read: z.number().optional() }).optional(),
+  input_token_details: z
+    .object({ cache_read: z.number().optional() })
+    .optional(),
 });
 
 export async function agentTools(state: GraphState): Promise<GraphUpdate> {
@@ -357,13 +462,22 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
   const tspec = specs.get("create_ticket");
   let decision: unknown = null;
   const firstTicket = ticketCalls[0];
-  if (firstTicket && tspec && engine.validateArgs(tspec, { ...(firstTicket.args ?? {}) }) === null) {
+  if (
+    firstTicket &&
+    tspec &&
+    engine.validateArgs(tspec, { ...(firstTicket.args ?? {}) }) === null
+  ) {
     const args = firstTicket.args ?? {};
-    decision = interrupt<{ type: string; preview: Record<string, string> }, unknown>({
+    decision = interrupt<
+      { type: string; preview: Record<string, string> },
+      unknown
+    >({
       type: "confirm_ticket",
       preview: {
-        ticket_type: typeof args.ticket_type === "string" ? args.ticket_type : "inquiry",
-        description: typeof args.description === "string" ? args.description : "",
+        ticket_type:
+          typeof args.ticket_type === "string" ? args.ticket_type : "inquiry",
+        description:
+          typeof args.description === "string" ? args.description : "",
       },
     });
   }
@@ -396,7 +510,8 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
       });
       toolMsgs.push(
         new ToolMessage({
-          content: "The 'submit refund ticket' option has been handed to the user for confirmation. State in one sentence that this order can be refunded, then stop; do not call any more tools.",
+          content:
+            "The 'submit refund ticket' option has been handed to the user for confirmation. State in one sentence that this order can be refunded, then stop; do not call any more tools.",
           tool_call_id: tc.id ?? "",
           name: "submit_refund",
         }),
@@ -406,17 +521,22 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
         const parsed = confirmResumeSchema.safeParse(decision);
         const run =
           parsed.success && parsed.data.confirmed
-            ? await engine.executeToolCall(tc, cid, specs, { confirmed: true, userId: uid })
+            ? await engine.executeToolCall(tc, cid, specs, {
+                confirmed: true,
+                userId: uid,
+              })
             : await engine.executeToolCall(tc, cid, specs, {
                 confirmed: false,
                 userId: uid,
-                denyNote: "The user clicked cancel on the ticket preview card; no ticket will be created this time. Do not initiate again unless the user explicitly asks.",
+                denyNote:
+                  "The user clicked cancel on the ticket preview card; no ticket will be created this time. Do not initiate again unless the user explicitly asks.",
               });
         toolMsgs.push(run.toolMessage);
       } else {
         toolMsgs.push(
           new ToolMessage({
-            content: "Only one ticket-creation request is handled at a time; this call was ignored.",
+            content:
+              "Only one ticket-creation request is handled at a time; this call was ignored.",
             tool_call_id: tc.id ?? "",
             name: "create_ticket",
             status: "error",
@@ -425,7 +545,10 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
       }
     } else {
       const run = await engine.executeToolCall(tc, cid, specs, { userId: uid });
-      if (tc.name === "query_order" && !business.ownsOrder(uid, String(args.order_id ?? ""))) {
+      if (
+        tc.name === "query_order" &&
+        !business.ownsOrder(uid, String(args.order_id ?? ""))
+      ) {
         notOwned = true;
       }
       toolMsgs.push(run.toolMessage);
@@ -476,7 +599,9 @@ export async function logNode(state: GraphState): Promise<GraphUpdate> {
   );
   const answer = resolveAnswer(state);
   if (state.conversationId) {
-    await repository.appendMessage(state.conversationId, "assistant", { content: answer || null });
+    await repository.appendMessage(state.conversationId, "assistant", {
+      content: answer || null,
+    });
   }
   return {};
 }

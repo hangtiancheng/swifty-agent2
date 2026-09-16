@@ -113,19 +113,19 @@ prisma dev rm myproject --force
 Configure your `prisma.config.ts` to use local Prisma Postgres:
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: 'prisma/migrations',
+    path: "prisma/migrations",
   },
   datasource: {
     // Local Prisma Postgres URL (from prisma dev output)
-    url: env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
-})
+});
 ```
 
 ## Workflow

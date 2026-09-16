@@ -12,7 +12,6 @@ import type { Chunk } from "#/kb/documents.ts";
 import * as dualwrite from "#/kb/dualwrite.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("api.review");
 export const reviewRouter = new Hono();
 
@@ -71,7 +70,9 @@ reviewRouter.post("/api/review/:review_id/approve", async (c) => {
   }
   const { item } = detail;
   if (item.reviewStatus !== "pending_review") {
-    throw new HTTPException(409, { message: `Current status is "${item.reviewStatus}"; it cannot be reviewed again` });
+    throw new HTTPException(409, {
+      message: `Current status is "${item.reviewStatus}"; it cannot be reviewed again`,
+    });
   }
 
   const chunk: Chunk = {
@@ -87,22 +88,46 @@ reviewRouter.post("/api/review/:review_id/approve", async (c) => {
     chunkIds = await dualwrite.writePending([chunk]);
     await dualwrite.vectorizePending();
   } catch (error) {
-    log.error({ err: error, review: reviewId }, "review write-back failed (status unchanged, retryable)");
+    log.error(
+      { err: error, review: reviewId },
+      "review write-back failed (status unchanged, retryable)",
+    );
     if (chunkIds.length > 0) {
       try {
         await repository.deleteKnowledgeChunks(chunkIds);
       } catch (rollbackError) {
-        log.error({ err: rollbackError, ids: chunkIds }, "pending chunk rollback failed (manual cleanup needed)");
+        log.error(
+          { err: rollbackError, ids: chunkIds },
+          "pending chunk rollback failed (manual cleanup needed)",
+        );
       }
     }
-    throw new HTTPException(502, { message: "Write-back to the knowledge base failed (check the embedding upstream/vector store); the status is unchanged and it can be retried" });
+    throw new HTTPException(502, {
+      message:
+        "Write-back to the knowledge base failed (check the embedding upstream/vector store); the status is unchanged and it can be retried",
+    });
   }
 
-  if (!(await repository.updateReviewStatus(reviewId, "approved", req.approved_answer))) {
-    log.warn({ review: reviewId, chunks: chunkIds }, "review status update lost (concurrent change); KB already written");
-    throw new HTTPException(409, { message: "The status was changed by someone else; the knowledge was already written — please verify manually" });
+  if (
+    !(await repository.updateReviewStatus(
+      reviewId,
+      "approved",
+      req.approved_answer,
+    ))
+  ) {
+    log.warn(
+      { review: reviewId, chunks: chunkIds },
+      "review status update lost (concurrent change); KB already written",
+    );
+    throw new HTTPException(409, {
+      message:
+        "The status was changed by someone else; the knowledge was already written — please verify manually",
+    });
   }
-  log.info({ review: reviewId, chunks: chunkIds }, "review approved and vectorized");
+  log.info(
+    { review: reviewId, chunks: chunkIds },
+    "review approved and vectorized",
+  );
   return c.json({ ok: true, chunk_ids: chunkIds });
 });
 
@@ -113,7 +138,9 @@ reviewRouter.post("/api/review/:review_id/reject", async (c) => {
     if (detail === null) {
       throw new HTTPException(404, { message: "Knowledge gap not found" });
     }
-    throw new HTTPException(409, { message: "Only pending-review items can be rejected" });
+    throw new HTTPException(409, {
+      message: "Only pending-review items can be rejected",
+    });
   }
   return c.json({ ok: true });
 });

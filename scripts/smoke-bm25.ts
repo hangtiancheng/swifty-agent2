@@ -19,13 +19,18 @@ async function main(): Promise<void> {
   const total = await count();
   console.log(`knowledge store count=${total}`);
   if (total === 0) {
-    console.log("KB is empty — nothing to smoke. Run `make kb-build && make kb-vectorize` first.");
+    console.log(
+      "KB is empty — nothing to smoke. Run `make kb-build && make kb-vectorize` first.",
+    );
     return;
   }
 
   // Pure BM25: a keyword query should recall at least one chunk.
   const bm25 = await bm25Search("shipping fee", 2);
-  console.log("bm25:", JSON.stringify(bm25.map((h) => [h.id, Number(h.score.toFixed(3))])));
+  console.log(
+    "bm25:",
+    JSON.stringify(bm25.map((h) => [h.id, Number(h.score.toFixed(3))])),
+  );
   if (bm25.length === 0) {
     throw new Error("BM25 returned no results for a keyword present in the KB");
   }
@@ -34,7 +39,10 @@ async function main(): Promise<void> {
   const { embedQuery } = await import("#/core/embeddings.ts");
   const vec = await embedQuery("shipping fee");
   const hybrid = await hybridSearch(vec, "shipping fee", 2);
-  console.log("hybrid:", JSON.stringify(hybrid.map((h) => [h.id, Number(h.score.toFixed(3))])));
+  console.log(
+    "hybrid:",
+    JSON.stringify(hybrid.map((h) => [h.id, Number(h.score.toFixed(3))])),
+  );
   if (hybrid.length === 0) {
     throw new Error("hybridSearch returned no results");
   }

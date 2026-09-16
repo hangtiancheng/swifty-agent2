@@ -21,10 +21,12 @@ npm install @prisma/management-api-sdk
 ## Simple client (existing token)
 
 ```typescript
-import { createManagementApiClient } from '@prisma/management-api-sdk'
+import { createManagementApiClient } from "@prisma/management-api-sdk";
 
-const client = createManagementApiClient({ token: process.env.PRISMA_SERVICE_TOKEN! })
-const { data: workspaces } = await client.GET('/v1/workspaces')
+const client = createManagementApiClient({
+  token: process.env.PRISMA_SERVICE_TOKEN!,
+});
+const { data: workspaces } = await client.GET("/v1/workspaces");
 ```
 
 Check the generated client result before using `data`; typed clients surface HTTP failures separately. Never log a full response from connection/key creation because it may contain one-time credentials.
@@ -42,19 +44,24 @@ Creation accepts a display `name`. The response's `data.value` is the complete t
 ## Full SDK (OAuth + refresh)
 
 ```typescript
-import { createManagementApiSdk, type TokenStorage } from '@prisma/management-api-sdk'
+import {
+  createManagementApiSdk,
+  type TokenStorage,
+} from "@prisma/management-api-sdk";
 
 const tokenStorage: TokenStorage = {
-  async getTokens() { return null },
+  async getTokens() {
+    return null;
+  },
   async setTokens(tokens) {},
   async clearTokens() {},
-}
+};
 
 const api = createManagementApiSdk({
   clientId: process.env.PRISMA_CLIENT_ID!,
-  redirectUri: 'https://your-app.com/auth/callback',
+  redirectUri: "https://your-app.com/auth/callback",
   tokenStorage,
-})
+});
 ```
 
 ## OAuth SDK flow

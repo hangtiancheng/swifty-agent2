@@ -30,7 +30,6 @@ import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
 import type { JobSpec } from "~/lib/types";
 
-
 /* Classifier eval detail: per-class P/R/F1, tolerance red lines, confusion matrix, threshold. */
 
 interface ClassMetric {
@@ -96,8 +95,7 @@ interface ClassifyResult {
 }
 
 type LoaderData =
-  | { ok: true; d: EvalData; jobs: JobsData }
-  | { ok: false; error: string };
+  { ok: true; d: EvalData; jobs: JobsData } | { ok: false; error: string };
 
 export async function clientLoader(): Promise<LoaderData> {
   try {
@@ -114,7 +112,11 @@ export async function clientLoader(): Promise<LoaderData> {
 export function meta() {
   return [
     { title: "MeowMeow Select · Acceptance Eval" },
-    { name: "description", content: "Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold" },
+    {
+      name: "description",
+      content:
+        "Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold",
+    },
   ];
 }
 
@@ -167,11 +169,7 @@ export default function AcceptanceEvalPage({
 
   // Auto-run once when the classifier is online so the multi-label behavior is visible right away
   useEffect(() => {
-    if (
-      loaderData.ok &&
-      loaderData.d.classifier.online &&
-      !autoRan.current
-    ) {
+    if (loaderData.ok && loaderData.d.classifier.online && !autoRan.current) {
       autoRan.current = true;
       void tryIt("Bought too big, want to return");
     }
@@ -181,7 +179,9 @@ export default function AcceptanceEvalPage({
   if (!loaderData.ok) {
     return (
       <PageShell title="Acceptance Eval" active="/acceptance/eval">
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       </PageShell>
     );
   }
@@ -201,7 +201,12 @@ export default function AcceptanceEvalPage({
       sub="Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold"
       active="/acceptance/eval"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -213,8 +218,14 @@ export default function AcceptanceEvalPage({
       <GateBar>
         {ev.present ? (
           <>
-            <Stat label="Test set" value={String(ev.test_size ?? 0) + " rows"} />
-            <Stat label="Decision threshold" value={String(ev.threshold ?? "—")} />
+            <Stat
+              label="Test set"
+              value={String(ev.test_size ?? 0) + " rows"}
+            />
+            <Stat
+              label="Decision threshold"
+              value={String(ev.threshold ?? "—")}
+            />
             <Stat
               label="micro-F1"
               value={ev.micro?.f1.toFixed(3) ?? "—"}
@@ -248,15 +259,23 @@ export default function AcceptanceEvalPage({
           <>
             <div className="flex flex-wrap gap-3.5">
               {[
-                { key: "micro", way: "No per-class split: all calls in one bucket", nums: ev.micro },
-                { key: "macro", way: "Per class: F1 for each of the 17, then averaged", nums: ev.macro },
+                {
+                  key: "micro",
+                  way: "No per-class split: all calls in one bucket",
+                  nums: ev.micro,
+                },
+                {
+                  key: "macro",
+                  way: "Per class: F1 for each of the 17, then averaged",
+                  nums: ev.macro,
+                },
               ].map(({ key, way, nums }) => (
                 <div
                   key={key}
-                  className="min-w-65 flex-1 border-3 border-ink bg-paper p-3"
+                  className="border-ink bg-paper min-w-65 flex-1 border-3 p-3"
                 >
                   <h3 className="text-[13px] font-bold">{key}</h3>
-                  <div className="text-[11px] text-muted">{way}</div>
+                  <div className="text-muted text-[11px]">{way}</div>
                   <div className="mt-2 flex gap-3.5 text-[13px]">
                     {nums
                       ? (["p", "r", "f1"] as const).map((k) => (
@@ -283,9 +302,12 @@ export default function AcceptanceEvalPage({
         {jobSpecs["train-eval"] ? (
           <JobRow
             specs={[jobSpecs["train-eval"]]}
-            onFinish={() => { void revalidate(); }}
+            onFinish={() => {
+              void revalidate();
+            }}
             note={
-              "Eval set: " + (ev.present ? String(ev.test_size ?? 0) + " rows" : "test.jsonl")
+              "Eval set: " +
+              (ev.present ? String(ev.test_size ?? 0) + " rows" : "test.jsonl")
             }
           />
         ) : null}
@@ -339,7 +361,8 @@ export default function AcceptanceEvalPage({
                         "—"
                       ) : (
                         <Pill tone={c.passed ? "pass" : "fail"}>
-                          {String(c.red_line) + (c.passed ? " ✅" : " 🔴 needs data work")}
+                          {String(c.red_line) +
+                            (c.passed ? " ✅" : " 🔴 needs data work")}
                         </Pill>
                       )}
                     </Td>
@@ -371,14 +394,21 @@ export default function AcceptanceEvalPage({
           <>
             <div className="flex flex-col gap-1.5">
               {(scan.scan ?? []).map((s) => {
-                const lo = Math.min(...(scan.scan ?? []).map((x) => x.micro_f1));
-                const hi = Math.max(...(scan.scan ?? []).map((x) => x.micro_f1));
+                const lo = Math.min(
+                  ...(scan.scan ?? []).map((x) => x.micro_f1),
+                );
+                const hi = Math.max(
+                  ...(scan.scan ?? []).map((x) => x.micro_f1),
+                );
                 const win =
                   Math.abs(s.threshold - (scan.best_threshold ?? -1)) < 1e-9;
                 const inuse =
                   Math.abs(s.threshold - (scan.in_use_threshold ?? -1)) < 1e-9;
                 return (
-                  <div key={s.threshold} className="flex items-center gap-2.5 text-[12.5px]">
+                  <div
+                    key={s.threshold}
+                    className="flex items-center gap-2.5 text-[12.5px]"
+                  >
                     <span
                       className={cn(
                         "w-14 text-right font-bold tabular-nums",
@@ -388,7 +418,7 @@ export default function AcceptanceEvalPage({
                       {s.threshold.toFixed(2)}
                       {inuse ? " ◀" : ""}
                     </span>
-                    <span className="h-4.5 flex-1 border-2 border-ink bg-paper">
+                    <span className="border-ink bg-paper h-4.5 flex-1 border-2">
                       <motion.span
                         className={cn(
                           "block h-full",
@@ -405,7 +435,7 @@ export default function AcceptanceEvalPage({
                     <span className="w-18 tabular-nums">
                       {s.micro_f1.toFixed(4)}
                     </span>
-                    <span className="w-40 text-[11px] text-muted">
+                    <span className="text-muted w-40 text-[11px]">
                       {(win ? "winner" : "") +
                         (inuse
                           ? win
@@ -418,20 +448,23 @@ export default function AcceptanceEvalPage({
               })}
             </div>
             <Tip>
-              The replay picks {scan.best_threshold?.toFixed(2)} (validation micro-F1{" "}
-              {scan.best_micro_f1?.toFixed(4)}); threshold.json in use:{" "}
+              The replay picks {scan.best_threshold?.toFixed(2)} (validation
+              micro-F1 {scan.best_micro_f1?.toFixed(4)}); threshold.json in use:{" "}
               {scan.in_use_threshold}
               {scan.consistent
                 ? " — they match ✅, so the scan is reproducible, not hand-picked."
-                : " — mismatch 🔴: re-export or re-run the scan."}
-              {" "}Validation set: {scan.val_size} rows, run at {fmtTime(scan.ran_at)}.
+                : " — mismatch 🔴: re-export or re-run the scan."}{" "}
+              Validation set: {scan.val_size} rows, run at{" "}
+              {fmtTime(scan.ran_at)}.
             </Tip>
           </>
         )}
         {jobSpecs["train-threshold-scan"] ? (
           <JobRow
             specs={[jobSpecs["train-threshold-scan"]]}
-            onFinish={() => { void revalidate(); }}
+            onFinish={() => {
+              void revalidate();
+            }}
             note={
               d.classifier.online
                 ? ":8110 online"
@@ -451,16 +484,17 @@ export default function AcceptanceEvalPage({
         ) : (
           <>
             <Tip className="mt-0">
-              The full table has {ev.total_cells} yes/no questions ({ev.test_size} rows × 17 classes) with{" "}
+              The full table has {ev.total_cells} yes/no questions (
+              {ev.test_size} rows × 17 classes) with{" "}
               {String((ev.total_fp ?? 0) + (ev.total_fn ?? 0))} wrong:{" "}
               {ev.total_fp} false alarms and {ev.total_fn} misses.
             </Tip>
-            <div className="mt-3 grid gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(158px,1fr))]">
+            <div className="mt-3 grid [grid-template-columns:repeat(auto-fill,minmax(158px,1fr))] gap-2.5">
               {(ev.classes ?? []).map((c) => (
-                <div key={c.name} className="border-3 border-ink bg-paper">
+                <div key={c.name} className="border-ink bg-paper border-3">
                   <div
                     className={cn(
-                      "flex items-center gap-1.5 border-b-2 border-ink px-2 py-1 text-[12.5px] font-bold",
+                      "border-ink flex items-center gap-1.5 border-b-2 px-2 py-1 text-[12.5px] font-bold",
                       (c.fp > 0 || c.fn > 0) && "bg-error-bg",
                     )}
                   >
@@ -473,10 +507,18 @@ export default function AcceptanceEvalPage({
                   <div className="grid grid-cols-2">
                     {(
                       [
-                        { k: "tn", label: "TN correctly skipped", cls: "text-muted" },
+                        {
+                          k: "tn",
+                          label: "TN correctly skipped",
+                          cls: "text-muted",
+                        },
                         { k: "fp", label: "FP false alarm", cls: "text-error" },
                         { k: "fn", label: "FN missed", cls: "text-error" },
-                        { k: "tp", label: "TP correctly labeled", cls: "text-online-deep" },
+                        {
+                          k: "tp",
+                          label: "TP correctly labeled",
+                          cls: "text-online-deep",
+                        },
                       ] satisfies {
                         k: keyof ClassMetric;
                         label: string;
@@ -485,9 +527,11 @@ export default function AcceptanceEvalPage({
                     ).map(({ k, label, cls }) => (
                       <div
                         key={k}
-                        className="border-r-2 border-b-2 border-ink px-2 py-1.5 text-[11.5px] whitespace-nowrap [&:nth-child(2n)]:border-r-0 [&:nth-child(n+3)]:border-b-0"
+                        className="border-ink border-r-2 border-b-2 px-2 py-1.5 text-[11.5px] whitespace-nowrap [&:nth-child(2n)]:border-r-0 [&:nth-child(n+3)]:border-b-0"
                       >
-                        <b className={cn("block text-[15px] tabular-nums", cls)}>
+                        <b
+                          className={cn("block text-[15px] tabular-nums", cls)}
+                        >
                           {String(c[k])}
                         </b>
                         {label}
@@ -521,10 +565,12 @@ export default function AcceptanceEvalPage({
         <div className="flex flex-wrap gap-2">
           <input
             type="text"
-            className="min-w-60 flex-1 border-3 border-ink bg-paper px-2.5 py-1.5 text-[13px] outline-none focus:bg-cream"
+            className="border-ink bg-paper focus:bg-cream min-w-60 flex-1 border-3 px-2.5 py-1.5 text-[13px] outline-none"
             placeholder="Type a user question, e.g. Bought too big, want to return"
             value={tryText}
-            onChange={(e) => { setTryText(e.target.value); }}
+            onChange={(e) => {
+              setTryText(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 void tryIt(tryText);
@@ -563,7 +609,7 @@ export default function AcceptanceEvalPage({
         </div>
         {tryResult ? (
           <div>
-            <div className="mt-3 border-2 border-ink bg-paper px-2.5 py-2 text-[13px] leading-7">
+            <div className="border-ink bg-paper mt-3 border-2 px-2.5 py-2 text-[13px] leading-7">
               <b className="font-bold">
                 Matched labels: {tryResult.labels.join(" + ") || "(none)"}
               </b>
@@ -591,7 +637,7 @@ export default function AcceptanceEvalPage({
                   >
                     {s.label}
                   </span>
-                  <span className="relative h-4 flex-1 border-2 border-ink bg-paper">
+                  <span className="border-ink bg-paper relative h-4 flex-1 border-2">
                     <span
                       className={cn(
                         "block h-full",
@@ -603,13 +649,19 @@ export default function AcceptanceEvalPage({
                     />
                     {tryResult.threshold !== null ? (
                       <span
-                        className="absolute -top-0.75 -bottom-0.75 w-0.75 bg-coral"
-                        style={{ left: (tryResult.threshold * 100).toFixed(1) + "%" }}
-                        title={"Decision threshold " + String(tryResult.threshold)}
+                        className="bg-coral absolute -top-0.75 -bottom-0.75 w-0.75"
+                        style={{
+                          left: (tryResult.threshold * 100).toFixed(1) + "%",
+                        }}
+                        title={
+                          "Decision threshold " + String(tryResult.threshold)
+                        }
                       />
                     ) : null}
                   </span>
-                  <span className="w-14 tabular-nums">{s.score.toFixed(3)}</span>
+                  <span className="w-14 tabular-nums">
+                    {s.score.toFixed(3)}
+                  </span>
                 </div>
               ))}
             </div>

@@ -12,7 +12,6 @@ import * as memory from "#/core/memory.ts";
 import * as repository from "#/db/repository.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("tools.engine");
 
 const ajv = new Ajv({ strict: false, allErrors: false });
@@ -39,7 +38,9 @@ function isTransient(error: unknown): boolean {
 
 const rawParse: (text: string) => unknown = JSON.parse;
 
-function tryParseJson(text: string): { ok: true; value: unknown } | { ok: false } {
+function tryParseJson(
+  text: string,
+): { ok: true; value: unknown } | { ok: false } {
   try {
     return { ok: true, value: rawParse(text) };
   } catch {
@@ -48,10 +49,14 @@ function tryParseJson(text: string): { ok: true; value: unknown } | { ok: false 
 }
 
 function stringifyJson(value: unknown): string {
-  return JSON.stringify(value, (_key: string, v: unknown) => (typeof v === "bigint" ? String(v) : v));
+  return JSON.stringify(value, (_key: string, v: unknown) =>
+    typeof v === "bigint" ? String(v) : v,
+  );
 }
 
-function bestMatch(errors: ErrorObject[] | null | undefined): ErrorObject | null {
+function bestMatch(
+  errors: ErrorObject[] | null | undefined,
+): ErrorObject | null {
   if (!errors || errors.length === 0) {
     return null;
   }
@@ -64,7 +69,10 @@ function bestMatch(errors: ErrorObject[] | null | undefined): ErrorObject | null
   return best;
 }
 
-export function validateArgs(spec: ToolSpec, args: Record<string, unknown>): string | null {
+export function validateArgs(
+  spec: ToolSpec,
+  args: Record<string, unknown>,
+): string | null {
   // Validate the model-provided args against the visible JSON Schema.
   let validate = validators.get(spec);
   if (validate === undefined) {
@@ -87,11 +95,15 @@ function timeoutOf(spec: ToolSpec): number {
   if (spec.timeout !== null) {
     return spec.timeout;
   }
-  return spec.source === "mcp" ? settings.mcpToolTimeout : settings.toolDefaultTimeout;
+  return spec.source === "mcp"
+    ? settings.mcpToolTimeout
+    : settings.toolDefaultTimeout;
 }
 
 function summarize(content: string): string {
-  return content.length <= SUMMARY_LIMIT ? content : `${content.slice(0, SUMMARY_LIMIT)}… (truncated)`;
+  return content.length <= SUMMARY_LIMIT
+    ? content
+    : `${content.slice(0, SUMMARY_LIMIT)}… (truncated)`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -119,7 +131,10 @@ function formatContent(spec: ToolSpec, result: unknown): string {
     try {
       value = spec.formatResult(value);
     } catch (error) {
-      log.error({ err: error, tool: spec.name }, "result formatter failed; passing the raw result through");
+      log.error(
+        { err: error, tool: spec.name },
+        "result formatter failed; passing the raw result through",
+      );
     }
   }
   return stringifyJson(value);
@@ -139,7 +154,9 @@ function capTokens(content: string): string {
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => { reject(new ToolTimeoutError()); }, ms);
+    timer = setTimeout(() => {
+      reject(new ToolTimeoutError());
+    }, ms);
   });
   try {
     return await Promise.race([promise, timeout]);
@@ -190,7 +207,10 @@ async function audit(
       durationMs,
     });
   } catch (error) {
-    log.error({ err: error, tool: name, status }, "audit write failed (tool execution unaffected)");
+    log.error(
+      { err: error, tool: name, status },
+      "audit write failed (tool execution unaffected)",
+    );
   }
 }
 
@@ -227,7 +247,12 @@ export async function executeToolCall(
   const args: Record<string, unknown> = { ...(toolCall.args ?? {}) };
   const started = Date.now();
 
-  const make = (ok: boolean, content: string, status: string, retryCount = 0): ToolRun => ({
+  const make = (
+    ok: boolean,
+    content: string,
+    status: string,
+    retryCount = 0,
+  ): ToolRun => ({
     toolCallId: tcId,
     name,
     ok,
@@ -244,8 +269,23 @@ export async function executeToolCall(
 
   const spec = specs.get(name);
   if (!spec) {
-    const run = make(false, `Tool execution failed: unknown tool ${name}`, "failed");
-    await audit(conversationId, tcId, name || "unknown", null, args, null, "failed", `Unknown tool ${name}`, 0, run.durationMs);
+    const run = make(
+      false,
+      `Tool execution failed: unknown tool ${name}`,
+      "failed",
+    );
+    await audit(
+      conversationId,
+      tcId,
+      name || "unknown",
+      null,
+      args,
+      null,
+      "failed",
+      `Unknown tool ${name}`,
+      0,
+      run.durationMs,
+    );
     return run;
   }
 
@@ -253,22 +293,72 @@ export async function executeToolCall(
   try {
     verr = validateArgs(spec, args);
   } catch (error) {
-    log.error({ err: error, tool: name }, "arg validator crashed (usually a malformed MCP schema)");
-    const run = make(false, `Tool temporarily unavailable: malformed argument definition (${error instanceof Error ? error.name : "Error"}); tell the user honestly.`, "failed");
-    await audit(conversationId, tcId, name, spec, args, null, "failed", `Schema error`, 0, run.durationMs);
+    log.error(
+      { err: error, tool: name },
+      "arg validator crashed (usually a malformed MCP schema)",
+    );
+    const run = make(
+      false,
+      `Tool temporarily unavailable: malformed argument definition (${error instanceof Error ? error.name : "Error"}); tell the user honestly.`,
+      "failed",
+    );
+    await audit(
+      conversationId,
+      tcId,
+      name,
+      spec,
+      args,
+      null,
+      "failed",
+      `Schema error`,
+      0,
+      run.durationMs,
+    );
     return run;
   }
   if (verr !== null) {
-    const run = make(false, `Argument validation failed: ${verr}. Fix the arguments and call again; ask the user for any missing information first, and never fabricate it.`, "validation_blocked");
-    await audit(conversationId, tcId, name, spec, args, null, "validation_blocked", verr, 0, run.durationMs);
+    const run = make(
+      false,
+      `Argument validation failed: ${verr}. Fix the arguments and call again; ask the user for any missing information first, and never fabricate it.`,
+      "validation_blocked",
+    );
+    await audit(
+      conversationId,
+      tcId,
+      name,
+      spec,
+      args,
+      null,
+      "validation_blocked",
+      verr,
+      0,
+      run.durationMs,
+    );
     return run;
   }
 
   // Write operations need the confirmation token issued after an interrupt.
   if (spec.permission === "write" && options.confirmed !== true) {
-    const note = options.denyNote ?? "This write operation requires user confirmation and is refused until confirmed. Do not initiate it again unless the user explicitly asks.";
-    const run = make(false, `${name} was not executed: ${note}`, "permission_denied");
-    await audit(conversationId, tcId, name, spec, args, null, "permission_denied", note.slice(0, 500), 0, run.durationMs);
+    const note =
+      options.denyNote ??
+      "This write operation requires user confirmation and is refused until confirmed. Do not initiate it again unless the user explicitly asks.";
+    const run = make(
+      false,
+      `${name} was not executed: ${note}`,
+      "permission_denied",
+    );
+    await audit(
+      conversationId,
+      tcId,
+      name,
+      spec,
+      args,
+      null,
+      "permission_denied",
+      note.slice(0, 500),
+      0,
+      run.durationMs,
+    );
     return run;
   }
 
@@ -280,28 +370,72 @@ export async function executeToolCall(
     args.user_id = options.userId ?? "";
   }
 
-  const retries = spec.permission === "write" ? 0 : spec.maxRetries ?? settings.toolMaxRetries;
+  const retries =
+    spec.permission === "write"
+      ? 0
+      : (spec.maxRetries ?? settings.toolMaxRetries);
   const toolTimeout = timeoutOf(spec);
   let attempt = 0;
   for (;;) {
     try {
-      const result = await withTimeout(Promise.resolve(spec.invoke(args)), toolTimeout);
+      const result = await withTimeout(
+        Promise.resolve(spec.invoke(args)),
+        toolTimeout,
+      );
       const content = capTokens(formatContent(spec, result));
       const run = make(true, content, "success", attempt);
-      await audit(conversationId, tcId, name, spec, args, summarize(content), "success", null, attempt, run.durationMs);
+      await audit(
+        conversationId,
+        tcId,
+        name,
+        spec,
+        args,
+        summarize(content),
+        "success",
+        null,
+        attempt,
+        run.durationMs,
+      );
       return run;
     } catch (error) {
       if (isTransient(error) && attempt < retries) {
         attempt += 1;
-        log.warn({ tool: name, attempt, err: error instanceof Error ? error.name : "Error" }, "transient tool failure; retrying");
+        log.warn(
+          {
+            tool: name,
+            attempt,
+            err: error instanceof Error ? error.name : "Error",
+          },
+          "transient tool failure; retrying",
+        );
         await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
         continue;
       }
       const isTimeout = error instanceof ToolTimeoutError;
       const status = isTimeout ? "timeout" : "failed";
-      const label = isTimeout ? "execution timed out" : error instanceof Error ? error.name : "Error";
-      const run = make(false, `Tool temporarily unavailable: ${isTimeout ? "execution timed out" : label}; try again later or tell the user honestly.`, status, attempt);
-      await audit(conversationId, tcId, name, spec, args, null, status, label, attempt, run.durationMs);
+      const label = isTimeout
+        ? "execution timed out"
+        : error instanceof Error
+          ? error.name
+          : "Error";
+      const run = make(
+        false,
+        `Tool temporarily unavailable: ${isTimeout ? "execution timed out" : label}; try again later or tell the user honestly.`,
+        status,
+        attempt,
+      );
+      await audit(
+        conversationId,
+        tcId,
+        name,
+        spec,
+        args,
+        null,
+        status,
+        label,
+        attempt,
+        run.durationMs,
+      );
       return run;
     }
   }

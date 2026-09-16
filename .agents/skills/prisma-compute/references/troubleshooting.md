@@ -271,9 +271,9 @@ Fix `next.config.ts`:
 ```typescript
 const nextConfig = {
   output: "standalone",
-}
+};
 
-export default nextConfig
+export default nextConfig;
 ```
 
 Then reinstall/build if needed and deploy again.

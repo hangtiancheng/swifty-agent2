@@ -45,7 +45,7 @@ function ModalShell({
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-5"
+          className="bg-ink/45 fixed inset-0 z-50 flex items-center justify-center p-5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -60,14 +60,14 @@ function ModalShell({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="scroll-cat max-h-[90dvh] w-full max-w-[420px] overflow-y-auto border-4 border-ink bg-paper p-5 shadow-hard-lg"
+            className="scroll-cat border-ink bg-paper shadow-hard-lg max-h-[90dvh] w-full max-w-[420px] overflow-y-auto border-4 p-5"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.16 }}
           >
             <h3 className="text-base font-bold">{title}</h3>
-            <p className="mt-1 mb-4 text-xs text-muted">{sub}</p>
+            <p className="text-muted mt-1 mb-4 text-xs">{sub}</p>
             {children}
           </motion.div>
         </motion.div>
@@ -78,7 +78,7 @@ function ModalShell({
 
 function FieldError({ text }: { text: string }) {
   return (
-    <div className="-mt-1.5 mb-2.5 min-h-4 text-xs text-error">{text}</div>
+    <div className="text-error -mt-1.5 mb-2.5 min-h-4 text-xs">{text}</div>
   );
 }
 
@@ -153,7 +153,9 @@ export function TicketModal({
           id="ticketType"
           className={FIELD_INPUT}
           value={type}
-          onChange={(e) => { setType(e.target.value); }}
+          onChange={(e) => {
+            setType(e.target.value);
+          }}
         >
           <option value="" disabled>
             Select a category…
@@ -172,7 +174,9 @@ export function TicketModal({
           className={FIELD_INPUT + " min-h-22 resize-y"}
           placeholder="Describe the issue you're facing…"
           value={desc}
-          onChange={(e) => { setDesc(e.target.value); }}
+          onChange={(e) => {
+            setDesc(e.target.value);
+          }}
         />
       </div>
       <FieldError text={err} />
@@ -256,7 +260,7 @@ export function RefundModal({
           type="text"
           readOnly
           value={order}
-          className={FIELD_INPUT + " cursor-not-allowed bg-track text-muted"}
+          className={FIELD_INPUT + " bg-track text-muted cursor-not-allowed"}
         />
       </div>
       <div className="mb-3.5">
@@ -267,7 +271,9 @@ export function RefundModal({
           id="refundReason"
           className={FIELD_INPUT}
           value={reason}
-          onChange={(e) => { setReason(e.target.value); }}
+          onChange={(e) => {
+            setReason(e.target.value);
+          }}
         >
           <option value="" disabled>
             Select a refund reason…

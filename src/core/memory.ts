@@ -11,7 +11,6 @@ import * as budget from "./budget.ts";
 
 import { settings } from "#/config.ts";
 
-
 export function contentToString(content: BaseMessage["content"]): string {
   if (typeof content === "string") {
     return content;
@@ -63,7 +62,10 @@ export function windowBudget(): number {
   return budget.compute().sliding;
 }
 
-export function trimHistory(messages: BaseMessage[], maxTokens: number): BaseMessage[] {
+export function trimHistory(
+  messages: BaseMessage[],
+  maxTokens: number,
+): BaseMessage[] {
   // Keep the last messages within budget, starting on a human message (drop leading
   // partial turns and tool results whose call was dropped).
   if (countTokens(messages) <= maxTokens) {
@@ -131,13 +133,24 @@ export function buildWindow(
   return trimmed.length > 0 ? trimmed : window;
 }
 
-export function layerTokens(messages: BaseMessage[], summaryUptoMsgId: number, layer1FromMsgId: number): [number, number] {
+export function layerTokens(
+  messages: BaseMessage[],
+  summaryUptoMsgId: number,
+  layer1FromMsgId: number,
+): [number, number] {
   const window = messages.slice(indexAfter(messages, summaryUptoMsgId));
   const split = layer1FromMsgId ? indexAfter(window, layer1FromMsgId) : 0;
-  return [countTokens(toLayer2(window.slice(0, split))), countTokens(window.slice(split))];
+  return [
+    countTokens(toLayer2(window.slice(0, split))),
+    countTokens(window.slice(split)),
+  ];
 }
 
-export function nextLayer1From(messages: BaseMessage[], summaryUptoMsgId: number, layer1Budget: number): number {
+export function nextLayer1From(
+  messages: BaseMessage[],
+  summaryUptoMsgId: number,
+  layer1Budget: number,
+): number {
   // Move the layer-1 boundary in one step (not per turn) so the rendered prefix stays
   // byte-stable between moves and the prompt cache survives.
   const window = messages.slice(indexAfter(messages, summaryUptoMsgId));
@@ -167,12 +180,17 @@ export function summarySystem(summary: string | null): SystemMessage | null {
   if (!summary) {
     return null;
   }
-  return new SystemMessage(`## Summary of earlier conversation (earlier turns are compressed; the facts in it are trustworthy)\n${summary}`);
+  return new SystemMessage(
+    `## Summary of earlier conversation (earlier turns are compressed; the facts in it are trustworthy)\n${summary}`,
+  );
 }
 
 // ---- layer 2: half-compressed rendering ----
 
-export function compressReply(text: string, keepChars: number | null = null): string {
+export function compressReply(
+  text: string,
+  keepChars: number | null = null,
+): string {
   const n = keepChars ?? settings.layer2ReplyKeepChars;
   if (!text || text.length <= n) {
     return text;

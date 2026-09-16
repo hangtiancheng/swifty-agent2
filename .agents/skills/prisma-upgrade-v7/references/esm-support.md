@@ -79,15 +79,15 @@ generator client {
 ### Server Code
 
 ```typescript
-import { PrismaClient } from '../generated/prisma/client'
+import { PrismaClient } from "../generated/prisma/client";
 ```
 
 ### Browser-Safe Types
 
 ```typescript
-import { Prisma } from '../generated/prisma/browser'
-import { Role } from '../generated/prisma/enums'
-import type { UserModel } from '../generated/prisma/models/User'
+import { Prisma } from "../generated/prisma/browser";
+import { Role } from "../generated/prisma/enums";
+import type { UserModel } from "../generated/prisma/models/User";
 ```
 
 ## File Extensions

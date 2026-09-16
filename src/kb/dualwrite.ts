@@ -10,7 +10,6 @@ import {
   setChunkNeighbors,
 } from "#/db/repository.ts";
 
-
 export async function writePending(chunks: Chunk[]): Promise<number[]> {
   const ids: number[] = [];
   for (const c of chunks) {
@@ -43,7 +42,9 @@ export async function vectorizePending(batchSize = 64): Promise<number> {
   const pending = await listPendingChunks();
   let done = 0;
   for (const batch of batches(pending, batchSize)) {
-    const texts = batch.map((r) => `${r.category}\n${r.questions}\n${r.answer}`);
+    const texts = batch.map(
+      (r) => `${r.category}\n${r.questions}\n${r.answer}`,
+    );
     const vectors = await embedTexts(texts);
     for (let i = 0; i < batch.length; i += 1) {
       const row = batch[i];

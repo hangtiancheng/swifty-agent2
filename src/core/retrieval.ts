@@ -6,7 +6,6 @@ import { settings } from "#/config.ts";
 import type { KnowledgeHit } from "#/kb/store.ts";
 import * as store from "#/kb/store.ts";
 
-
 const CLAUSE_RE = /[,，;；?？。]/;
 const MIN_CLAUSE = 4;
 
@@ -65,8 +64,17 @@ export interface SearchOptions {
   split?: boolean;
 }
 
-export async function searchKnowledge(query: string, options: SearchOptions = {}): Promise<KnowledgeHit[]> {
-  const { strategy = "hybrid_rerank", topK = null, category = null, bm25Text = null, split = true } = options;
+export async function searchKnowledge(
+  query: string,
+  options: SearchOptions = {},
+): Promise<KnowledgeHit[]> {
+  const {
+    strategy = "hybrid_rerank",
+    topK = null,
+    category = null,
+    bm25Text = null,
+    split = true,
+  } = options;
   const k = topK || settings.rerankTopK;
   const bm25Query = bm25Text || query;
 
@@ -74,7 +82,14 @@ export async function searchKnowledge(query: string, options: SearchOptions = {}
     const clauses = splitClauses(query);
     if (clauses.length >= 2) {
       const per = await Promise.all(
-        clauses.map((clause) => searchKnowledge(clause, { strategy, topK: k, category, split: false })),
+        clauses.map((clause) =>
+          searchKnowledge(clause, {
+            strategy,
+            topK: k,
+            category,
+            split: false,
+          }),
+        ),
       );
       return mergeRoundRobin(per).slice(0, k);
     }
@@ -89,12 +104,21 @@ export async function searchKnowledge(query: string, options: SearchOptions = {}
   }
 
   const vector = await embedQuery(query);
-  const hits = await store.hybridSearch(vector, bm25Query, k, settings.recallTopK, category);
+  const hits = await store.hybridSearch(
+    vector,
+    bm25Query,
+    k,
+    settings.recallTopK,
+    category,
+  );
   if (strategy === "hybrid") {
     return hits.slice(0, k);
   }
 
   const docs = hits.map((h) => `${h.question} ${h.answer}`);
   const ranked = await rerank(query, docs, k);
-  return ranked.map(([index, score]) => ({ ...hits[index], rerank_score: score }));
+  return ranked.map(([index, score]) => ({
+    ...hits[index],
+    rerank_score: score,
+  }));
 }

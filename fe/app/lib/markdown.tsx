@@ -20,7 +20,11 @@ const INLINE_RE =
 const CITE_CLS =
   "cursor-pointer select-none border-b-2 border-coral px-px align-super text-[11px] font-bold leading-none text-coral hover:bg-coral hover:text-white";
 
-function renderInline(s: string, opts: MarkdownOptions, kp: string): ReactNode[] {
+function renderInline(
+  s: string,
+  opts: MarkdownOptions,
+  kp: string,
+): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   let k = 0;
@@ -33,7 +37,7 @@ function renderInline(s: string, opts: MarkdownOptions, kp: string): ReactNode[]
     const key = kp + "i" + String(k++);
     if (m[1] !== undefined) {
       out.push(
-        <code key={key} className="rounded bg-code-bg px-1 py-px text-[13px]">
+        <code key={key} className="bg-code-bg rounded px-1 py-px text-[13px]">
           {m[1].slice(1, -1)}
         </code>,
       );
@@ -106,9 +110,7 @@ export function renderMarkdown(
   const key = () => "b" + String(bk++);
 
   const isTableSep = (l?: string): boolean =>
-    l !== undefined &&
-    l.includes("-") &&
-    /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l);
+    l !== undefined && l.includes("-") && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l);
   const splitRow = (l: string): string[] =>
     l
       .replace(/^\s*\|/, "")
@@ -139,7 +141,7 @@ export function renderMarkdown(
       out.push(
         <pre
           key={key()}
-          className="scroll-cat my-2 overflow-x-auto rounded-md bg-code-bg px-2.5 py-2"
+          className="scroll-cat bg-code-bg my-2 overflow-x-auto rounded-md px-2.5 py-2"
         >
           <code className="text-[13px]">{buf.join("\n")}</code>
         </pre>,
@@ -153,17 +155,41 @@ export function renderMarkdown(
       const inline = renderInline(hm[2] ?? "", opts, key());
       const level = hm[1]?.length ?? 1;
       if (level === 1) {
-        out.push(<h1 key={key()} className={cls}>{inline}</h1>);
+        out.push(
+          <h1 key={key()} className={cls}>
+            {inline}
+          </h1>,
+        );
       } else if (level === 2) {
-        out.push(<h2 key={key()} className={cls}>{inline}</h2>);
+        out.push(
+          <h2 key={key()} className={cls}>
+            {inline}
+          </h2>,
+        );
       } else if (level === 3) {
-        out.push(<h3 key={key()} className={cls}>{inline}</h3>);
+        out.push(
+          <h3 key={key()} className={cls}>
+            {inline}
+          </h3>,
+        );
       } else if (level === 4) {
-        out.push(<h4 key={key()} className={cls}>{inline}</h4>);
+        out.push(
+          <h4 key={key()} className={cls}>
+            {inline}
+          </h4>,
+        );
       } else if (level === 5) {
-        out.push(<h5 key={key()} className={cls}>{inline}</h5>);
+        out.push(
+          <h5 key={key()} className={cls}>
+            {inline}
+          </h5>,
+        );
       } else {
-        out.push(<h6 key={key()} className={cls}>{inline}</h6>);
+        out.push(
+          <h6 key={key()} className={cls}>
+            {inline}
+          </h6>,
+        );
       }
       i++;
       continue;
@@ -171,7 +197,10 @@ export function renderMarkdown(
     if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
       // Horizontal rule
       out.push(
-        <hr key={key()} className="my-2.5 border-t-2 border-dashed border-muted" />,
+        <hr
+          key={key()}
+          className="border-muted my-2.5 border-t-2 border-dashed"
+        />,
       );
       i++;
       continue;
@@ -272,7 +301,7 @@ export function renderMarkdown(
       out.push(
         <blockquote
           key={key()}
-          className="my-1.5 border-l-3 border-muted py-0.5 pl-2.5 text-muted"
+          className="border-muted text-muted my-1.5 border-l-3 py-0.5 pl-2.5"
         >
           {buf.map((b, j) => (
             <span key={j}>
@@ -327,7 +356,7 @@ export function Markdown({
   return (
     <div
       className={cn(
-        "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p:last-child]:mb-0",
+        "[&_p:last-child]:mb-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className,
       )}
     >

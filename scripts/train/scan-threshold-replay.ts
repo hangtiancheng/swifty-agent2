@@ -10,13 +10,24 @@ import { z } from "zod";
 import { settings } from "#/config.ts";
 
 const VAL = path.join(settings.root, "data/train/dataset/val.jsonl");
-const MODEL_THRESHOLD = path.join(settings.root, "data/train/model/threshold.json");
+const MODEL_THRESHOLD = path.join(
+  settings.root,
+  "data/train/model/threshold.json",
+);
 const REPORTS = path.join(settings.root, "data/train/reports");
 const SERVICE = "http://127.0.0.1:8110/classify";
 
-const valRowSchema = z.object({ text: z.string(), labels: z.array(z.string()) });
+const valRowSchema = z.object({
+  text: z.string(),
+  labels: z.array(z.string()),
+});
 const classifyResponseSchema = z.object({
-  results: z.array(z.object({ labels: z.array(z.string()), scores: z.record(z.string(), z.number()) })),
+  results: z.array(
+    z.object({
+      labels: z.array(z.string()),
+      scores: z.record(z.string(), z.number()),
+    }),
+  ),
 });
 const thresholdSchema = z.object({ threshold: z.number() });
 
@@ -26,7 +37,9 @@ async function main(): Promise<void> {
     .split(/\r?\n/)
     .filter((l) => l.trim())
     .map((l) => valRowSchema.parse(JSON.parse(l)));
-  console.log(`Validation set ${rows.length} rows; scored once, score table fixed`);
+  console.log(
+    `Validation set ${rows.length} rows; scored once, score table fixed`,
+  );
 
   const controller = new AbortController();
   const timer = setTimeout(() => {
@@ -50,12 +63,20 @@ async function main(): Promise<void> {
 
   const names = Object.keys(results[0]?.scores ?? {});
   const probs = results.map((r) => names.map((n) => r.scores[n]));
-  const gold = rows.map((r) => names.map((n) => (r.labels.includes(n) ? 1 : 0)));
+  const gold = rows.map((r) =>
+    names.map((n) => (r.labels.includes(n) ? 1 : 0)),
+  );
 
   console.log(`${"line".padStart(6)} ${"micro-F1".padStart(10)}`);
   let bestT = 0;
   let bestF1 = -1;
-  const scan: { threshold: number; micro_f1: number; tp: number; fp: number; fn: number }[] = [];
+  const scan: {
+    threshold: number;
+    micro_f1: number;
+    tp: number;
+    fp: number;
+    fn: number;
+  }[] = [];
   for (let i = 0; i < 9; i += 1) {
     const t = 0.3 + i * 0.05;
     let tp = 0;
@@ -81,15 +102,25 @@ async function main(): Promise<void> {
       bestT = t;
       bestF1 = f1;
     }
-    scan.push({ threshold: Number(t.toFixed(2)), micro_f1: Number(f1.toFixed(4)), tp, fp, fn });
+    scan.push({
+      threshold: Number(t.toFixed(2)),
+      micro_f1: Number(f1.toFixed(4)),
+      tp,
+      fp,
+      fn,
+    });
     console.log(`${t.toFixed(2).padStart(6)} ${f1.toFixed(4).padStart(10)}`);
   }
-  console.log(`\nElected: threshold ${bestT.toFixed(2)} (val micro-F1 ${bestF1.toFixed(4)}) -> compare against threshold.json`);
+  console.log(
+    `\nElected: threshold ${bestT.toFixed(2)} (val micro-F1 ${bestF1.toFixed(4)}) -> compare against threshold.json`,
+  );
 
   let inUse: number | null = null;
   if (fs.existsSync(MODEL_THRESHOLD)) {
     try {
-      inUse = thresholdSchema.parse(JSON.parse(fs.readFileSync(MODEL_THRESHOLD, "utf8"))).threshold;
+      inUse = thresholdSchema.parse(
+        JSON.parse(fs.readFileSync(MODEL_THRESHOLD, "utf8")),
+      ).threshold;
     } catch {
       inUse = null;
     }
@@ -118,7 +149,9 @@ async function main(): Promise<void> {
 try {
   await main();
 } catch (error) {
-  console.error(`Threshold scan failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(
+    `Threshold scan failed: ${error instanceof Error ? error.message : String(error)}`,
+  );
   console.error("Is the classifier service running? make classifier-up");
   process.exitCode = 1;
 }

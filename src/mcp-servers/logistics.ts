@@ -8,8 +8,19 @@ import { z } from "zod";
 const port = Number(process.env.PORT ?? "8101");
 const delaySeconds = Number(process.env.MOCK_DELAY_SECONDS ?? "0");
 
-const STATUS_CODES = ["PICKED_UP", "IN_TRANSIT", "DELIVERING", "DELIVERED"] as const;
-const CITIES = ["Shenzhen", "Guangzhou", "Hangzhou", "Shanghai", "Chengdu"] as const;
+const STATUS_CODES = [
+  "PICKED_UP",
+  "IN_TRANSIT",
+  "DELIVERING",
+  "DELIVERED",
+] as const;
+const CITIES = [
+  "Shenzhen",
+  "Guangzhou",
+  "Hangzhou",
+  "Shanghai",
+  "Chengdu",
+] as const;
 
 function seedFrom(key: string): () => number {
   let h = 0x811c9dc5;
@@ -36,7 +47,11 @@ server.registerTool(
       "Query the logistics status, current location, and trace by tracking number (tracking_no). Use it when the user asks where a shipment or courier package is. " +
       "The tracking number is not the order number: first use query_order to fetch the order's tracking_no, then call this tool.",
     inputSchema: z.object({
-      tracking_no: z.string().describe("Tracking number (starts with SF); obtain it first via query_order"),
+      tracking_no: z
+        .string()
+        .describe(
+          "Tracking number (starts with SF); obtain it first via query_order",
+        ),
     }),
   },
   async ({ tracking_no }) => {
@@ -50,7 +65,10 @@ server.registerTool(
       tracking_no,
       status_code: code, // internal enum; translated on the client side
       current_city: city,
-      trace: [`${city} sorting center: dispatched`, `Internal status code: ${code}`],
+      trace: [
+        `${city} sorting center: dispatched`,
+        `Internal status code: ${code}`,
+      ],
       carrier_code: "SF-EXP-01", // internal carrier code; dropped by the client formatter
     };
     return {

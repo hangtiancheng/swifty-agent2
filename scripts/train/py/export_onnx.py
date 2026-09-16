@@ -1,7 +1,7 @@
-"""ch10 ONNX export: torch model -> onnx (variable batch/seq), then run the test set to verify the
+"""train ONNX export: torch model -> onnx (variable batch/seq), then run the test set to verify the
 ONNX predictions match torch exactly. Note: torch 2.9+'s torch.onnx.export defaults to dynamo=True;
 for HF models we explicitly pass dynamo=False to take the stable TorchScript exporter + dynamic_axes
-route. Run: make ch10-export.
+route. Run: make train-export.
 
 Vendored Python (torch -> ONNX). Writes reports/export_report.json for the acceptance page
 (/acceptance): checked count, mismatch count, artifact size.

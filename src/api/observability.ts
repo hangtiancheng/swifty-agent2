@@ -21,7 +21,13 @@ const COST_JOB = "cost-report";
 const TREND_JOB = "eval-flywheel";
 const CALIB_JOB = "calibrate-confidence";
 const TREND_LIMIT = 10;
-const METRIC_NAMES = ["recall_at_5", "recall_at_10", "mrr", "faithfulness", "refusal_rate"];
+const METRIC_NAMES = [
+  "recall_at_5",
+  "recall_at_10",
+  "mrr",
+  "faithfulness",
+  "refusal_rate",
+];
 
 const recordSchema = z.record(z.string(), z.unknown());
 
@@ -32,19 +38,29 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function readJson(file: string): Record<string, unknown> | null {
   try {
-    const parsed = recordSchema.safeParse(JSON.parse(fs.readFileSync(file, "utf8")));
+    const parsed = recordSchema.safeParse(
+      JSON.parse(fs.readFileSync(file, "utf8")),
+    );
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
 }
 
-function block(job: string, make: string, hint: string): Record<string, unknown> {
+function block(
+  job: string,
+  make: string,
+  hint: string,
+): Record<string, unknown> {
   return { present: false, status: "missing", job: jobStatus(job), make, hint };
 }
 
 function costBlock(): Record<string, unknown> {
-  const base = block(COST_JOB, "make cost-report", "The cost ledger by intent has not run yet. Ask a few questions on the chat page to accumulate traces, then press \"Re-run cost ledger by intent\".");
+  const base = block(
+    COST_JOB,
+    "make cost-report",
+    'The cost ledger by intent has not run yet. Ask a few questions on the chat page to accumulate traces, then press "Re-run cost ledger by intent".',
+  );
   const report = readJson(COST);
   if (report === null) {
     return base;
@@ -61,7 +77,10 @@ function costBlock(): Record<string, unknown> {
     total_requests: report.total_requests ?? null,
     top: rows.length > 0 ? rows[0] : null,
     read_note: readNotes.cost_by_intent ?? null,
-    hint: rows.length > 0 ? null : "No traces with an intent tag inside the window; ask a few questions on the chat page, then re-run.",
+    hint:
+      rows.length > 0
+        ? null
+        : "No traces with an intent tag inside the window; ask a few questions on the chat page, then re-run.",
   };
 }
 
@@ -74,12 +93,20 @@ function trendNote(latestRunId: number | null): string | null {
 }
 
 async function trendBlock(): Promise<Record<string, unknown>> {
-  const base = block(TREND_JOB, "make eval-flywheel", "The evaluation pipeline has not run yet. Press \"Re-run evaluation pipeline\" once, and this round becomes the first point of the trend.");
+  const base = block(
+    TREND_JOB,
+    "make eval-flywheel",
+    'The evaluation pipeline has not run yet. Press "Re-run evaluation pipeline" once, and this round becomes the first point of the trend.',
+  );
   let runs: repository.EvalRunRow[];
   try {
     runs = await repository.listEvalRuns(TREND_LIMIT);
   } catch (error) {
-    return { ...base, status: "error", note: `${error instanceof Error ? error.constructor.name : "Error"}: ${String(error)}` };
+    return {
+      ...base,
+      status: "error",
+      note: `${error instanceof Error ? error.constructor.name : "Error"}: ${String(error)}`,
+    };
   }
   return {
     ...base,
@@ -98,11 +125,20 @@ async function trendBlock(): Promise<Record<string, unknown>> {
 }
 
 function calibrationBlock(): Record<string, unknown> {
-  const base = block(CALIB_JOB, "make calibrate-confidence", "No calibration yet. Press \"Re-run confidence threshold calibration\" to scan the rag eval set, so the threshold is no longer a guess.");
+  const base = block(
+    CALIB_JOB,
+    "make calibrate-confidence",
+    'No calibration yet. Press "Re-run confidence threshold calibration" to scan the rag eval set, so the threshold is no longer a guess.',
+  );
   const withSettings = {
     ...base,
     in_use: settings.evidenceConfidenceThreshold,
-    weights: { top1: W_TOP1, valid_count: W_VALID, margin: W_MARGIN, key_clause: W_KEY },
+    weights: {
+      top1: W_TOP1,
+      valid_count: W_VALID,
+      margin: W_MARGIN,
+      key_clause: W_KEY,
+    },
   };
   const report = readJson(CALIB);
   if (report === null) {
@@ -124,7 +160,13 @@ function calibrationBlock(): Record<string, unknown> {
 }
 
 export async function overview(): Promise<Record<string, unknown>> {
-  return { cost: costBlock(), trend: await trendBlock(), calibration: calibrationBlock() };
+  return {
+    cost: costBlock(),
+    trend: await trendBlock(),
+    calibration: calibrationBlock(),
+  };
 }
 
-observabilityRouter.get("/api/observability/overview", async () => Response.json(await overview()));
+observabilityRouter.get("/api/observability/overview", async () =>
+  Response.json(await overview()),
+);

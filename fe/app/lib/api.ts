@@ -6,7 +6,7 @@ export async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   if (!r.ok) {
     let detail: string | undefined;
     if (typeof body === "object" && body !== null && "detail" in body) {
-      detail = String((body).detail);
+      detail = String(body.detail);
     }
     throw new Error(detail ?? `HTTP ${r.status}`);
   }

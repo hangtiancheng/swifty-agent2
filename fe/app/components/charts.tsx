@@ -63,9 +63,17 @@ export function GroupedBarChart({
 
   return (
     <div className="scroll-cat overflow-x-auto">
-      <div className="min-w-[560px]" role="img" aria-label={ariaLabel ?? "Grouped bar chart"}>
+      <div
+        className="min-w-[560px]"
+        role="img"
+        aria-label={ariaLabel ?? "Grouped bar chart"}
+      >
         <ResponsiveContainer width="100%" height={348}>
-          <BarChart data={data} margin={{ top: 20, right: 14, left: -8, bottom: 4 }} barGap={3}>
+          <BarChart
+            data={data}
+            margin={{ top: 20, right: 14, left: -8, bottom: 4 }}
+            barGap={3}
+          >
             <CartesianGrid
               stroke="var(--grid-line)"
               strokeDasharray="3 3"
@@ -100,7 +108,9 @@ export function GroupedBarChart({
                 <LabelList
                   dataKey={s.key}
                   position="top"
-                  formatter={(v: unknown) => (typeof v === "number" ? fmt2(v) : "")}
+                  formatter={(v: unknown) =>
+                    typeof v === "number" ? fmt2(v) : ""
+                  }
                   style={VALUE_TICK}
                 />
               </Bar>
@@ -125,9 +135,16 @@ export function ScanLineChart({
 }) {
   return (
     <div className="scroll-cat overflow-x-auto">
-      <div className="min-w-[560px]" role="img" aria-label="Threshold scan line chart">
+      <div
+        className="min-w-[560px]"
+        role="img"
+        aria-label="Threshold scan line chart"
+      >
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={scan} margin={{ top: 16, right: 14, left: -6, bottom: 8 }}>
+          <LineChart
+            data={scan}
+            margin={{ top: 16, right: 14, left: -6, bottom: 8 }}
+          >
             <CartesianGrid stroke="var(--grid-line)" strokeDasharray="3 3" />
             <XAxis
               dataKey="t"
@@ -207,7 +224,7 @@ export function RingGauge({
 }) {
   const clamped = Math.max(0, Math.min(1, rate));
   return (
-    <div className="flex flex-col items-center justify-center border-3 border-ink bg-paper p-3.5 text-center shadow-hard-sm">
+    <div className="border-ink bg-paper shadow-hard-sm flex flex-col items-center justify-center border-3 p-3.5 text-center">
       <div className="relative h-[118px] w-[118px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -230,12 +247,12 @@ export function RingGauge({
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold tabular-nums">
             {Math.round(clamped * 100)}
-            <small className="text-[10.5px] text-muted">%</small>
+            <small className="text-muted text-[10.5px]">%</small>
           </span>
-          <span className="text-[10.5px] text-muted">Refusal rate</span>
+          <span className="text-muted text-[10.5px]">Refusal rate</span>
         </div>
       </div>
-      <div className="mt-2.5 text-xs leading-6 text-ink-soft [&_b]:font-bold [&_b]:text-ink">
+      <div className="text-ink-soft [&_b]:text-ink mt-2.5 text-xs leading-6 [&_b]:font-bold">
         {caption}
       </div>
     </div>

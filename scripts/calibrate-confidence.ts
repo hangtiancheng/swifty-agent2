@@ -194,7 +194,10 @@ async function main(): Promise<void> {
         should_refuse_leak_rate: r.leak_rate,
       })),
   });
-  logLine("\nRead note: " + (note ?? "none this round (the page uses its fallback sentence)"));
+  logLine(
+    "\nRead note: " +
+      (note ?? "none this round (the page uses its fallback sentence)"),
+  );
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT, `${lines.join("\n")}\n`, "utf8");
@@ -219,7 +222,9 @@ async function main(): Promise<void> {
     )}\n`,
     "utf8",
   );
-  logLine("Report written to data/observability/reports/confidence_calibration.txt and .json");
+  logLine(
+    "Report written to data/observability/reports/confidence_calibration.txt and .json",
+  );
 }
 
 await main();

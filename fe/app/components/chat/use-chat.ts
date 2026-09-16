@@ -150,10 +150,18 @@ export function useChat() {
       try {
         const resp = await doFetch();
         await readSSEStream(resp, {
-          delta: (d) => { updateBot(botId, (m) => ({ ...m, raw: m.raw + d })); },
-          tool: (name) => { updateBot(botId, (m) => ({ ...m, tools: [...m.tools, name] })); },
-          citations: (items) => { updateBot(botId, (m) => ({ ...m, citations: items })); },
-          actions: (items) => { updateBot(botId, (m) => ({ ...m, actions: items })); },
+          delta: (d) => {
+            updateBot(botId, (m) => ({ ...m, raw: m.raw + d }));
+          },
+          tool: (name) => {
+            updateBot(botId, (m) => ({ ...m, tools: [...m.tools, name] }));
+          },
+          citations: (items) => {
+            updateBot(botId, (m) => ({ ...m, citations: items }));
+          },
+          actions: (items) => {
+            updateBot(botId, (m) => ({ ...m, actions: items }));
+          },
           interrupt: (data) => {
             // Interrupts send no done frame, so capture the conversation id here for resume
             if (data.conversation_id) {
@@ -165,7 +173,9 @@ export function useChat() {
               streaming: false,
             }));
           },
-          done: (cid) => { persistConvId(cid); },
+          done: (cid) => {
+            persistConvId(cid);
+          },
         });
         updateBot(botId, (m) => ({ ...m, streaming: false }));
       } catch {
@@ -324,11 +334,15 @@ export function useChat() {
   );
 
   const markDecided = useCallback(
-    (botId: number) => { updateBot(botId, (m) => ({ ...m, decided: true })); },
+    (botId: number) => {
+      updateBot(botId, (m) => ({ ...m, decided: true }));
+    },
     [updateBot],
   );
   const markActed = useCallback(
-    (botId: number) => { updateBot(botId, (m) => ({ ...m, acted: true })); },
+    (botId: number) => {
+      updateBot(botId, (m) => ({ ...m, acted: true }));
+    },
     [updateBot],
   );
 

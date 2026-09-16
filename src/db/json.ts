@@ -15,7 +15,10 @@ export function parseJson(text: string | null): unknown {
   }
 }
 
-export function parseWith<T>(schema: z.ZodType<T>, text: string | null): T | null {
+export function parseWith<T>(
+  schema: z.ZodType<T>,
+  text: string | null,
+): T | null {
   const result = schema.safeParse(parseJson(text));
   return result.success ? result.data : null;
 }

@@ -7,51 +7,68 @@
   },
   {
     "raw_question": "can the cat bed be washed with water",
-    "candidates": [{ "id": 1, "normalized_question": "Is the cat bed washable" }],
+    "candidates": [
+      { "id": 1, "normalized_question": "Is the cat bed washable" }
+    ],
     "expect_match": 1,
     "expect_keywords": []
   },
   {
     "raw_question": "the cat bed is dirty how do i wash it without ruining it",
-    "candidates": [{ "id": 1, "normalized_question": "Is the cat bed washable" }],
+    "candidates": [
+      { "id": 1, "normalized_question": "Is the cat bed washable" }
+    ],
     "expect_match": 1,
     "expect_keywords": []
   },
   {
     "raw_question": "what colors does the cat bed come in",
-    "candidates": [{ "id": 1, "normalized_question": "Is the cat bed washable" }],
+    "candidates": [
+      { "id": 1, "normalized_question": "Is the cat bed washable" }
+    ],
     "expect_match": null,
     "expect_keywords": ["color"]
   },
   {
     "raw_question": "how many years is the warranty on your cat tree i asked several times and nobody answered",
-    "candidates": [{ "id": 3, "normalized_question": "How long is the cat tree warranty" }],
+    "candidates": [
+      { "id": 3, "normalized_question": "How long is the cat tree warranty" }
+    ],
     "expect_match": 3,
     "expect_keywords": []
   },
   {
     "raw_question": "my cat tree is broken how much does a repair cost",
-    "candidates": [{ "id": 3, "normalized_question": "How long is the cat tree warranty" }],
+    "candidates": [
+      { "id": 3, "normalized_question": "How long is the cat tree warranty" }
+    ],
     "expect_match": null,
     "expect_keywords": ["repair", "cost"]
   },
   {
     "raw_question": "what upgrades does the smart litter box gen 2 have over gen 1",
     "candidates": [
-      { "id": 5, "normalized_question": "Differences between the smart litter box gen 2 and gen 1" }
+      {
+        "id": 5,
+        "normalized_question": "Differences between the smart litter box gen 2 and gen 1"
+      }
     ],
     "expect_match": 5,
     "expect_keywords": []
   },
   {
     "raw_question": "can i still return the cat food if the bag is already opened urgent",
-    "candidates": [{ "id": 7, "normalized_question": "Can opened cat food be returned" }],
+    "candidates": [
+      { "id": 7, "normalized_question": "Can opened cat food be returned" }
+    ],
     "expect_match": 7,
     "expect_keywords": []
   },
   {
     "raw_question": "when will the stuff i bought on the big sale ship i have been waiting so long",
-    "candidates": [{ "id": 7, "normalized_question": "Can opened cat food be returned" }],
+    "candidates": [
+      { "id": 7, "normalized_question": "Can opened cat food be returned" }
+    ],
     "expect_match": null,
     "expect_keywords": ["ship"]
   },
@@ -63,7 +80,12 @@
   },
   {
     "raw_question": "last time the agent said i could get a refund but the money still has not arrived i want to complain",
-    "candidates": [{ "id": 9, "normalized_question": "How long does a refund take to arrive" }],
+    "candidates": [
+      {
+        "id": 9,
+        "normalized_question": "How long does a refund take to arrive"
+      }
+    ],
     "expect_match": 9,
     "expect_keywords": []
   },

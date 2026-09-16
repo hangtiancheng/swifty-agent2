@@ -15,7 +15,9 @@ export const WRITE_TOOLS = new Set(["create_ticket"]);
 export type ToolPermission = "read" | "write";
 export type ToolSource = "builtin" | "mcp";
 export type ToolHandler = (args: Record<string, unknown>) => unknown;
-export type ResultFormatter = (data: Record<string, unknown>) => Record<string, unknown>;
+export type ResultFormatter = (
+  data: Record<string, unknown>,
+) => Record<string, unknown>;
 
 export interface ToolSpec {
   name: string;
@@ -109,7 +111,10 @@ let scanned = false;
 
 export function register(spec: ToolSpec): void {
   if (builtin.has(spec.name)) {
-    log.warn({ name: spec.name }, "duplicate tool name; keeping the first registration");
+    log.warn(
+      { name: spec.name },
+      "duplicate tool name; keeping the first registration",
+    );
     return;
   }
   builtin.set(spec.name, spec);
@@ -121,16 +126,25 @@ export async function scanBuiltin(): Promise<void> {
     return;
   }
   scanned = true;
-  const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "builtin");
+  const dir = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "builtin",
+  );
   const files = fs
     .readdirSync(dir)
-    .filter((f) => (f.endsWith(".ts") || f.endsWith(".js")) && !f.startsWith("index."))
+    .filter(
+      (f) =>
+        (f.endsWith(".ts") || f.endsWith(".js")) && !f.startsWith("index."),
+    )
     .sort();
   for (const file of files) {
     try {
       await import(new URL(`./builtin/${file}`, import.meta.url).href);
     } catch (error) {
-      log.error({ err: error, file }, "failed to import builtin tool module; skipping");
+      log.error(
+        { err: error, file },
+        "failed to import builtin tool module; skipping",
+      );
     }
   }
   log.info({ tools: [...builtin.keys()].sort() }, "builtin tools registered");
@@ -155,7 +169,10 @@ export async function getAllSpecs(): Promise<ToolSpec[]> {
   const { fetchMcpSpecs } = await import("./mcp-client.ts");
   for (const spec of await fetchMcpSpecs()) {
     if (merged.has(spec.name)) {
-      log.warn({ name: spec.name, server: spec.mcpServer }, "MCP tool name collides with a builtin; dropping it");
+      log.warn(
+        { name: spec.name, server: spec.mcpServer },
+        "MCP tool name collides with a builtin; dropping it",
+      );
       continue;
     }
     merged.set(spec.name, spec);

@@ -23,9 +23,13 @@ const rerankResponseSchema = z.object({
     .optional(),
 });
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
-async function post(url: string, body: Record<string, unknown>): Promise<Response> {
+async function post(
+  url: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
   let lastResponse: Response | null = null;
   let lastError: unknown = null;
   for (let i = 0; i <= RETRIES; i += 1) {
@@ -55,7 +59,9 @@ async function post(url: string, body: Record<string, unknown>): Promise<Respons
     }
   }
   if (lastResponse === null && lastError !== null) {
-    throw lastError instanceof Error ? lastError : new Error("rerank upstream transport error");
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("rerank upstream transport error");
   }
   if (lastResponse === null) {
     throw new Error("rerank upstream produced no response");
@@ -63,7 +69,11 @@ async function post(url: string, body: Record<string, unknown>): Promise<Respons
   return lastResponse;
 }
 
-export async function rerank(query: string, docs: string[], topN: number | null = null): Promise<[number, number][]> {
+export async function rerank(
+  query: string,
+  docs: string[],
+  topN: number | null = null,
+): Promise<[number, number][]> {
   if (docs.length === 0) {
     return [];
   }
@@ -75,7 +85,9 @@ export async function rerank(query: string, docs: string[], topN: number | null 
   };
   const resp = await post(rerankUrl(), body);
   if (!resp.ok) {
-    throw new Error(`rerank upstream returned ${resp.status}: ${await resp.text()}`);
+    throw new Error(
+      `rerank upstream returned ${resp.status}: ${await resp.text()}`,
+    );
   }
   const data = rerankResponseSchema.parse(await resp.json());
   const ranked = (data.results ?? [])

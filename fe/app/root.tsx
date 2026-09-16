@@ -13,7 +13,6 @@ import type { Route } from "./+types/root";
 import { ToastProvider } from "./components/toast";
 import { THEME_INIT_SCRIPT } from "./lib/theme";
 
-
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
 ];
@@ -43,15 +42,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export function HydrateFallback() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-5">
-      <div className="border-4 border-ink bg-paper p-3 shadow-hard">
+      <div className="border-ink bg-paper shadow-hard border-4 p-3">
         <Cat className="h-16 w-16" strokeWidth={1.5} />
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 animate-blink bg-coral" />
-        <span className="h-2.5 w-2.5 animate-blink bg-coral [animation-delay:.2s]" />
-        <span className="h-2.5 w-2.5 animate-blink bg-coral [animation-delay:.4s]" />
+        <span className="animate-blink bg-coral h-2.5 w-2.5" />
+        <span className="animate-blink bg-coral h-2.5 w-2.5 [animation-delay:.2s]" />
+        <span className="animate-blink bg-coral h-2.5 w-2.5 [animation-delay:.4s]" />
       </div>
-      <p className="text-xs font-bold tracking-widest text-muted">
+      <p className="text-muted text-xs font-bold tracking-widest">
         MeowMeow Select · Loading…
       </p>
     </div>
@@ -84,20 +83,20 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-lg border-4 border-ink bg-cream p-6 shadow-hard-lg">
+      <div className="border-ink bg-cream shadow-hard-lg w-full max-w-lg border-4 p-6">
         <div className="flex items-center gap-3">
           <Cat className="h-10 w-10" strokeWidth={1.5} />
           <h1 className="text-xl font-bold tracking-wider">{message}</h1>
         </div>
-        <p className="mt-3 text-sm leading-7 text-ink-soft">{details}</p>
+        <p className="text-ink-soft mt-3 text-sm leading-7">{details}</p>
         {stack ? (
-          <pre className="scroll-cat mt-4 max-h-64 overflow-auto border-3 border-ink bg-paper p-3 text-xs">
+          <pre className="scroll-cat border-ink bg-paper mt-4 max-h-64 overflow-auto border-3 p-3 text-xs">
             <code>{stack}</code>
           </pre>
         ) : null}
         <a
           href="/"
-          className="press mt-5 inline-block border-3 border-ink bg-fur px-4 py-2 text-sm font-bold shadow-hard-sm"
+          className="press border-ink bg-fur shadow-hard-sm mt-5 inline-block border-3 px-4 py-2 text-sm font-bold"
         >
           Back to chat →
         </a>

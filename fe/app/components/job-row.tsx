@@ -8,7 +8,6 @@ import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import type { JobSpec, JobStatus } from "~/lib/types";
 
-
 /* The "re-run" button machinery (ported from the original acceptance.js).
    Interaction contract: POST to start → poll status + log tail every 1.2s → on a
    terminal state (ok/failed/stopped) stop polling and tell the page to refetch.
@@ -115,7 +114,9 @@ function JobButton({
           '" is a minutes-long heavy job (' +
           spec.cmd +
           ").\n" +
-          (spec.needs && spec.needs !== "—" ? "Prerequisite: " + spec.needs + "\n" : "") +
+          (spec.needs && spec.needs !== "—"
+            ? "Prerequisite: " + spec.needs + "\n"
+            : "") +
           "Run it now?",
       )
     ) {
@@ -162,7 +163,10 @@ function JobButton({
       onClick={() => {
         void start();
       }}
-      title={spec.cmd + (spec.needs && spec.needs !== "—" ? "(" + spec.needs + ")" : "")}
+      title={
+        spec.cmd +
+        (spec.needs && spec.needs !== "—" ? "(" + spec.needs + ")" : "")
+      }
     >
       {running ? (
         <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -204,13 +208,13 @@ export function JobRow({
         {specs.map((s) => (
           <JobButton key={s.name} spec={s} onLog={setLog} onFinish={onFinish} />
         ))}
-        {note ? <span className="text-[11.5px] text-muted">{note}</span> : null}
+        {note ? <span className="text-muted text-[11.5px]">{note}</span> : null}
       </div>
       {log ? (
         <pre
           className={cn(
-            "scroll-cat mt-2.5 max-h-70 overflow-auto border-3 border-ink bg-ink p-2.5",
-            "text-xs leading-relaxed whitespace-pre-wrap break-all text-[#f3ead9]",
+            "scroll-cat border-ink bg-ink mt-2.5 max-h-70 overflow-auto border-3 p-2.5",
+            "text-xs leading-relaxed break-all whitespace-pre-wrap text-[#f3ead9]",
           )}
         >
           {log}

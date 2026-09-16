@@ -2,7 +2,7 @@ allowBuilds:
   better-sqlite3: true
   protobufjs: true
   prisma: true
-  '@prisma/engines': true
+  "@prisma/engines": true
   onnxruntime-node: true
 
 packages:

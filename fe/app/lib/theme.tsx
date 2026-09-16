@@ -9,9 +9,7 @@ function currentTheme(): Theme {
   if (typeof document === "undefined") {
     return "light";
   }
-  return document.documentElement.classList.contains("dark")
-    ? "dark"
-    : "light";
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 function emit() {

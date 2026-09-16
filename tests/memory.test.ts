@@ -70,9 +70,9 @@ describe("memory", () => {
 
   it("wraps the summary as a system message", () => {
     expect(summarySystem(null)).toBeNull();
-    expect(summarySystem("The user asked about shipping fees")?.content).toContain(
-      "Summary of earlier conversation",
-    );
+    expect(
+      summarySystem("The user asked about shipping fees")?.content,
+    ).toContain("Summary of earlier conversation");
   });
 
   it("slices the window after the summary anchor", () => {

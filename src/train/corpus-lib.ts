@@ -1,4 +1,4 @@
-// ch10 data pipeline pure functions: desensitization, dedup and stratified splitting.
+// train data pipeline pure functions: desensitization, dedup and stratified splitting.
 // No network or DB access — unit-testable in isolation.
 import { LABEL2ID } from "#/core/taxonomy.ts";
 
@@ -84,7 +84,9 @@ export function splitDataset(
   const strata = new Map<string, CorpusSample[]>();
   for (const [key, items] of combos) {
     const target =
-      items.length >= 10 ? key : String(Math.min(...key.split(",").map(Number)));
+      items.length >= 10
+        ? key
+        : String(Math.min(...key.split(",").map(Number)));
     const bucket = strata.get(target);
     if (bucket) {
       bucket.push(...items);

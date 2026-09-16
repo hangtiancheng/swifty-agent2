@@ -25,7 +25,6 @@ import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import type { JobSpec } from "~/lib/types";
 
-
 /* Knowledge Base entry: paste a document and it goes straight into the KB —
    chunking → dual-write to MySQL and Milvus → search self-test on the spot.
    The page reads the output of /api/kb/overview; re-runs go through the /api/jobs runner. */
@@ -142,7 +141,11 @@ export async function clientLoader(): Promise<LoaderData> {
 export function meta() {
   return [
     { title: "MeowMeow Select · Knowledge Base Entry" },
-    { name: "description", content: "Paste a document to ingest it: chunking, dual-write, search self-test" },
+    {
+      name: "description",
+      content:
+        "Paste a document to ingest it: chunking, dual-write, search self-test",
+    },
   ];
 }
 
@@ -193,7 +196,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
   if (!loaderData.ok) {
     return (
       <PageShell title="Knowledge Base Entry" active="/kb">
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       </PageShell>
     );
   }
@@ -231,7 +236,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               String(n) +
               " chunks" +
               (preview?.duplicates
-                ? ", " + String(preview.duplicates) + " already in the KB will be skipped"
+                ? ", " +
+                  String(preview.duplicates) +
+                  " already in the KB will be skipped"
                 : "")
             : "") +
           (vecAfter
@@ -297,7 +304,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       await loadStaging(); // Refetch: this row moves from pending review to approved/rejected
       void revalidate();
     } catch (e) {
-      toast((kind === "approve" ? "Approval" : "Rejection") + " failed: " + errMsg(e), true);
+      toast(
+        (kind === "approve" ? "Approval" : "Rejection") +
+          " failed: " +
+          errMsg(e),
+        true,
+      );
     }
   };
 
@@ -328,7 +340,11 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
     try {
       const r = await api<{ strategy: string; hits: KbHit[] }>(
         "/api/kb/search",
-        jsonPost({ q: query.trim() || "How much is postage?", strategy, top_k: topk }),
+        jsonPost({
+          q: query.trim() || "How much is postage?",
+          strategy,
+          top_k: topk,
+        }),
       );
       setHits(r.hits);
       setHitStrategy(r.strategy);
@@ -351,7 +367,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       sub="Paste a document to ingest it: chunking → dual-write to MySQL and Milvus → search self-test on the spot"
       active="/kb"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -377,14 +398,14 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         <Stat
           label="Dual-write"
           value={
-            d.consistent === null ? "Can't read" : d.consistent ? "Consistent" : "Mismatched"
+            d.consistent === null
+              ? "Can't read"
+              : d.consistent
+                ? "Consistent"
+                : "Mismatched"
           }
           tone={
-            d.consistent === null
-              ? undefined
-              : d.consistent
-                ? "pass"
-                : "fail"
+            d.consistent === null ? undefined : d.consistent ? "pass" : "fail"
           }
         />
         {d.db_error ? (
@@ -393,12 +414,13 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       </GateBar>
 
       <Tip>
-        Two paths: <b>manual entry</b> — paste body text on this page and what you preview
-        is exactly what gets ingested; <b>offline build</b> — hand the materials in data/kb/
-        to the make target, and the page button runs the same command you would type in the
-        terminal. Both paths share one chunking logic and dual-write order — write to MySQL
-        first as "pending", then into Milvus and mark "done"; if it dies mid-way, re-run to
-        pick up the pending chunks and catch up.
+        Two paths: <b>manual entry</b> — paste body text on this page and what
+        you preview is exactly what gets ingested; <b>offline build</b> — hand
+        the materials in data/kb/ to the make target, and the page button runs
+        the same command you would type in the terminal. Both paths share one
+        chunking logic and dual-write order — write to MySQL first as "pending",
+        then into Milvus and mark "done"; if it dies mid-way, re-run to pick up
+        the pending chunks and catch up.
       </Tip>
 
       {/* ① Manual entry */}
@@ -416,7 +438,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               id="ctype"
               className={FIELD}
               value={ct}
-              onChange={(e) => { setCtype(e.target.value); }}
+              onChange={(e) => {
+                setCtype(e.target.value);
+              }}
             >
               {d.content_types.map((t) => (
                 <option key={t.key} value={t.key}>
@@ -424,9 +448,14 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 </option>
               ))}
             </select>
-            <span className="text-[11.5px] text-ink-soft">{ctDesc}</span>
+            <span className="text-ink-soft text-[11.5px]">{ctDesc}</span>
             <span className="flex-1" />
-            <Btn size="sm" onClick={() => { setText(SAMPLE); }}>
+            <Btn
+              size="sm"
+              onClick={() => {
+                setText(SAMPLE);
+              }}
+            >
               Fill in a sample
             </Btn>
             <Btn
@@ -443,7 +472,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             className={cn(FIELD, "min-h-44 w-full resize-y leading-7")}
             placeholder="Paste Markdown. It works best with # / ## heading levels — for policy manuals without natural questions, questions fall back to section titles and category to the parent path."
             value={text}
-            onChange={(e) => { setText(e.target.value); }}
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
           />
           <div className="flex flex-wrap items-center gap-2.5">
             <Btn
@@ -468,7 +499,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 type="checkbox"
                 className="h-4 w-4 accent-(--coral)"
                 checked={vecAfter}
-                onChange={(e) => { setVecAfter(e.target.checked); }}
+                onChange={(e) => {
+                  setVecAfter(e.target.checked);
+                }}
               />
               Vectorize right after ingest
             </label>
@@ -480,7 +513,8 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             <div className="flex flex-wrap gap-2">
               <Pill tone="info">Source: {preview.source}</Pill>
               <Pill tone="info">
-                Total: {preview.total} chunks / {preview.features.sections} sections
+                Total: {preview.total} chunks / {preview.features.sections}{" "}
+                sections
               </Pill>
               <Pill tone={preview.features.table_split ? "pass" : "missing"}>
                 {preview.features.table_split
@@ -540,7 +574,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                             Table chunk
                           </Pill>
                         ) : null}
-                        {ch.duplicate ? <Pill tone="missing">Duplicate</Pill> : null}
+                        {ch.duplicate ? (
+                          <Pill tone="missing">Duplicate</Pill>
+                        ) : null}
                       </Td>
                     </Tr>
                   ))}
@@ -622,7 +658,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         </TableScroll>
         <JobRow
           specs={pick(["kb-preview", "kb-build", "kb-repatch"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
           note="kb-build has an idempotency guard: chunks of the same type that already exist are skipped; after editing an md file use kb-repatch to patch it in place, and remember to vectorize afterwards"
         />
       </Panel>
@@ -647,14 +685,17 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         {d.staging ? (
           <div className="flex flex-wrap gap-2">
             {[
-              { label: "Extracted, awaiting dedup", v: d.staging.counts.extracted },
+              {
+                label: "Extracted, awaiting dedup",
+                v: d.staging.counts.extracted,
+              },
               { label: "Kept after dedup (in KB)", v: d.staging.counts.kept },
               { label: "Discarded by dedup", v: d.staging.counts.discarded },
               { label: "Batches", v: d.staging.batches },
             ].map(({ label, v }) => (
               <div
                 key={label}
-                className="min-w-21 border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]"
+                className="border-ink bg-paper min-w-21 border-2 px-2.5 py-1 text-[11.5px]"
               >
                 <b className="block text-[17px] leading-snug">{v}</b>
                 {label}
@@ -662,11 +703,15 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
         ) : (
-          <MissingBox>MySQL can't be read, so staging counts are unavailable</MissingBox>
+          <MissingBox>
+            MySQL can't be read, so staging counts are unavailable
+          </MissingBox>
         )}
         <JobRow
           specs={pick(["seed-conv", "kb-mine"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
           note="Mining calls the LLM and takes minutes"
         />
         <div className="mt-3">
@@ -693,11 +738,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                     {STAGING_LABEL[st]} ({rows.length} rows)
                   </h3>
                   {st === "kept" ? (
-                    <p className="mb-2 text-[12.5px] leading-6 text-ink-soft">
-                      These were summarized by the model from historical conversations and quality
-                      varies. Review each row before approving: anything that only applies to a
-                      single order, carries an order number, or answers the wrong question should
-                      not enter the Knowledge Base.
+                    <p className="text-ink-soft mb-2 text-[12.5px] leading-6">
+                      These were summarized by the model from historical
+                      conversations and quality varies. Review each row before
+                      approving: anything that only applies to a single order,
+                      carries an order number, or answers the wrong question
+                      should not enter the Knowledge Base.
                     </p>
                   ) : null}
                   <TableScroll>
@@ -754,7 +800,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             {STAGING_ORDER.every(
               (st) => (stagingRows.rows[st] ?? []).length === 0,
             ) ? (
-              <MissingBox>The staging table is empty — run conversation mining once first</MissingBox>
+              <MissingBox>
+                The staging table is empty — run conversation mining once first
+              </MissingBox>
             ) : null}
           </div>
         ) : null}
@@ -786,7 +834,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
           ].map(({ label, v }) => (
             <div
               key={label}
-              className="min-w-21 border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]"
+              className="border-ink bg-paper min-w-21 border-2 px-2.5 py-1 text-[11.5px]"
             >
               <b className="block text-[17px] leading-snug">
                 {v === null || v === undefined ? "—" : String(v)}
@@ -805,7 +853,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
           >
             {vectorizing ? "Vectorizing…" : "Vectorize pending chunks"}
           </Btn>
-          <span className="text-[11.5px] text-muted">
+          <span className="text-muted text-[11.5px]">
             {d.milvus.online
               ? "Runs in-process — the same function as make kb-vectorize"
               : "Milvus offline: " + (d.milvus.detail ?? "")}
@@ -813,7 +861,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         </div>
         <JobRow
           specs={pick(["kb-vectorize", "kb-reset"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
           note="Reset clears both tables and drops the collection; the KB must be rebuilt afterwards"
         />
       </Panel>
@@ -830,7 +880,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             className={cn(FIELD, "min-w-55 flex-1")}
             placeholder="How much is postage?"
             value={q}
-            onChange={(e) => { setQ(e.target.value); }}
+            onChange={(e) => {
+              setQ(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 void runSearch(q);
@@ -844,7 +896,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             id="strategy"
             className={FIELD}
             value={strategy}
-            onChange={(e) => { setStrategy(e.target.value); }}
+            onChange={(e) => {
+              setStrategy(e.target.value);
+            }}
           >
             <option value="vector">Dense vector only (this chapter)</option>
             <option value="bm25">BM25 keyword</option>
@@ -861,7 +915,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             max={20}
             className={cn(FIELD, "w-18")}
             value={topk}
-            onChange={(e) => { setTopk(Number(e.target.value) || 5); }}
+            onChange={(e) => {
+              setTopk(Number(e.target.value) || 5);
+            }}
           />
           <Btn
             variant="go"
@@ -881,18 +937,17 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             "How soon will my order ship?",
             "Can I return expired cat food?",
           ].map((preset) => (
-              <Btn
-                key={preset}
-                size="sm"
-                onClick={() => {
-                  setQ(preset);
-                  void runSearch(preset);
-                }}
-              >
-                {preset}
-              </Btn>
-            ),
-          )}
+            <Btn
+              key={preset}
+              size="sm"
+              onClick={() => {
+                setQ(preset);
+                void runSearch(preset);
+              }}
+            >
+              {preset}
+            </Btn>
+          ))}
         </div>
         {hits ? (
           <div className="mt-3">
@@ -908,7 +963,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                   <div
                     key={i}
                     className={cn(
-                      "border-3 border-ink bg-paper px-3 py-2 text-[12.5px]",
+                      "border-ink bg-paper border-3 px-3 py-2 text-[12.5px]",
                       i === 0 && "bg-cream shadow-hard-sm",
                     )}
                   >
@@ -931,7 +986,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                     <div className="mt-1.5 leading-7 whitespace-pre-wrap">
                       {h.answer}
                     </div>
-                    <div className="mt-1.5 text-[11.5px] text-muted">
+                    <div className="text-muted mt-1.5 text-[11.5px]">
                       {[
                         h.section_path ?? "—",
                         h.content_type ?? "—",
@@ -943,7 +998,8 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               </div>
             ) : (
               <MissingBox className="mt-2.5">
-                No hits at all: the KB may still be empty, or pending chunks have not been vectorized yet
+                No hits at all: the KB may still be empty, or pending chunks
+                have not been vectorized yet
               </MissingBox>
             )}
           </div>
@@ -994,7 +1050,8 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               ) : (
                 <Tr>
                   <Td colSpan={6}>
-                    No chunks in the KB yet. Paste some text above to ingest it, or run the offline build once.
+                    No chunks in the KB yet. Paste some text above to ingest it,
+                    or run the offline build once.
                   </Td>
                 </Tr>
               )}

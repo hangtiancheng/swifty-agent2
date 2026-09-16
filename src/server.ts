@@ -21,7 +21,10 @@ import { topicsRouter } from "./api/topics.ts";
 import { settings } from "./config.ts";
 import * as budget from "./core/budget.ts";
 import * as jobs from "./core/jobs.ts";
-import { initObservability, shutdownObservability } from "./core/observability.ts";
+import {
+  initObservability,
+  shutdownObservability,
+} from "./core/observability.ts";
 import { closeDb } from "./db/client.ts";
 import * as runtime from "./graph/runtime.ts";
 import { childLogger, logger } from "./logger.ts";
@@ -54,7 +57,10 @@ export function createApp(): Hono {
       return c.json({ detail: error.message }, error.status);
     }
     log.error({ err: error, path: c.req.path }, "unhandled error");
-    return c.json({ detail: "Internal server error; please try again later" }, 500);
+    return c.json(
+      { detail: "Internal server error; please try again later" },
+      500,
+    );
   });
   return app;
 }
@@ -82,7 +88,11 @@ export function startServer(): void {
   checkContextBudget();
   runtime.initGraph();
   const app = createApp();
-  const server = serve({ fetch: app.fetch, port: settings.port, hostname: "0.0.0.0" });
+  const server = serve({
+    fetch: app.fetch,
+    port: settings.port,
+    hostname: "0.0.0.0",
+  });
 
   const shutdown = (signal: string): void => {
     log.info({ signal }, "shutting down");
@@ -104,5 +114,8 @@ export function startServer(): void {
   process.once("SIGTERM", () => {
     shutdown("SIGTERM");
   });
-  log.info({ port: settings.port, jobs: Object.keys(jobs.JOBS).length }, "server listening");
+  log.info(
+    { port: settings.port, jobs: Object.keys(jobs.JOBS).length },
+    "server listening",
+  );
 }

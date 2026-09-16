@@ -1,5 +1,8 @@
 // All prompt assets. Content is product behavior; code comments are English.
-import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+} from "@langchain/core/prompts";
 
 export const CUSTOMER_SERVICE_SYSTEM = `You are "Meow", the smart customer service assistant of the "MeowMeow Select" e-commerce platform.
 
@@ -142,7 +145,10 @@ When judging a number, ask yourself in this order: (1) Does this number appear a
 
 export const FAITHFULNESS_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", FAITHFULNESS_SYSTEM],
-  ["human", "Retrieved evidence:\n{evidence}\n\nCustomer service answer:\n{answer}"],
+  [
+    "human",
+    "Retrieved evidence:\n{evidence}\n\nCustomer service answer:\n{answer}",
+  ],
 ]);
 
 export const COREF_REWRITE_SYSTEM = `## Role
@@ -160,7 +166,10 @@ You are the "question completer" of an e-commerce customer service system, runni
 
 export const COREF_REWRITE_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", COREF_REWRITE_SYSTEM],
-  ["human", "Recent conversation (may be empty):\n{history}\n\nUser's current utterance: {query}\n\nCompleted standalone question:"],
+  [
+    "human",
+    "Recent conversation (may be empty):\n{history}\n\nUser's current utterance: {query}\n\nCompleted standalone question:",
+  ],
 ]);
 
 export const INTENT_CLASSIFY_SYSTEM = `## Role
@@ -193,12 +202,18 @@ intent must be exactly one of the nine English labels above; confidence is how s
 
 export const INTENT_CLASSIFY_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", INTENT_CLASSIFY_SYSTEM],
-  ["human", "Recent conversation (may be empty):\n{history}\n\nCurrent user utterance: {query}"],
+  [
+    "human",
+    "Recent conversation (may be empty):\n{history}\n\nCurrent user utterance: {query}",
+  ],
 ]);
 
-export const CHITCHAT_REPLY_TEXT = "Hi there~ I'm Meow, the smart customer service assistant of MeowMeow Select. Feel free to ask me about products, orders, logistics, or after-sales. How can I help you?";
-export const COMPLAINT_REPLY_TEXT = "We're very sorry for the bad experience, and we understand how you feel. You can choose to be transferred to human customer service, or let me register a ticket to follow up for you.";
-export const FALLBACK_REPLY_TEXT = "Sorry, I couldn't find definitive information on this question for now, so I don't dare answer blindly. We suggest contacting human customer service to confirm further, so you don't get wrong guidance.";
+export const CHITCHAT_REPLY_TEXT =
+  "Hi there~ I'm Meow, the smart customer service assistant of MeowMeow Select. Feel free to ask me about products, orders, logistics, or after-sales. How can I help you?";
+export const COMPLAINT_REPLY_TEXT =
+  "We're very sorry for the bad experience, and we understand how you feel. You can choose to be transferred to human customer service, or let me register a ticket to follow up for you.";
+export const FALLBACK_REPLY_TEXT =
+  "Sorry, I couldn't find definitive information on this question for now, so I don't dare answer blindly. We suggest contacting human customer service to confirm further, so you don't get wrong guidance.";
 
 export const EXPAND_QUERIES_SYSTEM = `## Role
 You are the query optimization assistant of an e-commerce customer service system; generalize the user question into multiple retrieval-friendly English queries for knowledge base retrieval.
@@ -225,8 +240,10 @@ export const REFUND_JUDGE_HINT =
   "Judge from the policy evidence; never invent clauses; timeframe/amount wording is subject to the platform's after-sales rules.\n" +
   "## Order data\n";
 
-export const SCRIPT_REPLY_CHITCHAT = "I can't answer this one yet — please ask me anything about our products~ products, orders, logistics, and after-sales are all welcome.";
-export const SCRIPT_REPLY_OTHER = "Sorry, I'm not quite sure what you mean. Could you make the question more specific? For example, the product you're asking about, a particular order, or a refund/after-sales issue.";
+export const SCRIPT_REPLY_CHITCHAT =
+  "I can't answer this one yet — please ask me anything about our products~ products, orders, logistics, and after-sales are all welcome.";
+export const SCRIPT_REPLY_OTHER =
+  "Sorry, I'm not quite sure what you mean. Could you make the question more specific? For example, the product you're asking about, a particular order, or a refund/after-sales issue.";
 
 export const FLYWHEEL_NORMALIZE_SYSTEM = `## Role
 You are the question normalizer and deduplicator of the customer service knowledge base. Given one raw user utterance and a batch of candidate standard questions, do three things in one output:
@@ -243,7 +260,10 @@ Return the result as tool parameters; do not answer in natural language. Fill ma
 
 export const FLYWHEEL_NORMALIZE_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", FLYWHEEL_NORMALIZE_SYSTEM],
-  ["human", "Candidate standard questions (may be empty):\n{candidates}\n\nRaw user utterance: {raw_question}"],
+  [
+    "human",
+    "Candidate standard questions (may be empty):\n{candidates}\n\nRaw user utterance: {raw_question}",
+  ],
 ]);
 
 export const SUMMARY_SYSTEM = `## Role
@@ -259,5 +279,8 @@ You are the customer service conversation summarizer. Compress early conversatio
 
 export const SUMMARY_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", SUMMARY_SYSTEM],
-  ["human", "Existing synopsis (background only, do not repeat): {old_summary}\n\nThis batch of conversation to compress into one paragraph:\n{dialog}"],
+  [
+    "human",
+    "Existing synopsis (background only, do not repeat): {old_summary}\n\nThis batch of conversation to compress into one paragraph:\n{dialog}",
+  ],
 ]);

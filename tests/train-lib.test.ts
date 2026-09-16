@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { dedupe, desensitize, splitDataset, type CorpusSample } from "#/train/corpus-lib.ts";
+import {
+  dedupe,
+  desensitize,
+  splitDataset,
+  type CorpusSample,
+} from "#/train/corpus-lib.ts";
 import { applyThreshold } from "#/train/inference-lib.ts";
 
 describe("inference-lib applyThreshold", () => {
@@ -30,9 +35,11 @@ describe("inference-lib applyThreshold", () => {
 
 describe("corpus-lib desensitize", () => {
   it("masks emails, long digit runs and handles", () => {
-    expect(desensitize("mail me at a.b+x@ex.com, order 1234567890123, ping @john_doe")).toBe(
-      "mail me at [email], order [number], ping [handle]",
-    );
+    expect(
+      desensitize(
+        "mail me at a.b+x@ex.com, order 1234567890123, ping @john_doe",
+      ),
+    ).toBe("mail me at [email], order [number], ping [handle]");
   });
 
   it("leaves product model numbers untouched", () => {
@@ -57,17 +64,26 @@ describe("corpus-lib dedupe", () => {
 });
 
 describe("corpus-lib splitDataset", () => {
-  const sample = (text: string, labels: string[]): CorpusSample => ({ text, labels });
+  const sample = (text: string, labels: string[]): CorpusSample => ({
+    text,
+    labels,
+  });
 
   it("is deterministic for a fixed seed", () => {
-    const data = Array.from({ length: 40 }, (_, i) => sample(`q${i}`, ["logistics"]));
+    const data = Array.from({ length: 40 }, (_, i) =>
+      sample(`q${i}`, ["logistics"]),
+    );
     const a = splitDataset(data, 7);
     const b = splitDataset(data, 7);
-    expect(a.map((s) => s.map((x) => x.text))).toEqual(b.map((s) => s.map((x) => x.text)));
+    expect(a.map((s) => s.map((x) => x.text))).toEqual(
+      b.map((s) => s.map((x) => x.text)),
+    );
   });
 
   it("partitions every sample exactly once", () => {
-    const data = Array.from({ length: 50 }, (_, i) => sample(`q${i}`, ["sizing", "returns_refunds"]));
+    const data = Array.from({ length: 50 }, (_, i) =>
+      sample(`q${i}`, ["sizing", "returns_refunds"]),
+    );
     const [train, val, test] = splitDataset(data, 42);
     const all = [...train, ...val, ...test].map((s) => s.text).sort();
     expect(all).toEqual(data.map((s) => s.text).sort());

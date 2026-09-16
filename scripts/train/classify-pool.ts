@@ -1,4 +1,4 @@
-// ch10 bypass batch classification: low-confidence questions accumulate, and once a batch is full they
+// train bypass batch classification: low-confidence questions accumulate, and once a batch is full they
 // are grouped in one pass and the results written to topic_classifications. Not called from the live
 // conversation path. Run: make classify-pool (requires DB + classifier service :8110).
 // Idempotent: rows already classified (LEFT JOIN hit) are not re-classified. Cron example:
@@ -19,7 +19,12 @@ const classifyResponseSchema = z.object({
 const SERVICE = "http://127.0.0.1:8110";
 const REPORTS = path.join(settings.root, "data/train/reports");
 
-function writeReport(status: string, pending: number, written: number, counts: Record<string, number>): void {
+function writeReport(
+  status: string,
+  pending: number,
+  written: number,
+  counts: Record<string, number>,
+): void {
   // Each run leaves a conclusion for the acceptance page (/acceptance): a second run returning
   // status=empty is the idempotency evidence.
   fs.mkdirSync(REPORTS, { recursive: true });
@@ -31,7 +36,9 @@ function writeReport(status: string, pending: number, written: number, counts: R
         status,
         pending,
         written,
-        counts: Object.fromEntries(Object.entries(counts).sort((a, b) => b[1] - a[1])),
+        counts: Object.fromEntries(
+          Object.entries(counts).sort((a, b) => b[1] - a[1]),
+        ),
       },
       null,
       2,
@@ -64,13 +71,17 @@ async function main(): Promise<void> {
     return;
   }
   if (rows.length < minBatch && !force) {
-    console.log(`${rows.length} pending, below one batch (${minBatch}); --force to run anyway`);
+    console.log(
+      `${rows.length} pending, below one batch (${minBatch}); --force to run anyway`,
+    );
     writeReport("below_batch", rows.length, 0, {});
     return;
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => { controller.abort(); }, 300_000);
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, 300_000);
   let results: { labels: string[] }[];
   try {
     const resp = await fetch(`${SERVICE}/classify`, {
@@ -91,10 +102,15 @@ async function main(): Promise<void> {
   // strict: question_id <-> labels line up purely by position; if the service returns one too few or
   // too many it must fail loudly, otherwise misaligned labels would be permanently cemented by idempotency.
   if (results.length !== rows.length) {
-    throw new Error(`classifier returned ${results.length} results for ${rows.length} inputs; refusing to write misaligned labels`);
+    throw new Error(
+      `classifier returned ${results.length} results for ${rows.length} inputs; refusing to write misaligned labels`,
+    );
   }
   const n = await repository.insertTopicClassifications(
-    rows.map((x, i) => ({ question_id: x.question_id, labels: results[i].labels })),
+    rows.map((x, i) => ({
+      question_id: x.question_id,
+      labels: results[i].labels,
+    })),
   );
 
   const counts: Record<string, number> = {};
@@ -116,7 +132,9 @@ async function main(): Promise<void> {
 try {
   await main();
 } catch (error) {
-  console.error(`Bypass classification failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(
+    `Bypass classification failed: ${error instanceof Error ? error.message : String(error)}`,
+  );
   console.error("Is the classifier service running? make classifier-up");
   process.exitCode = 1;
 } finally {

@@ -1,4 +1,4 @@
-"""ch10 evaluation: per-class P/R/F1 + per-class confusion matrix + tolerance red lines + error
+"""train evaluation: per-class P/R/F1 + per-class confusion matrix + tolerance red lines + error
 export on the held-out test set. Run: make train-eval. The eval set is the project's own e-commerce
 scenario (dataset/test.jsonl), not a public leaderboard.
 
@@ -90,7 +90,7 @@ def main() -> None:
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     lines = [
-        "# ch10 classifier evaluation report (held-out test set)",
+        "# train classifier evaluation report (held-out test set)",
         "",
         f"Test set {len(samples)} rows; decision threshold {threshold} (from the validation scan).",
         "",
@@ -125,7 +125,7 @@ def main() -> None:
     (REPORTS / "eval_report.md").write_text("\n".join(lines), encoding="utf-8")
 
     err = [
-        "# ch10 misclassified samples (human review: which class erred? is the gold label itself wrong?)",
+        "# train misclassified samples (human review: which class erred? is the gold label itself wrong?)",
         "",
     ]
     errors: list[dict[str, Any]] = []

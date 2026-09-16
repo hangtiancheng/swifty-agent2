@@ -77,19 +77,21 @@ export function CitePopover({
   return (
     <div
       ref={popRef}
-      className="scroll-cat fixed z-50 max-h-[50vh] overflow-y-auto border-3 border-ink bg-paper p-3 text-[13px] leading-relaxed shadow-hard"
+      className="scroll-cat border-ink bg-paper shadow-hard fixed z-50 max-h-[50vh] overflow-y-auto border-3 p-3 text-[13px] leading-relaxed"
       style={
         pos
           ? { left: pos.left, top: pos.top, width: pos.width }
           : { left: 0, top: 0, visibility: "hidden" }
       }
     >
-      <div className="mb-1.5 border-b-2 border-dashed border-muted pb-1.5 text-xs font-bold break-words text-coral">
+      <div className="border-muted text-coral mb-1.5 border-b-2 border-dashed pb-1.5 text-xs font-bold break-words">
         {c.section_path ?? "Source"}
       </div>
       {c.question ? <div className="mb-1 font-bold">{c.question}</div> : null}
-      <div className="whitespace-pre-wrap wrap-break-word">{c.answer ?? ""}</div>
-      <div className="mt-2 text-[11px] text-muted">
+      <div className="wrap-break-word whitespace-pre-wrap">
+        {c.answer ?? ""}
+      </div>
+      <div className="text-muted mt-2 text-[11px]">
         {"Source [" + String(c.n) + "]"}
         {c.content_type ? " · " + c.content_type : ""}
       </div>

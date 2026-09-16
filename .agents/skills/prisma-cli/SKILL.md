@@ -4,7 +4,7 @@ description: Prisma ORM CLI commands reference covering init, generate, migrate,
 license: MIT
 metadata:
   author: prisma
-  version: '7.9.1'
+  version: "7.9.1"
 ---
 
 # Prisma CLI Reference
@@ -204,19 +204,19 @@ Read `references/agent-safety.md` before any destructive Prisma command.
 Use `prisma.config.ts` for CLI configuration:
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: 'prisma/migrations',
-    seed: 'tsx prisma/seed.ts',
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
-})
+});
 ```
 
 ### Current Command Behavior
@@ -231,7 +231,7 @@ Load environment variables explicitly in `prisma.config.ts`, commonly with `dote
 
 ```typescript
 // prisma.config.ts
-import 'dotenv/config'
+import "dotenv/config";
 ```
 
 ## Rule Files

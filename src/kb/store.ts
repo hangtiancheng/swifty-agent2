@@ -116,7 +116,11 @@ function toHit(doc: StoreDoc, score: number): KnowledgeHit {
   };
 }
 
-export async function denseSearch(vector: number[], topK: number, category: string | null = null): Promise<KnowledgeHit[]> {
+export async function denseSearch(
+  vector: number[],
+  topK: number,
+  category: string | null = null,
+): Promise<KnowledgeHit[]> {
   const { docs } = await loadChunks();
   const scored = docs
     .filter((d) => !category || d.category === category)
@@ -126,11 +130,16 @@ export async function denseSearch(vector: number[], topK: number, category: stri
   return scored.map(([doc, score]) => toHit(doc, score));
 }
 
-export async function bm25Search(text: string, topK: number, category: string | null = null): Promise<KnowledgeHit[]> {
+export async function bm25Search(
+  text: string,
+  topK: number,
+  category: string | null = null,
+): Promise<KnowledgeHit[]> {
   const { docs, df } = await loadChunks();
   const pool = docs.filter((d) => !category || d.category === category);
   const queryTerms = [...new Set(tokenize(text))];
-  const avgdl = pool.reduce((sum, d) => sum + d.tokens.length, 0) / (pool.length || 1);
+  const avgdl =
+    pool.reduce((sum, d) => sum + d.tokens.length, 0) / (pool.length || 1);
   const N = pool.length || 1;
   const scored = pool.map((doc): [StoreDoc, number] => {
     let score = 0;
@@ -141,7 +150,9 @@ export async function bm25Search(text: string, topK: number, category: string | 
       }
       const n = df.get(term) ?? 0;
       const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
-      score += (idf * (tf * (K1 + 1))) / (tf + K1 * (1 - B + (B * doc.tokens.length) / avgdl));
+      score +=
+        (idf * (tf * (K1 + 1))) /
+        (tf + K1 * (1 - B + (B * doc.tokens.length) / avgdl));
     }
     return [doc, score];
   });
@@ -187,6 +198,8 @@ export async function count(): Promise<number> {
 
 export async function drop(): Promise<void> {
   const { prisma } = await import("../db/client.ts");
-  await prisma.knowledgeChunk.updateMany({ data: { embedding: null, vectorId: null, vectorizeStatus: "pending" } });
+  await prisma.knowledgeChunk.updateMany({
+    data: { embedding: null, vectorId: null, vectorizeStatus: "pending" },
+  });
   invalidateVectorCache();
 }

@@ -14,7 +14,6 @@ import { status as jobStatus } from "#/core/jobs.ts";
 import { parseJson } from "#/db/json.ts";
 import * as repository from "#/db/repository.ts";
 
-
 export const ragevalRouter = new Hono();
 
 const REPORT = path.join(settings.root, "data/rag/reports/rag_eval.json");
@@ -36,7 +35,9 @@ function asNumber(value: unknown): number | null {
 
 function readReport(): Record<string, unknown> | null {
   try {
-    const parsed = recordSchema.safeParse(JSON.parse(fs.readFileSync(REPORT, "utf8")));
+    const parsed = recordSchema.safeParse(
+      JSON.parse(fs.readFileSync(REPORT, "utf8")),
+    );
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
@@ -46,13 +47,20 @@ function readReport(): Record<string, unknown> | null {
 function stat(file: string): Record<string, unknown> {
   try {
     const st = fs.statSync(file);
-    return { present: true, bytes: st.size, mtime: st.mtime.toISOString().slice(0, 19) };
+    return {
+      present: true,
+      bytes: st.size,
+      mtime: st.mtime.toISOString().slice(0, 19),
+    };
   } catch {
     return { present: false, bytes: null, mtime: null };
   }
 }
 
-function bestStrategy(report: Record<string, unknown>): { strategy: string | null; mrr: number | null } {
+function bestStrategy(report: Record<string, unknown>): {
+  strategy: string | null;
+  mrr: number | null;
+} {
   let best: string | null = null;
   let bestMrr = -1;
   for (const s of STRATEGIES) {
@@ -69,8 +77,18 @@ function bestStrategy(report: Record<string, unknown>): { strategy: string | nul
 }
 
 const hallucinationSchema = z.object({
-  faithfulness: z.record(z.string(), z.object({ v: z.number().nullable().optional(), answered: z.number().optional() })).optional(),
-  faithfulness_cases: z.array(z.object({ id: z.string().optional() }).loose()).optional(),
+  faithfulness: z
+    .record(
+      z.string(),
+      z.object({
+        v: z.number().nullable().optional(),
+        answered: z.number().optional(),
+      }),
+    )
+    .optional(),
+  faithfulness_cases: z
+    .array(z.object({ id: z.string().optional() }).loose())
+    .optional(),
   refusal: z
     .object({
       rate: z.number().nullable().optional(),
@@ -98,7 +116,11 @@ export interface HallucinationReport {
   ledger: Record<string, number>;
 }
 
-export function hallucination(counts: repository.FaithCounts, report: Record<string, unknown> | null, statusMap: Record<string, string>): HallucinationReport {
+export function hallucination(
+  counts: repository.FaithCounts,
+  report: Record<string, unknown> | null,
+  statusMap: Record<string, string>,
+): HallucinationReport {
   // Both rates are per-round: the ledger is a cross-round management view and must not
   // become the numerator of a single-round rate.
   const gen = asRecord(report?.generation) ?? {};
@@ -113,17 +135,24 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
   const missed = Math.max(0, absent - (data.refusal?.correct ?? 0));
   const evaluated = graded + absent || null;
 
-  const roundIds = (data.faithfulness_cases ?? []).map((c) => c.id).filter((id): id is string => typeof id === "string");
+  const roundIds = (data.faithfulness_cases ?? [])
+    .map((c) => c.id)
+    .filter((id): id is string => typeof id === "string");
   const tally = { unresolved: 0, resolved: 0, dismissed: 0 };
   for (const id of roundIds) {
     const status = statusMap[id];
-    if (status === "unresolved" || status === "resolved" || status === "dismissed") {
+    if (
+      status === "unresolved" ||
+      status === "resolved" ||
+      status === "dismissed"
+    ) {
       tally[status] += 1;
     }
   }
   const casesJudged = roundIds.length;
   const confirmedCases = tally.resolved;
-  const rate = (n: number): number | null => (evaluated ? Number((n / evaluated).toFixed(4)) : null);
+  const rate = (n: number): number | null =>
+    evaluated ? Number((n / evaluated).toFixed(4)) : null;
   return {
     evaluated,
     graded: graded || null,
@@ -137,7 +166,10 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
     confirmed: confirmedCases + missed,
     judged_rate: rate(casesJudged + missed),
     confirmed_rate: rate(confirmedCases + missed),
-    ledger: { total: counts.unresolved + counts.resolved + counts.dismissed, ...counts },
+    ledger: {
+      total: counts.unresolved + counts.resolved + counts.dismissed,
+      ...counts,
+    },
   };
 }
 
@@ -155,7 +187,7 @@ export function overview(): Record<string, unknown> {
       present: false,
       job,
       make: "make eval-rag",
-      hint: "No RAG evaluation run yet. Press \"Re-run RAG evaluation\" to run one round on the spot (four strategies × four buckets; requires the vector store + a built KB + chat upstream; takes minutes).",
+      hint: 'No RAG evaluation run yet. Press "Re-run RAG evaluation" to run one round on the spot (four strategies × four buckets; requires the vector store + a built KB + chat upstream; takes minutes).',
     };
   }
   const generation = report.generation ?? null;
@@ -226,10 +258,21 @@ const faithQuerySchema = z.object({
 ragevalRouter.get("/api/rag-eval/faith-cases", async (c) => {
   const query = parseQuery(c, faithQuerySchema);
   const status = query.status ?? null;
-  if (status !== null && status !== "unresolved" && status !== "resolved" && status !== "dismissed") {
-    throw new HTTPException(400, { message: "status must be one of unresolved/resolved/dismissed" });
+  if (
+    status !== null &&
+    status !== "unresolved" &&
+    status !== "resolved" &&
+    status !== "dismissed"
+  ) {
+    throw new HTTPException(400, {
+      message: "status must be one of unresolved/resolved/dismissed",
+    });
   }
-  const { rows, total, counts } = await repository.listFaithCases(status, query.page, query.size);
+  const { rows, total, counts } = await repository.listFaithCases(
+    status,
+    query.page,
+    query.size,
+  );
   const statusMap = await repository.faithCaseStatusMap();
   return Response.json({
     items: rows.map(caseOut),
@@ -248,10 +291,15 @@ ragevalRouter.post("/api/rag-eval/faith-cases/:case_id/status", async (c) => {
   const note = (req.resolution ?? "").trim();
   if (req.status !== "unresolved" && !note) {
     throw new HTTPException(400, {
-      message: "Marking \"resolved\" requires stating how it was resolved; marking \"dismissed\" requires stating why no change is needed",
+      message:
+        'Marking "resolved" requires stating how it was resolved; marking "dismissed" requires stating why no change is needed',
     });
   }
-  const row = await repository.setFaithCaseStatus(caseId, req.status, note || null);
+  const row = await repository.setFaithCaseStatus(
+    caseId,
+    req.status,
+    note || null,
+  );
   if (row === null) {
     throw new HTTPException(404, { message: "Case not found" });
   }

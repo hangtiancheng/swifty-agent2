@@ -8,7 +8,6 @@ import * as repository from "#/db/repository.ts";
 import * as runtime from "#/graph/runtime.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("api.feedback");
 export const feedbackRouter = new Hono();
 
@@ -19,7 +18,10 @@ function sameQuestion(a: string, b: string): boolean {
 feedbackRouter.post("/api/feedback", async (c) => {
   const req = await parseJsonBody(c, feedbackRequestSchema);
   if (req.rating === "up") {
-    log.info({ conv: req.conversation_id, question: req.question.slice(0, 40) }, "feedback up (log only)");
+    log.info(
+      { conv: req.conversation_id, question: req.question.slice(0, 40) },
+      "feedback up (log only)",
+    );
     return c.json({ ok: true, pooled: false });
   }
 
@@ -30,7 +32,10 @@ feedbackRouter.post("/api/feedback", async (c) => {
       snapshot = turn.snapshot;
     }
   } catch (error) {
-    log.warn({ err: error, conv: req.conversation_id }, "feedback snapshot lookup failed (pooling anyway)");
+    log.warn(
+      { err: error, conv: req.conversation_id },
+      "feedback snapshot lookup failed (pooling anyway)",
+    );
   }
 
   await repository.insertLowConfidence(
@@ -40,6 +45,9 @@ feedbackRouter.post("/api/feedback", async (c) => {
     "User feedback: not resolved",
     snapshot ?? undefined,
   );
-  log.info({ conv: req.conversation_id, snapshot: snapshot ? "yes" : "no" }, "feedback down pooled");
+  log.info(
+    { conv: req.conversation_id, snapshot: snapshot ? "yes" : "no" },
+    "feedback down pooled",
+  );
   return c.json({ ok: true, pooled: true });
 });

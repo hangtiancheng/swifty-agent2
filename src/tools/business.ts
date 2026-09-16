@@ -40,7 +40,12 @@ export function orderSnapshot(orderId: string): OrderSnapshot {
     status: pick(rng, ["awaiting payment", "paid", "shipped", "delivered"]),
     amount: randInt(rng, 50, 2000),
     created_at: `2026-07-${String(randInt(rng, 1, 12)).padStart(2, "0")} 10:00`,
-    product: pick(rng, ["Smart Litter Box", "Cat food 5kg", "Cat tree", "Automatic water fountain"]),
+    product: pick(rng, [
+      "Smart Litter Box",
+      "Cat food 5kg",
+      "Cat tree",
+      "Automatic water fountain",
+    ]),
     tracking_no: `SF${randInt(rng, 10 ** 11, 10 ** 12 - 1)}`,
   };
 }
@@ -67,7 +72,12 @@ export function listUserOrders(userId: string): UserOrder[] {
   }
   return ids.map((oid) => {
     const s = orderSnapshot(oid);
-    return { order_id: oid, product: s.product, status: s.status, amount: s.amount };
+    return {
+      order_id: oid,
+      product: s.product,
+      status: s.status,
+      amount: s.amount,
+    };
   });
 }
 

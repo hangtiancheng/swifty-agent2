@@ -4,11 +4,20 @@ import { z } from "zod";
 import { ownsOrder } from "#/tools/business.ts";
 import { defineTool, register } from "#/tools/registry.ts";
 
-const NOT_OWNED = { error: "No such order was found for you", code: "order_not_owned" };
+const NOT_OWNED = {
+  error: "No such order was found for you",
+  code: "order_not_owned",
+};
 
 const submitRefundSchema = z.object({
   order_id: z.string().describe("Order number to refund"),
-  reason: z.string().nullable().optional().describe("Refund reason (optional; the front-end fixed-category dropdown is authoritative)"),
+  reason: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Refund reason (optional; the front-end fixed-category dropdown is authoritative)",
+    ),
 });
 
 register(

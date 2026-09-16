@@ -9,7 +9,6 @@ import { Btn, MissingBox, PageShell } from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 
-
 export interface TopicClass {
   label: string;
   count: number;
@@ -23,12 +22,14 @@ export interface TopicDistribution {
 }
 
 type LoaderData =
-  | { ok: true; d: TopicDistribution }
-  | { ok: false; error: string };
+  { ok: true; d: TopicDistribution } | { ok: false; error: string };
 
 export async function clientLoader(): Promise<LoaderData> {
   try {
-    return { ok: true, d: await api<TopicDistribution>("/api/topics/distribution") };
+    return {
+      ok: true,
+      d: await api<TopicDistribution>("/api/topics/distribution"),
+    };
   } catch (e) {
     return { ok: false, error: errMsg(e) };
   }
@@ -60,23 +61,26 @@ function fmtLatest(iso: string | null): string {
   });
 }
 
-function TopicRow({ c, max, top1 }: { c: TopicClass; max: number; top1: boolean }) {
+function TopicRow({
+  c,
+  max,
+  top1,
+}: {
+  c: TopicClass;
+  max: number;
+  top1: boolean;
+}) {
   const pct = Math.round((c.count / max) * 100);
   const href =
     "/topics/questions?label=" + encodeURIComponent(c.label) + "&page=1";
   return (
-    <details
-      className={cn(
-        "group my-1.5",
-        c.count === 0 && "opacity-45",
-      )}
-    >
+    <details className={cn("group my-1.5", c.count === 0 && "opacity-45")}>
       <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
         <span className="w-24 shrink-0 text-right text-[13px] font-bold sm:w-28">
           {c.count ? (
             <Link
               to={href}
-              className="border-b-2 border-fur text-inherit no-underline hover:bg-fur"
+              className="border-fur hover:bg-fur border-b-2 text-inherit no-underline"
             >
               {c.label}
             </Link>
@@ -84,11 +88,11 @@ function TopicRow({ c, max, top1 }: { c: TopicClass; max: number; top1: boolean 
             c.label
           )}
         </span>
-        <span className="relative h-5.5 flex-1 border-2 border-ink bg-paper">
+        <span className="border-ink bg-paper relative h-5.5 flex-1 border-2">
           {c.count ? (
             <motion.span
               className={cn(
-                "absolute inset-y-0 left-0 block border-r-2 border-ink",
+                "border-ink absolute inset-y-0 left-0 block border-r-2",
                 top1 ? "bg-coral" : "bg-fur",
               )}
               initial={{ width: 0 }}
@@ -101,7 +105,7 @@ function TopicRow({ c, max, top1 }: { c: TopicClass; max: number; top1: boolean 
           {c.count}
         </span>
       </summary>
-      <div className="mt-1.5 mb-2.5 ml-0 border-2 border-dashed border-ink bg-paper px-3 py-2 text-[12.5px] sm:ml-[7.4rem]">
+      <div className="border-ink bg-paper mt-1.5 mb-2.5 ml-0 border-2 border-dashed px-3 py-2 text-[12.5px] sm:ml-[7.4rem]">
         {c.samples.length ? (
           <>
             {c.samples.map((s, i) => (
@@ -111,7 +115,7 @@ function TopicRow({ c, max, top1 }: { c: TopicClass; max: number; top1: boolean 
             ))}
             <Link
               to={href}
-              className="mt-2 inline-block border-3 border-ink bg-cream px-2.5 py-0.5 text-xs font-bold no-underline shadow-hard-xs hover:bg-fur-hover"
+              className="border-ink bg-cream shadow-hard-xs hover:bg-fur-hover mt-2 inline-block border-3 px-2.5 py-0.5 text-xs font-bold no-underline"
             >
               View all {c.count} →
             </Link>
@@ -138,7 +142,12 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
       active="/topics"
       maxW="max-w-[1080px]"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -150,14 +159,14 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
       {loaderData.ok && d ? (
         <>
           <div className="mt-4 flex flex-wrap gap-3.5">
-            <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
+            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
               Classified questions<b className="block text-xl">{d.total}</b>
             </div>
-            <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
+            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
               Last classified
               <b className="block text-sm leading-7">{fmtLatest(d.latest)}</b>
             </div>
-            <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
+            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
               Classes hit
               <b className="block text-xl">
                 {hit} / {d.classes.length || 17}
@@ -169,7 +178,7 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            className="mt-4 border-4 border-ink bg-cream p-4 shadow-hard"
+            className="border-ink bg-cream shadow-hard mt-4 border-4 p-4"
           >
             <h2 className="mb-3 text-sm font-bold">
               {d.classes.length || 17} authoritative classes · question volume
@@ -178,10 +187,15 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
             </h2>
             <div>
               {classes.map((c, i) => (
-                <TopicRow key={c.label} c={c} max={max} top1={i === 0 && c.count > 0} />
+                <TopicRow
+                  key={c.label}
+                  c={c}
+                  max={max}
+                  top1={i === 0 && c.count > 0}
+                />
               ))}
             </div>
-            <div className="mt-2.5 text-xs text-muted">
+            <div className="text-muted mt-2.5 text-xs">
               Data comes from topic_classifications (make classify-pool runs the
               bypass batch classification); multi-label questions count toward
               every class they hit.
@@ -190,7 +204,8 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
         </>
       ) : (
         <MissingBox className="mt-4">
-          Failed to load the distribution: {loaderData.ok ? "" : loaderData.error}
+          Failed to load the distribution:{" "}
+          {loaderData.ok ? "" : loaderData.error}
         </MissingBox>
       )}
     </PageShell>

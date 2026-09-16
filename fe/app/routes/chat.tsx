@@ -12,26 +12,27 @@ import { MobileDrawer, Sidebar } from "~/components/chat/sidebar";
 import { SUGGESTIONS, useChat } from "~/components/chat/use-chat";
 import { ThemeToggle } from "~/components/theme-toggle";
 
-
 export function meta() {
   return [
     { title: "MeowMeow Select · AI Assistant" },
     {
       name: "description",
-      content: "MeowMeow Select AI Assistant Meow: ask about products, orders, and after-sales support",
+      content:
+        "MeowMeow Select AI Assistant Meow: ask about products, orders, and after-sales support",
     },
   ];
 }
 
 function EmptyState({ onChip }: { onChip: (s: string) => void }) {
   return (
-    <div className="m-auto flex animate-pop-in flex-col items-center gap-1.5 px-3 py-5 text-center">
-      <div className="mb-3 border-4 border-ink bg-paper p-2.5 shadow-hard">
+    <div className="animate-pop-in m-auto flex flex-col items-center gap-1.5 px-3 py-5 text-center">
+      <div className="border-ink bg-paper shadow-hard mb-3 border-4 p-2.5">
         <Cat className="h-24 w-24" strokeWidth={1.5} />
       </div>
       <h1 className="text-lg font-bold tracking-widest">Hi, I'm Meow</h1>
-      <p className="text-[13px] text-muted">
-        MeowMeow Select's AI Assistant — ask me about products, orders, and after-sales support.
+      <p className="text-muted text-[13px]">
+        MeowMeow Select's AI Assistant — ask me about products, orders, and
+        after-sales support.
       </p>
       <div className="mt-4 flex max-w-110 flex-wrap justify-center gap-2.5">
         {SUGGESTIONS.map((s, i) => (
@@ -41,8 +42,10 @@ function EmptyState({ onChip }: { onChip: (s: string) => void }) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.06 * i, duration: 0.18 }}
-            className="press cursor-pointer border-3 border-ink bg-paper px-3.5 py-2 text-[12.5px] shadow-hard-sm hover:bg-fur-hover"
-            onClick={() => { onChip(s); }}
+            className="press border-ink bg-paper shadow-hard-sm hover:bg-fur-hover cursor-pointer border-3 px-3.5 py-2 text-[12.5px]"
+            onClick={() => {
+              onChip(s);
+            }}
           >
             {s}
           </motion.button>
@@ -119,11 +122,17 @@ export default function ChatPage() {
 
   const cb = useMemo<BubbleCallbacks>(
     () => ({
-      onCite: (c, el) => { setCite({ c, rect: el.getBoundingClientRect() }); },
+      onCite: (c, el) => {
+        setCite({ c, rect: el.getBoundingClientRect() });
+      },
       onFeedback: giveFeedback,
       onTransfer: transferHuman,
-      onCreateTicket: (msgId) => { setTicketFor(msgId); },
-      onRefund: (msgId, draft) => { setRefundFor({ msgId, order: draft.order_id ?? "" }); },
+      onCreateTicket: (msgId) => {
+        setTicketFor(msgId);
+      },
+      onRefund: (msgId, draft) => {
+        setRefundFor({ msgId, order: draft.order_id ?? "" });
+      },
       onPickOrderResume: (msgId, o) => {
         markDecided(msgId);
         void resume("I choose order " + o.order_id, { order_id: o.order_id });
@@ -134,7 +143,12 @@ export default function ChatPage() {
       },
       onConfirmTicket: (msgId, confirmed) => {
         markDecided(msgId);
-        void resume(confirmed ? "Confirm ticket submission" : "Cancel ticket creation", { confirmed });
+        void resume(
+          confirmed ? "Confirm ticket submission" : "Cancel ticket creation",
+          {
+            confirmed,
+          },
+        );
       },
     }),
     [giveFeedback, transferHuman, markDecided, resume, send],
@@ -142,7 +156,7 @@ export default function ChatPage() {
 
   return (
     <div className="md:grid md:min-h-dvh md:place-items-center">
-      <div className="mx-auto flex h-dvh w-full max-w-[980px] overflow-hidden bg-cream md:h-[min(90dvh,860px)] md:border-4 md:border-ink md:shadow-hard-lg">
+      <div className="bg-cream md:border-ink md:shadow-hard-lg mx-auto flex h-dvh w-full max-w-[980px] overflow-hidden md:h-[min(90dvh,860px)] md:border-4">
         <Sidebar
           className="max-md:hidden"
           items={conversations}
@@ -153,24 +167,29 @@ export default function ChatPage() {
           }}
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-3 border-b-4 border-ink bg-fur px-3 py-3 sm:px-4">
+          <header className="border-ink bg-fur flex items-center gap-3 border-b-4 px-3 py-3 sm:px-4">
             <button
               type="button"
-              className="press-sm grid h-9 w-9 shrink-0 cursor-pointer place-items-center border-3 border-ink bg-paper shadow-hard-xs md:hidden"
-              onClick={() => { setDrawer(true); }}
+              className="press-sm border-ink bg-paper shadow-hard-xs grid h-9 w-9 shrink-0 cursor-pointer place-items-center border-3 md:hidden"
+              onClick={() => {
+                setDrawer(true);
+              }}
               aria-label="Open conversation list"
             >
               <Menu className="h-4 w-4" aria-hidden />
             </button>
-            <div className="shrink-0 border-3 border-ink bg-paper p-1 shadow-hard-sm">
-              <Cat className="h-[38px] w-[38px] sm:h-[46px] sm:w-[46px]" strokeWidth={1.5} />
+            <div className="border-ink bg-paper shadow-hard-sm shrink-0 border-3 p-1">
+              <Cat
+                className="h-[38px] w-[38px] sm:h-[46px] sm:w-[46px]"
+                strokeWidth={1.5}
+              />
             </div>
             <div className="flex min-w-0 flex-col leading-tight">
               <span className="truncate text-[15px] font-bold tracking-wide">
                 Meow · AI Assistant
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-[#6b5b48]">
-                <span className="h-2 w-2 border-2 border-ink bg-online" />
+                <span className="border-ink bg-online h-2 w-2 border-2" />
                 ONLINE · MeowMeow Select
               </span>
             </div>
@@ -178,7 +197,7 @@ export default function ChatPage() {
             <ThemeToggle />
             <button
               type="button"
-              className="press flex shrink-0 cursor-pointer items-center gap-1 border-3 border-ink bg-paper px-3 py-2 text-xs font-bold shadow-hard-sm hover:bg-fur-hover"
+              className="press border-ink bg-paper shadow-hard-sm hover:bg-fur-hover flex shrink-0 cursor-pointer items-center gap-1 border-3 px-3 py-2 text-xs font-bold"
               onClick={newChat}
             >
               <Plus className="h-4 w-4" aria-hidden />
@@ -203,35 +222,40 @@ export default function ChatPage() {
             )}
           </div>
 
-          <footer className="border-t-4 border-ink bg-cream p-3 sm:p-3.5">
-            <div className="flex items-end gap-2.5 border-3 border-ink bg-paper py-2 pr-2 pl-3.5 shadow-hard">
+          <footer className="border-ink bg-cream border-t-4 p-3 sm:p-3.5">
+            <div className="border-ink bg-paper shadow-hard flex items-end gap-2.5 border-3 py-2 pr-2 pl-3.5">
               <textarea
                 ref={inputRef}
                 rows={1}
                 value={input}
                 disabled={busy}
                 placeholder="Type a message… (Enter to send, Shift+Enter for a new line)"
-                onChange={(e) => { setInput(e.target.value); }}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     submit();
                   }
                 }}
-                className="max-h-32 flex-1 resize-none border-none bg-transparent p-1.5 text-[14.5px] leading-normal outline-none placeholder:text-muted disabled:opacity-60"
+                className="placeholder:text-muted max-h-32 flex-1 resize-none border-none bg-transparent p-1.5 text-[14.5px] leading-normal outline-none disabled:opacity-60"
               />
               <button
                 type="button"
                 aria-label="Send"
                 disabled={busy}
-                onClick={() => { submit(); }}
-                className="press grid h-11 w-11 shrink-0 cursor-pointer place-items-center border-3 border-ink bg-coral text-white shadow-hard-sm hover:bg-coral-hover disabled:cursor-not-allowed disabled:bg-track disabled:text-muted disabled:shadow-none"
+                onClick={() => {
+                  submit();
+                }}
+                className="press border-ink bg-coral shadow-hard-sm hover:bg-coral-hover disabled:bg-track disabled:text-muted grid h-11 w-11 shrink-0 cursor-pointer place-items-center border-3 text-white disabled:cursor-not-allowed disabled:shadow-none"
               >
                 <Send className="h-[22px] w-[22px]" aria-hidden />
               </button>
             </div>
-            <p className="mt-2.5 text-center text-[11px] tracking-wide text-muted">
-              Meow is an AI assistant. For questions about specific orders, we'll transfer you to a human agent to verify.
+            <p className="text-muted mt-2.5 text-center text-[11px] tracking-wide">
+              Meow is an AI assistant. For questions about specific orders,
+              we'll transfer you to a human agent to verify.
             </p>
           </footer>
         </div>
@@ -239,7 +263,9 @@ export default function ChatPage() {
 
       <MobileDrawer
         open={drawer}
-        onClose={() => { setDrawer(false); }}
+        onClose={() => {
+          setDrawer(false);
+        }}
         items={conversations}
         current={conversationId}
         busy={busy}
@@ -248,11 +274,18 @@ export default function ChatPage() {
         }}
         onNewChat={newChat}
       />
-      <CitePopover target={cite} onClose={() => { setCite(null); }} />
+      <CitePopover
+        target={cite}
+        onClose={() => {
+          setCite(null);
+        }}
+      />
       <TicketModal
         open={ticketFor !== null}
         conversationId={conversationId}
-        onClose={() => { setTicketFor(null); }}
+        onClose={() => {
+          setTicketFor(null);
+        }}
         onSuccess={(no) => {
           if (ticketFor !== null) {
             markActed(ticketFor);
@@ -265,7 +298,9 @@ export default function ChatPage() {
         open={refundFor !== null}
         order={refundFor?.order ?? ""}
         conversationId={conversationId}
-        onClose={() => { setRefundFor(null); }}
+        onClose={() => {
+          setRefundFor(null);
+        }}
         onSuccess={(no) => {
           if (refundFor) {
             markActed(refundFor.msgId);

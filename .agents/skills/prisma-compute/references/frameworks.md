@@ -83,13 +83,13 @@ bunx @prisma/cli@latest app deploy --framework nextjs --env .env
 `next.config.ts` must include standalone output:
 
 ```typescript
-import type { NextConfig } from "next"
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-}
+};
 
-export default nextConfig
+export default nextConfig;
 ```
 
 Do not pass `--entry` with `nextjs`; the CLI derives the runtime entrypoint from framework build output.
@@ -130,10 +130,10 @@ Project expectations:
 Example runtime shape:
 
 ```typescript
-const rawPort = (process.env.PORT ?? "").trim()
-const parsedPort = rawPort.length > 0 ? Number(rawPort) : Number.NaN
-const port = Number.isInteger(parsedPort) ? parsedPort : 8080
-serve({ fetch: app.fetch, port })
+const rawPort = (process.env.PORT ?? "").trim();
+const parsedPort = rawPort.length > 0 ? Number(rawPort) : Number.NaN;
+const port = Number.isInteger(parsedPort) ? parsedPort : 8080;
+serve({ fetch: app.fetch, port });
 ```
 
 ## NestJS
@@ -166,8 +166,8 @@ Project expectations:
 Example runtime shape:
 
 ```typescript
-const port = Number(process.env.PORT ?? "3000")
-await app.listen(port)
+const port = Number(process.env.PORT ?? "3000");
+await app.listen(port);
 ```
 
 ## TanStack Start
@@ -181,14 +181,14 @@ bunx @prisma/cli@latest app deploy --framework tanstack-start --env .env
 Expected `vite.config.ts` shape:
 
 ```typescript
-import { defineConfig } from "vite"
-import viteReact from "@vitejs/plugin-react"
-import { tanstackStart } from "@tanstack/react-start/plugin/vite"
-import { nitro } from "nitro/vite"
+import { defineConfig } from "vite";
+import viteReact from "@vitejs/plugin-react";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { nitro } from "nitro/vite";
 
 export default defineConfig({
   plugins: [tanstackStart(), nitro(), viteReact()],
-})
+});
 ```
 
 Preserve these details:
@@ -258,14 +258,14 @@ export default defineComputeConfig({
 Astro Compute-style server output usually needs:
 
 ```javascript
-import { defineConfig } from "astro/config"
-import node from "@astrojs/node"
+import { defineConfig } from "astro/config";
+import node from "@astrojs/node";
 
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
   server: { host: true },
-})
+});
 ```
 
 ## Bun, Elysia, and Plain Source Servers
@@ -292,8 +292,8 @@ Requirements:
 Elysia example:
 
 ```typescript
-const port = Number(process.env.PORT ?? "8080")
-app.listen({ port, hostname: "0.0.0.0" })
+const port = Number(process.env.PORT ?? "8080");
+app.listen({ port, hostname: "0.0.0.0" });
 ```
 
 ## Custom Build Artifacts

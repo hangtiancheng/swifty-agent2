@@ -8,13 +8,19 @@ let client: OpenAI | null = null;
 function getClient(): OpenAI {
   // Process-wide singleton: reuse one HTTP connection pool for all embed calls.
   if (client === null) {
-    client = new OpenAI({ baseURL: settings.embedBaseUrl, apiKey: settings.embedApiKey });
+    client = new OpenAI({
+      baseURL: settings.embedBaseUrl,
+      apiKey: settings.embedApiKey,
+    });
   }
   return client;
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const resp = await getClient().embeddings.create({ model: settings.embedModel, input: texts });
+  const resp = await getClient().embeddings.create({
+    model: settings.embedModel,
+    input: texts,
+  });
   return resp.data.map((d) => d.embedding);
 }
 

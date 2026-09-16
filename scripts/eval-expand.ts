@@ -11,7 +11,9 @@ const CASES = [
 async function main(): Promise<void> {
   for (const q of CASES) {
     const qs = await expandQueries(q);
-    console.log(`${qs.length === 3 ? "✅" : "⚠️"} ${JSON.stringify(q)} -> ${JSON.stringify(qs)} (count=${qs.length})`);
+    console.log(
+      `${qs.length === 3 ? "✅" : "⚠️"} ${JSON.stringify(q)} -> ${JSON.stringify(qs)} (count=${qs.length})`,
+    );
   }
   console.log(
     "\nThe core scenario should yield 3 queries with different emphases that keep the key entities of the original; when the JSON is unstable the count drops below 3. Re-run and record honestly.",

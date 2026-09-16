@@ -215,5 +215,5 @@ dist-tsup/
 
 data/swifty-agent2.db
 
-# ch10 classifier pipeline artifacts (corpus, dataset, trained model, ONNX, reports) — all generated
+# train classifier pipeline artifacts (corpus, dataset, trained model, ONNX, reports) — all generated
 data/train/

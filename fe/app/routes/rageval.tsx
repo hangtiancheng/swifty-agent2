@@ -35,7 +35,6 @@ import { fmtTime } from "~/lib/format";
 import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
-
 /* This page only renders the artifact served by /api/rag-eval/overview — not a single
    number is recomputed on the client. The re-run button goes through the shared
    /api/jobs runner (job name eval-rag) and revalidates once it finishes. */
@@ -272,13 +271,13 @@ function KpiBox({ d }: { d: Overview }) {
       {items.map((k) => (
         <div
           key={k.label}
-          className="border-3 border-ink bg-paper px-3 pt-2.5 pb-3 shadow-hard-sm"
+          className="border-ink bg-paper shadow-hard-sm border-3 px-3 pt-2.5 pb-3"
         >
-          <div className="text-[11.5px] text-muted">{k.label}</div>
+          <div className="text-muted text-[11.5px]">{k.label}</div>
           <div className="text-2xl leading-snug font-bold tabular-nums">
             {k.val}
           </div>
-          <div className="text-[11.5px] leading-6 text-ink-soft">{k.sub}</div>
+          <div className="text-ink-soft text-[11.5px] leading-6">{k.sub}</div>
         </div>
       ))}
     </div>
@@ -328,17 +327,19 @@ function RetrievalPanel({ d }: { d: Overview }) {
           {metric}
         </SectionHead>
         <span className="flex-1" />
-        <div className="flex border-3 border-ink bg-paper">
+        <div className="border-ink bg-paper flex border-3">
           {METRICS.map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={metric === m}
               className={cn(
-                "cursor-pointer border-r-3 border-ink px-3 py-1 text-xs font-bold last:border-r-0 hover:bg-fur-hover",
+                "border-ink hover:bg-fur-hover cursor-pointer border-r-3 px-3 py-1 text-xs font-bold last:border-r-0",
                 metric === m && "bg-fur",
               )}
-              onClick={() => { setMetric(m); }}
+              onClick={() => {
+                setMetric(m);
+              }}
             >
               {m}
             </button>
@@ -355,7 +356,7 @@ function RetrievalPanel({ d }: { d: Overview }) {
             )}
           >
             <i
-              className="h-3 w-3 border-2 border-ink"
+              className="border-ink h-3 w-3 border-2"
               style={{ background: s.color }}
             />
             {s.label}
@@ -383,51 +384,51 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
   const cases = R.cases ?? [];
   if (!cases.length) {
     return (
-      <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
-        ✓ All <b className="font-bold">{R.total}</b> evaluated out-of-KB questions were{" "}
-        <b className="font-bold">correctly refused</b> — no should-refuse leaks.
+      <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
+        ✓ All <b className="font-bold">{R.total}</b> evaluated out-of-KB
+        questions were <b className="font-bold">correctly refused</b> — no
+        should-refuse leaks.
       </div>
     );
   }
   return (
-    <details className="group mt-3 border-3 border-ink bg-paper">
-      <summary className="flex cursor-pointer flex-wrap items-center gap-2 bg-cream px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
+    <details className="group border-ink bg-paper mt-3 border-3">
+      <summary className="bg-cream flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
         Should-refuse leaks
         <Pill tone="sev-medium">{cases.length} cases</Pill>
-        <span className="font-normal text-muted">
-          Open to see which questions slipped through, and what evidence fooled the gates
+        <span className="text-muted font-normal">
+          Open to see which questions slipped through, and what evidence fooled
+          the gates
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
-        <p className="my-2 text-xs leading-7 text-ink-soft">
-          These out-of-KB questions should have been refused, but both evidence gates waved
-          them through. Check which section got mistaken for an answer, then tighten the
-          threshold or add an explicit "not supported" knowledge entry.
+        <p className="text-ink-soft my-2 text-xs leading-7">
+          These out-of-KB questions should have been refused, but both evidence
+          gates waved them through. Check which section got mistaken for an
+          answer, then tighten the threshold or add an explicit "not supported"
+          knowledge entry.
         </p>
         {cases.map((c) => (
-          <div
-            key={c.id}
-            className="mt-2.5 border-2 border-ink bg-cream p-2.5"
-          >
+          <div key={c.id} className="border-ink bg-cream mt-2.5 border-2 p-2.5">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="border-2 border-ink bg-fur px-1 text-[11px]">
+              <span className="border-ink bg-fur border-2 px-1 text-[11px]">
                 {c.id}
               </span>
               <span className="text-[13px] font-bold">{c.query}</span>
-              <span className="text-[11px] text-muted">Out-of-KB bucket</span>
+              <span className="text-muted text-[11px]">Out-of-KB bucket</span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="block text-[10.5px] text-muted">
+              <span className="text-muted block text-[10.5px]">
                 Section mistaken for the answer
               </span>
               {c.section_path ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="block text-[10.5px] text-muted">
+              <span className="text-muted block text-[10.5px]">
                 The evidence (verbatim)
               </span>
-              <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
+              <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
                 {c.evidence ?? ""}
               </div>
             </div>
@@ -448,9 +449,10 @@ function GenerationPanel({ d }: { d: Overview }) {
         lede="Each strategy feeds its retrieved evidence to the same model, an answer is generated, and an LLM judge counts how many gold-answer points it covers — the end-to-end proof that better retrieval yields fuller answers. Below: faithfulness of the production pipeline, and whether out-of-KB questions were properly refused."
       >
         <MissingBox>
-          The generation stage didn't finish — the judge model's upstream was unavailable, so
-          these numbers are missing. Once it recovers, press "Re-run RAG evaluation" and they
-          will fill in; retrieval scores are unaffected.
+          The generation stage didn't finish — the judge model's upstream was
+          unavailable, so these numbers are missing. Once it recovers, press
+          "Re-run RAG evaluation" and they will fill in; retrieval scores are
+          unaffected.
         </MissingBox>
       </Panel>
     );
@@ -480,17 +482,20 @@ function GenerationPanel({ d }: { d: Overview }) {
         note={d.read_notes?.rag_answer_coverage}
         fallback={
           <>
-            Same generation prompt, only the retrieval strategy changes: hybrid + rerank
-            reaches <b>{fmt2(acR)}</b> answer coverage overall, while BM25 alone manages just{" "}
-            <b>{fmt2(acB)}</b>. Weaker retrieval means missing evidence, and the answer drops
-            gold points.
+            Same generation prompt, only the retrieval strategy changes: hybrid
+            + rerank reaches <b>{fmt2(acR)}</b> answer coverage overall, while
+            BM25 alone manages just <b>{fmt2(acB)}</b>. Weaker retrieval means
+            missing evidence, and the answer drops gold points.
           </>
         }
       />
 
       <div className="mt-3.5 grid gap-3.5 md:grid-cols-[1.45fr_1fr]">
         <div>
-          <SectionHead unit="Hybrid + rerank · does the answer fabricate?" className="mt-0">
+          <SectionHead
+            unit="Hybrid + rerank · does the answer fabricate?"
+            className="mt-0"
+          >
             Faithfulness
           </SectionHead>
           <div className="mt-2 flex flex-col gap-3">
@@ -507,7 +512,7 @@ function GenerationPanel({ d }: { d: Overview }) {
                   <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
                     <div>
                       <b className="font-bold">{b.label}</b>
-                      <span className="ml-1.5 text-[11px] text-muted">
+                      <span className="text-muted ml-1.5 text-[11px]">
                         {b.key} · {f.answered} evaluated
                       </span>
                     </div>
@@ -515,7 +520,7 @@ function GenerationPanel({ d }: { d: Overview }) {
                       {has ? v.toFixed(2) : "—"}
                     </div>
                   </div>
-                  <div className="mt-1 h-3.5 border-2 border-ink bg-cream">
+                  <div className="border-ink bg-cream mt-1 h-3.5 border-2">
                     <span
                       className={cn(
                         "block h-full",
@@ -540,18 +545,18 @@ function GenerationPanel({ d }: { d: Overview }) {
             <>
               <b>D_absent bucket</b> · out-of-KB questions
               <br />
-              {G.refusal.correct} / {G.refusal.total} correct refusals, logged to the
-              low-confidence pool
+              {G.refusal.correct} / {G.refusal.total} correct refusals, logged
+              to the low-confidence pool
             </>
           }
         />
       </div>
       <RefusalCases R={G.refusal} />
       {G.skipped ? (
-        <div className="mt-3 border-3 border-ink bg-paper p-2.5 text-xs leading-7 text-ink-soft">
-          Note: {G.skipped}{" "}
-          judge calls timed out or failed this round and were skipped (upstream
-          instability); rates are computed from the available samples.
+        <div className="border-ink bg-paper text-ink-soft mt-3 border-3 p-2.5 text-xs leading-7">
+          Note: {G.skipped} judge calls timed out or failed this round and were
+          skipped (upstream instability); rates are computed from the available
+          samples.
           {(G.refusal.skipped_ids ?? []).length
             ? " Skipped out-of-KB ids: " +
               (G.refusal.skipped_ids ?? []).join(", ") +
@@ -568,54 +573,54 @@ function GenerationPanel({ d }: { d: Overview }) {
 function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
   if (!cases.length) {
     return (
-      <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
+      <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
         ✓ No generated answer from this round's production pipeline was{" "}
-        <b className="font-bold">judged "fabricated"</b> — every factual claim is backed by
-        the retrieved evidence.
+        <b className="font-bold">judged "fabricated"</b> — every factual claim
+        is backed by the retrieved evidence.
       </div>
     );
   }
   // Bucket names follow BUCKETS above — don't hand-copy a second list
   const BMAP = Object.fromEntries(BUCKETS.map((b) => [b.key, b.label]));
   return (
-    <details className="group mt-3 border-3 border-ink bg-paper">
-      <summary className="flex cursor-pointer flex-wrap items-center gap-2 bg-cream px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
+    <details className="group border-ink bg-paper mt-3 border-3">
+      <summary className="bg-cream flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
         Fabricated cases
         <Pill tone="sev-medium">{cases.length} cases</Pill>
-        <span className="font-normal text-muted">
+        <span className="text-muted font-normal">
           Open for the question / generated answer / judge rationale
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
-        <p className="my-2 text-xs leading-7 text-ink-soft">
-          These generated answers from the production pipeline were judged to contain claims
-          the retrieved evidence doesn't support. Look at which sentence was fabricated, then
-          patch the Knowledge Base or adjust the judging criteria.
+        <p className="text-ink-soft my-2 text-xs leading-7">
+          These generated answers from the production pipeline were judged to
+          contain claims the retrieved evidence doesn't support. Look at which
+          sentence was fabricated, then patch the Knowledge Base or adjust the
+          judging criteria.
         </p>
         {cases.map((c) => (
-          <div
-            key={c.id}
-            className="mt-2.5 border-2 border-ink bg-cream p-2.5"
-          >
+          <div key={c.id} className="border-ink bg-cream mt-2.5 border-2 p-2.5">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="border-2 border-ink bg-fur px-1 text-[11px]">
+              <span className="border-ink bg-fur border-2 px-1 text-[11px]">
                 {c.id}
               </span>
               <span className="text-[13px] font-bold">{c.query}</span>
-              <span className="text-[11px] text-muted">
+              <span className="text-muted text-[11px]">
                 {(BMAP[c.bucket] ?? c.bucket) + " bucket"}
               </span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="block text-[10.5px] text-muted">Judge rationale</span>
+              <span className="text-muted block text-[10.5px]">
+                Judge rationale
+              </span>
               {c.reason ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="block text-[10.5px] text-muted">
+              <span className="text-muted block text-[10.5px]">
                 Generated answer (verbatim)
               </span>
-              <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
+              <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
                 {c.answer ?? ""}
               </div>
             </div>
@@ -654,13 +659,11 @@ function TablePanel({ d }: { d: Overview }) {
             {STRAT.map((s) => (
               <Tr
                 key={s.key}
-                className={
-                  s.key === d.best.strategy ? "bg-picked" : undefined
-                }
+                className={s.key === d.best.strategy ? "bg-picked" : undefined}
               >
                 <Td className="whitespace-nowrap">
                   <i
-                    className="mr-1.5 inline-block h-2.5 w-2.5 border-2 border-ink align-baseline"
+                    className="border-ink mr-1.5 inline-block h-2.5 w-2.5 border-2 align-baseline"
                     style={{ background: s.color }}
                   />
                   {s.label}
@@ -693,8 +696,8 @@ function TablePanel({ d }: { d: Overview }) {
         </Tbl>
       </TableScroll>
       <Tip>
-        <b>D_absent</b> out-of-KB questions (should be refused) have no gold answers, so they
-        don't appear in the table above.
+        <b>D_absent</b> out-of-KB questions (should be refused) have no gold
+        answers, so they don't appear in the table above.
         {G
           ? " They run through the production pipeline and are graded on refusal only: " +
             String(G.refusal.correct) +
@@ -739,47 +742,49 @@ function HallucBox({ h }: { h: Hallucination }) {
   const lg = h.ledger;
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      <div className="border-3 border-ink bg-cream p-2.5 shadow-hard-sm">
-        <div className="text-[11.5px] text-muted">
+      <div className="border-ink bg-cream shadow-hard-sm border-3 p-2.5">
+        <div className="text-muted text-[11.5px]">
           Confirmed hallucination rate this round (counted after human review)
         </div>
         <div className="text-2xl leading-snug font-bold tabular-nums">
           {pct(h.confirmed_rate)}
-          <small className="ml-0.5 text-[13px] font-normal text-muted">%</small>
+          <small className="text-muted ml-0.5 text-[13px] font-normal">%</small>
         </div>
-        <div className="text-[11.5px] leading-6 text-ink-soft [&_b]:font-bold">
+        <div className="text-ink-soft text-[11.5px] leading-6 [&_b]:font-bold">
           <b>{h.confirmed}</b> / {h.evaluated ?? "—"} evaluated questions (
           {split(h.cases_confirmed)}
-          ). The fabricated part only counts cases marked "Resolved" — confirmed real and
-          fixed.{" "}
+          ). The fabricated part only counts cases marked "Resolved" — confirmed
+          real and fixed.{" "}
           {h.pending ? (
             <>
-              <b>{h.pending}</b> cases are still awaiting review this round, so this is a
-              lower bound and can only go up.{" "}
+              <b>{h.pending}</b> cases are still awaiting review this round, so
+              this is a lower bound and can only go up.{" "}
             </>
           ) : (
             "Everything flagged this round has been reviewed — the books are settled. "
           )}
-          Should-refuse leaks need no human confirmation: answering an out-of-KB question is
-          answering without evidence.
+          Should-refuse leaks need no human confirmation: answering an out-of-KB
+          question is answering without evidence.
         </div>
       </div>
-      <div className="border-3 border-ink bg-paper p-2.5">
-        <div className="text-[11.5px] text-muted">
+      <div className="border-ink bg-paper border-3 p-2.5">
+        <div className="text-muted text-[11.5px]">
           Judge-flagged rate this round (a lead volume, not a verdict)
         </div>
         <div className="text-2xl leading-snug font-bold tabular-nums">
           {pct(h.judged_rate)}
-          <small className="ml-0.5 text-[13px] font-normal text-muted">%</small>
+          <small className="text-muted ml-0.5 text-[13px] font-normal">%</small>
         </div>
-        <div className="text-[11.5px] leading-6 text-ink-soft [&_b]:font-bold">
-          <b>{h.judged}</b> / {h.evaluated ?? "—"} questions ({split(h.cases_judged)}). Of the
-          fabricated ones, <b>{h.dismissed}</b> were reviewed as over-strict judge calls
-          (marked "Dismissed"). Denominator = {h.graded ?? "—"} answerable + {h.absent ?? "—"}{" "}
-          out-of-KB questions. The ledger holds <b>{lg.total ?? "—"}</b> cases across all
-          rounds (Unresolved {lg.unresolved ?? "—"} · Resolved {lg.resolved ?? "—"} ·
-          Dismissed {lg.dismissed ?? "—"}) — a cross-round management view; don't divide it
-          by one round's question count.
+        <div className="text-ink-soft text-[11.5px] leading-6 [&_b]:font-bold">
+          <b>{h.judged}</b> / {h.evaluated ?? "—"} questions (
+          {split(h.cases_judged)}). Of the fabricated ones, <b>{h.dismissed}</b>{" "}
+          were reviewed as over-strict judge calls (marked "Dismissed").
+          Denominator = {h.graded ?? "—"} answerable + {h.absent ?? "—"}{" "}
+          out-of-KB questions. The ledger holds <b>{lg.total ?? "—"}</b> cases
+          across all rounds (Unresolved {lg.unresolved ?? "—"} · Resolved{" "}
+          {lg.resolved ?? "—"} · Dismissed {lg.dismissed ?? "—"}) — a
+          cross-round management view; don't divide it by one round's question
+          count.
         </div>
       </div>
     </div>
@@ -837,27 +842,27 @@ function LedgerCaseCard({
     "press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px] shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none";
 
   return (
-    <div className="mt-2.5 border-2 border-ink bg-cream p-2.5">
+    <div className="border-ink bg-cream mt-2.5 border-2 p-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="border-2 border-ink bg-fur px-1 text-[11px]">
+        <span className="border-ink bg-fur border-2 px-1 text-[11px]">
           {c.eval_id}
         </span>
         <span className="flex-1 text-[13px] font-bold">{c.query}</span>
         {c.reopened ? (
-          <span className="border-2 border-ink bg-fur px-1.5 text-[11px] font-bold">
+          <span className="border-ink bg-fur border-2 px-1.5 text-[11px] font-bold">
             Recurred
           </span>
         ) : null}
         <span
           className={cn(
-            "border-2 border-ink bg-paper px-1.5 text-[11px] whitespace-nowrap",
+            "border-ink bg-paper border-2 px-1.5 text-[11px] whitespace-nowrap",
             ST_CLS[c.status] ?? "",
           )}
         >
           {STATUS_LABEL[c.status] ?? c.status}
         </span>
       </div>
-      <div className="mt-1 text-[11px] text-muted">
+      <div className="text-muted mt-1 text-[11px]">
         {(BUCKETS.find((x) => x.key === c.bucket)?.label ?? c.bucket) +
           " · " +
           (STRAT.find((x) => x.key === c.strategy)?.label ?? c.strategy) +
@@ -868,27 +873,31 @@ function LedgerCaseCard({
           (c.judge_model ? " · judge " + c.judge_model : "")}
       </div>
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="block text-[10.5px] text-muted">Judge rationale</span>
+        <span className="text-muted block text-[10.5px]">Judge rationale</span>
         {c.reason ?? "—"}
       </div>
       {/* Resolution note: marking resolved/dismissed requires an explanation (the two fields most worth revisiting, kept together) */}
       {c.resolution ? (
         <div className="mt-1.5 text-[12.5px] leading-7">
-          <span className="block text-[10.5px] text-muted">
-            {c.status === "resolved" ? "How it was resolved" : "Why no fix is needed"}
+          <span className="text-muted block text-[10.5px]">
+            {c.status === "resolved"
+              ? "How it was resolved"
+              : "Why no fix is needed"}
           </span>
           {c.resolution}
         </div>
       ) : null}
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="block text-[10.5px] text-muted">Generated answer (verbatim)</span>
-        <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
+        <span className="text-muted block text-[10.5px]">
+          Generated answer (verbatim)
+        </span>
+        <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
           {c.answer ?? ""}
         </div>
       </div>
 
-      <details className="mt-2 border-2 border-ink bg-paper">
-        <summary className="cursor-pointer bg-cream px-2.5 py-1.5 text-[11.5px] text-ink-soft [&::-webkit-details-marker]:hidden">
+      <details className="border-ink bg-paper mt-2 border-2">
+        <summary className="bg-cream text-ink-soft cursor-pointer px-2.5 py-1.5 text-[11.5px] [&::-webkit-details-marker]:hidden">
           {n
             ? "Evidence (verbatim): " +
               String(n) +
@@ -907,14 +916,14 @@ function LedgerCaseCard({
             <div
               key={x.n}
               className={cn(
-                "border-t-2 border-ink px-2.5 py-2 text-[12.5px] leading-7",
+                "border-ink border-t-2 px-2.5 py-2 text-[12.5px] leading-7",
                 isUsed && "bg-paper",
               )}
             >
               <div>
                 <span
                   className={cn(
-                    "mr-1.5 border-2 border-ink px-1 font-bold",
+                    "border-ink mr-1.5 border-2 px-1 font-bold",
                     isUsed ? "bg-fur" : "bg-paper text-muted",
                   )}
                 >
@@ -922,13 +931,13 @@ function LedgerCaseCard({
                 </span>
                 {x.question ?? ""}
                 {isUsed ? (
-                  <span className="ml-1.5 border-2 border-ink bg-fur px-1 text-[10.5px]">
+                  <span className="border-ink bg-fur ml-1.5 border-2 px-1 text-[10.5px]">
                     Cited in answer
                   </span>
                 ) : null}
               </div>
               <div className="mt-1 whitespace-pre-wrap">{x.answer ?? ""}</div>
-              <div className="mt-0.5 text-[10.5px] text-muted">
+              <div className="text-muted mt-0.5 text-[10.5px]">
                 {(x.section_path ?? "") +
                   (x.chunk_id ? " · chunk id " + String(x.chunk_id) : "")}
               </div>
@@ -989,14 +998,16 @@ function LedgerCaseCard({
                 type="text"
                 maxLength={300}
                 autoFocus
-                className="min-w-65 flex-1 border-2 border-ink bg-paper px-2 py-1 text-[12.5px] outline-none"
+                className="border-ink bg-paper min-w-65 flex-1 border-2 px-2 py-1 text-[12.5px] outline-none"
                 placeholder={
                   noteFor === "resolved"
                     ? 'How was it resolved? e.g. added "Lite waste bin holds ~5 days" to the Knowledge Base'
                     : "Why is no fix needed? e.g. the processing deadline is our payout deadline — the judge was too strict"
                 }
                 value={note}
-                onChange={(e) => { setNote(e.target.value); }}
+                onChange={(e) => {
+                  setNote(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     submitNote();
@@ -1005,15 +1016,17 @@ function LedgerCaseCard({
               />
               <button
                 type="button"
-                className="press-sm cursor-pointer border-2 border-ink bg-fur px-2.5 py-1 text-[11.5px] shadow-hard-xs"
+                className="press-sm border-ink bg-fur shadow-hard-xs cursor-pointer border-2 px-2.5 py-1 text-[11.5px]"
                 onClick={submitNote}
               >
                 Mark as "{STATUS_LABEL[noteFor] ?? noteFor}"
               </button>
               <button
                 type="button"
-                className="cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]"
-                onClick={() => { setNoteFor(null); }}
+                className="border-ink bg-paper cursor-pointer border-2 px-2.5 py-1 text-[11.5px]"
+                onClick={() => {
+                  setNoteFor(null);
+                }}
               >
                 Cancel
               </button>
@@ -1055,9 +1068,7 @@ function LedgerPanel() {
   const h = data?.hallucination;
   const counts = data?.counts ?? {};
   const all =
-    (counts.unresolved ?? 0) +
-    (counts.resolved ?? 0) +
-    (counts.dismissed ?? 0);
+    (counts.unresolved ?? 0) + (counts.resolved ?? 0) + (counts.dismissed ?? 0);
 
   return (
     <Panel
@@ -1066,9 +1077,9 @@ function LedgerPanel() {
       lede="The section above only covers the current round — re-running the report overwrites it. The ledger keeps flagged cases across rounds, keyed by question: when the same question is flagged again, its entry updates and the count increments; a case that resurfaces after being handled reverts to “Unresolved” and is marked “Recurred” — the previous fix didn't hold. Every entry keeps the evidence behind the [n] markers in the answer at the time, so you can open it and see exactly what the model was fed."
     >
       {err ? (
-        <div className="border-3 border-ink bg-error-bg p-2.5 text-[12.5px]">
-          Failed to load ledger data: {err} (the FaithCase table needs its Prisma migration
-          applied first)
+        <div className="border-ink bg-error-bg border-3 p-2.5 text-[12.5px]">
+          Failed to load ledger data: {err} (the FaithCase table needs its
+          Prisma migration applied first)
         </div>
       ) : null}
       {h ? <HallucBox h={h} /> : null}
@@ -1093,7 +1104,7 @@ function LedgerPanel() {
                 key={label}
                 type="button"
                 className={cn(
-                  "cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px] hover:bg-fur-hover",
+                  "border-ink bg-paper hover:bg-fur-hover cursor-pointer border-2 px-2.5 py-1 text-[11.5px]",
                   status === st && "bg-fur font-bold",
                 )}
                 onClick={() => {
@@ -1116,26 +1127,30 @@ function LedgerPanel() {
               />
             ))
           ) : (
-            <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
+            <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
               {all
                 ? "No cases in this status yet."
                 : "The ledger is still empty — run make eval-rag and the fabricated cases it flags are written here automatically."}
             </div>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px] text-ink-soft">
+          <div className="text-ink-soft mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px]">
             <button
               type="button"
               disabled={data.page <= 1}
-              className="press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
-              onClick={() => { setPage((p) => p - 1); }}
+              className="press-sm border-ink bg-paper shadow-hard-xs hover:bg-fur cursor-pointer border-2 px-2.5 py-1 disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
+              onClick={() => {
+                setPage((p) => p - 1);
+              }}
             >
               ← Previous
             </button>
             <button
               type="button"
               disabled={data.page >= data.pages}
-              className="press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
-              onClick={() => { setPage((p) => p + 1); }}
+              className="press-sm border-ink bg-paper shadow-hard-xs hover:bg-fur cursor-pointer border-2 px-2.5 py-1 disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
+              onClick={() => {
+                setPage((p) => p + 1);
+              }}
             >
               Next →
             </button>
@@ -1184,7 +1199,9 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
     >
       <JobRow
         specs={d.job.specs}
-        onFinish={() => { void revalidate(); }}
+        onFinish={() => {
+          void revalidate();
+        }}
         note={
           "Artifact " +
           d.job.artifacts.json.path +
@@ -1227,11 +1244,14 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       sub="Four strategies side by side · retrieval ranking / evidence coverage / end-to-end answers in one run"
       active="/rag-eval"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
-            className={
-              state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"
-            }
+            className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
           Refresh
@@ -1239,9 +1259,19 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       }
     >
       <GateBar>
-        <Stat label="Eval set" value={String(m.n_samples ?? "—") + " questions"} />
-        <Stat label="Knowledge Base" value={String(m.kb_chunks ?? "—") + " chunks"} />
-        <Stat label="Embedding / rerank" value="qwen3.7-text-embedding-flash · reranker-v2-m3" small />
+        <Stat
+          label="Eval set"
+          value={String(m.n_samples ?? "—") + " questions"}
+        />
+        <Stat
+          label="Knowledge Base"
+          value={String(m.kb_chunks ?? "—") + " chunks"}
+        />
+        <Stat
+          label="Embedding / rerank"
+          value="qwen3.7-text-embedding-flash · reranker-v2-m3"
+          small
+        />
         <Stat label="Judge model" value={m.chat_model ?? "—"} small />
         <Stat label="Last run" value={m.generated_at ?? "—"} small />
       </GateBar>
@@ -1257,9 +1287,9 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       >
         <div className="grid gap-3 md:grid-cols-2">
           {NOTES.map(([t, body]) => (
-            <div key={t} className="border-3 border-ink bg-paper p-3">
+            <div key={t} className="border-ink bg-paper border-3 p-3">
               <h3 className="mb-1 text-[12.5px] font-bold">{t}</h3>
-              <p className="text-xs leading-7 text-ink-soft">{body}</p>
+              <p className="text-ink-soft text-xs leading-7">{body}</p>
             </div>
           ))}
         </div>

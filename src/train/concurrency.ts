@@ -1,4 +1,4 @@
-// Small concurrency helper for the ch10 pipeline: map over items with a bounded
+// Small concurrency helper for the train pipeline: map over items with a bounded
 // number of in-flight promises, preserving input order in the output.
 
 export async function mapPool<T, R>(

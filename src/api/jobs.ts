@@ -20,8 +20,12 @@ jobsRouter.post("/api/jobs/:name", (c) => {
   try {
     jobs.start(name);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to start the job";
-    throw new HTTPException(message.includes("is already running") ? 409 : 500, { message });
+    const message =
+      error instanceof Error ? error.message : "Failed to start the job";
+    throw new HTTPException(
+      message.includes("is already running") ? 409 : 500,
+      { message },
+    );
   }
   return c.json(jobs.status(name, true));
 });
@@ -38,7 +42,8 @@ jobsRouter.post("/api/jobs/:name/stop", async (c) => {
   try {
     await jobs.stop(name);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to stop the job";
+    const message =
+      error instanceof Error ? error.message : "Failed to stop the job";
     throw new HTTPException(409, { message });
   }
   return c.json(jobs.status(name, true));

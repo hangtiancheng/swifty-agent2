@@ -20,21 +20,33 @@ async function main(): Promise<void> {
   });
   await prisma.message.createMany({
     data: [
-      { conversationId: c1.id, role: "user", content: "How long does dispatch usually take?" },
+      {
+        conversationId: c1.id,
+        role: "user",
+        content: "How long does dispatch usually take?",
+      },
       {
         conversationId: c1.id,
         role: "assistant",
-        content: "In-stock items are dispatched within 48 hours of payment; pre-order items follow the dispatch time indicated on the product detail page.",
+        content:
+          "In-stock items are dispatched within 48 hours of payment; pre-order items follow the dispatch time indicated on the product detail page.",
       },
-      { conversationId: c2.id, role: "user", content: "How much do I need to spend for free shipping?" },
+      {
+        conversationId: c2.id,
+        role: "user",
+        content: "How much do I need to spend for free shipping?",
+      },
       {
         conversationId: c2.id,
         role: "assistant",
-        content: "Orders of 99 yuan or more ship free; below that, a 10-yuan shipping fee is charged; shipping to remote areas is calculated separately.",
+        content:
+          "Orders of 99 yuan or more ship free; below that, a 10-yuan shipping fee is charged; shipping to remote areas is calculated separately.",
       },
     ],
   });
-  console.log("✅ Historical conversation seeds inserted: seed-u1 / seed-u2, 2 conversations and 4 messages in total");
+  console.log(
+    "✅ Historical conversation seeds inserted: seed-u1 / seed-u2, 2 conversations and 4 messages in total",
+  );
 }
 
 await main();

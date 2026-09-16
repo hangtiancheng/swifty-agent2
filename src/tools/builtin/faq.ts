@@ -9,8 +9,18 @@ import type { KnowledgeHit } from "#/kb/store.ts";
 import { defineTool, register } from "#/tools/registry.ts";
 
 const faqInputSchema = z.object({
-  keyword: z.string().describe("The policy/rule/procedure question the user is asking (the original wording is fine)"),
-  category: z.string().nullable().optional().describe("Optional: filter by category, e.g. 'shipping fee', 'returns', 'product manual'"),
+  keyword: z
+    .string()
+    .describe(
+      "The policy/rule/procedure question the user is asking (the original wording is fine)",
+    ),
+  category: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Optional: filter by category, e.g. 'shipping fee', 'returns', 'product manual'",
+    ),
 });
 
 export interface FaqArgs {
@@ -38,7 +48,8 @@ export interface FaqResult {
 export async function queryFaq(args: FaqArgs): Promise<FaqResult> {
   const u = await queryUnderstanding.understand(args.keyword);
   const query = u.standard;
-  const bm25Text = u.expanded.length > 0 ? `${query} ${u.expanded.join(" ")}` : query;
+  const bm25Text =
+    u.expanded.length > 0 ? `${query} ${u.expanded.join(" ")}` : query;
   const category = args.category ?? null;
 
   let hits = await retrieval.searchKnowledge(query, {
@@ -48,7 +59,10 @@ export async function queryFaq(args: FaqArgs): Promise<FaqResult> {
   });
 
   // Category is model-generated and often wrong; a bad filter must not cause refusal.
-  if (category && (hits.length === 0 || (hits[0].rerank_score ?? 0) < settings.rerankMinScore)) {
+  if (
+    category &&
+    (hits.length === 0 || (hits[0].rerank_score ?? 0) < settings.rerankMinScore)
+  ) {
     hits = await retrieval.searchKnowledge(query, {
       strategy: "hybrid_rerank",
       category: null,
@@ -59,7 +73,10 @@ export async function queryFaq(args: FaqArgs): Promise<FaqResult> {
   return evaluateHits(query, hits);
 }
 
-export async function evaluateHits(query: string, hits: KnowledgeHit[]): Promise<FaqResult> {
+export async function evaluateHits(
+  query: string,
+  hits: KnowledgeHit[],
+): Promise<FaqResult> {
   const top = hits.length > 0 ? (hits[0].rerank_score ?? 0) : 0;
   if (hits.length === 0 || top < settings.rerankMinScore) {
     return {
@@ -73,7 +90,12 @@ export async function evaluateHits(query: string, hits: KnowledgeHit[]): Promise
   const evidenceTexts = hits.map((h) => `${h.question} ${h.answer}`);
   const check = await selfcheck.checkSufficient(query, evidenceTexts);
   if (!check.useful) {
-    return { sufficient: false, source: "self_check", reason: check.reason, citations: [] };
+    return {
+      sufficient: false,
+      source: "self_check",
+      reason: check.reason,
+      citations: [],
+    };
   }
 
   const arranged = retrieval.arrangeHeadTail(hits);
@@ -85,7 +107,9 @@ export async function evaluateHits(query: string, hits: KnowledgeHit[]): Promise
     answer: h.answer,
     content_type: h.content_type,
   }));
-  const evidence = citations.map((c) => `[${c.n}] ${c.question}: ${c.answer}`).join("\n");
+  const evidence = citations
+    .map((c) => `[${c.n}] ${c.question}: ${c.answer}`)
+    .join("\n");
   return { sufficient: true, evidence, citations };
 }
 
@@ -101,7 +125,10 @@ register(
     maxRetries: 0,
     handler: async (args) => {
       const parsed = faqInputSchema.parse(args);
-      return queryFaq({ keyword: parsed.keyword, category: parsed.category ?? null });
+      return queryFaq({
+        keyword: parsed.keyword,
+        category: parsed.category ?? null,
+      });
     },
   }),
 );

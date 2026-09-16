@@ -1,4 +1,4 @@
-// Eval-set self-check (ch04): the 300 hand-written ground-truth rows are guarded by this script,
+// Eval-set self-check (rag): the 300 hand-written ground-truth rows are guarded by this script,
 // not by eyeballing.
 //
 // Checks five things:
@@ -24,7 +24,12 @@ import { closeDb } from "#/db/client.ts";
 import { listVectorizedChunks } from "#/db/repository.ts";
 
 const EVALSET = path.join(settings.root, "tests/data/eval_rag.jsonl");
-const GRADED_BUCKETS = new Set(["A_policy", "B_model", "C_colloquial", "E_multi"]);
+const GRADED_BUCKETS = new Set([
+  "A_policy",
+  "B_model",
+  "C_colloquial",
+  "E_multi",
+]);
 const LOOSE_LIMIT = 4; // warn when one expect_section hits more sections than this
 
 const rowSchema = z.object({
@@ -33,7 +38,9 @@ const rowSchema = z.object({
   query: z.string(),
   expect_section: z.array(z.string()),
   expect_points: z.array(z.string()),
-  expect_sections_all: z.array(z.union([z.string(), z.array(z.string())])).optional(),
+  expect_sections_all: z
+    .array(z.union([z.string(), z.array(z.string())]))
+    .optional(),
   should_refuse: z.boolean(),
 });
 type Row = z.infer<typeof rowSchema>;
@@ -74,14 +81,18 @@ async function main(): Promise<number> {
     ["query", rows.map((r) => r.query)],
   ];
   for (const [label, values] of uniquenessChecks) {
-    const dup = [...counter(values).entries()].filter(([, n]) => n > 1).map(([v]) => v);
+    const dup = [...counter(values).entries()]
+      .filter(([, n]) => n > 1)
+      .map(([v]) => v);
     if (dup.length > 0) {
       errs.push(`${label} duplicated: ${JSON.stringify(dup)}`);
     }
   }
   const perBucket = counter(rows.map((r) => r.bucket));
   if (new Set(perBucket.values()).size !== 1) {
-    errs.push(`bucket counts differ: ${JSON.stringify(Object.fromEntries(perBucket))}`);
+    errs.push(
+      `bucket counts differ: ${JSON.stringify(Object.fromEntries(perBucket))}`,
+    );
   }
 
   const sections = [...textBySection.keys()];
@@ -104,17 +115,23 @@ async function main(): Promise<number> {
       errs.push(`${rid}: missing expect_section or expect_points`);
       continue;
     }
-    const groups: (string | string[])[] = r.expect_sections_all ?? [r.expect_section];
+    const groups: (string | string[])[] = r.expect_sections_all ?? [
+      r.expect_section,
+    ];
     let matched: string[] = [];
     let bad = false;
     groups.forEach((rawG, gi) => {
       const g = Array.isArray(rawG) ? rawG : [rawG];
       const hit = sections.filter((p) => g.some((w) => p.includes(w)));
       if (hit.length === 0) {
-        errs.push(`${rid}: group ${gi + 1} ${JSON.stringify(g)} hits 0 sections`);
+        errs.push(
+          `${rid}: group ${gi + 1} ${JSON.stringify(g)} hits 0 sections`,
+        );
         bad = true;
       } else if (hit.length > LOOSE_LIMIT) {
-        warns.push(`${rid}: group ${gi + 1} ${JSON.stringify(g)} hits ${hit.length} sections, judged too loosely`);
+        warns.push(
+          `${rid}: group ${gi + 1} ${JSON.stringify(g)} hits ${hit.length} sections, judged too loosely`,
+        );
       }
       matched = matched.concat(hit);
     });
@@ -123,10 +140,14 @@ async function main(): Promise<number> {
     }
     matched = [...new Set(matched)].sort();
     candHist.set(groups.length, (candHist.get(groups.length) ?? 0) + 1);
-    const target = norm(matched.map((p) => textBySection.get(p) ?? "").join(""));
+    const target = norm(
+      matched.map((p) => textBySection.get(p) ?? "").join(""),
+    );
     for (const pt of r.expect_points) {
       if (!target.includes(norm(pt))) {
-        const where = allText.includes(norm(pt)) ? "in the KB but not in the target section" : "not found anywhere in the KB";
+        const where = allText.includes(norm(pt))
+          ? "in the KB but not in the target section"
+          : "not found anywhere in the KB";
         errs.push(`${rid}: point "${pt}" ${where}`);
       }
     }
@@ -136,7 +157,9 @@ async function main(): Promise<number> {
   console.log(
     `Eval set ${rows.length} questions · per bucket ${JSON.stringify(Object.fromEntries(perBucket))} · KB ${textBySection.size} sections`,
   );
-  console.log(`Answerable questions' "how many evidence groups" distribution: ${JSON.stringify(Object.fromEntries(sortedCand))}`);
+  console.log(
+    `Answerable questions' "how many evidence groups" distribution: ${JSON.stringify(Object.fromEntries(sortedCand))}`,
+  );
   for (const e of errs) {
     console.log("  ✗", e);
   }
@@ -144,7 +167,8 @@ async function main(): Promise<number> {
     console.log("  !", w);
   }
   console.log(
-    `\n${errs.length} errors · ${warns.length} warnings` + (errs.length === 0 ? " — self-check passed" : " — self-check FAILED"),
+    `\n${errs.length} errors · ${warns.length} warnings` +
+      (errs.length === 0 ? " — self-check passed" : " — self-check FAILED"),
   );
   return errs.length > 0 ? 1 : 0;
 }

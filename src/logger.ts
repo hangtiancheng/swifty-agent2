@@ -14,11 +14,19 @@ fs.mkdirSync(logDir, { recursive: true });
 const streams: pino.StreamEntry[] = [
   {
     level: "info",
-    stream: pretty({ colorize: true, translateTime: "SYS:HH:MM:ss", ignore: "pid,hostname" }),
+    stream: pretty({
+      colorize: true,
+      translateTime: "SYS:HH:MM:ss",
+      ignore: "pid,hostname",
+    }),
   },
   {
     level: "info",
-    stream: pino.destination({ dest: path.join(logDir, "app.log"), sync: false, mkdir: true }),
+    stream: pino.destination({
+      dest: path.join(logDir, "app.log"),
+      sync: false,
+      mkdir: true,
+    }),
   },
 ];
 

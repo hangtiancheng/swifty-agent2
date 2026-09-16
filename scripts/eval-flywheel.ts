@@ -91,7 +91,9 @@ function formatEvidence(
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => { reject(new Error("call timeout")); }, ms);
+    timer = setTimeout(() => {
+      reject(new Error("call timeout"));
+    }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {
@@ -208,7 +210,9 @@ async function trendNote(runs: repository.EvalRunRow[]): Promise<void> {
       triggered_by: latest.triggeredBy,
       ...metricPick(latest.metrics),
     },
-    previous_round: prev ? { round: prev.id, ...metricPick(prev.metrics) } : null,
+    previous_round: prev
+      ? { round: prev.id, ...metricPick(prev.metrics) }
+      : null,
     delta: prev
       ? Object.fromEntries(
           METRICS.map((n) => [
@@ -221,7 +225,10 @@ async function trendNote(runs: repository.EvalRunRow[]): Promise<void> {
       : null,
   };
   const note = await readNotes.generate("eval_trend", payload);
-  logLine("\nRead note: " + (note ?? "none this round (the page uses its fallback sentence)"));
+  logLine(
+    "\nRead note: " +
+      (note ?? "none this round (the page uses its fallback sentence)"),
+  );
   fs.writeFileSync(
     NOTE,
     `${JSON.stringify({ run_id: latest.id, note }, null, 1)}\n`,
@@ -276,7 +283,9 @@ async function main(): Promise<void> {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   await trendNote(runs);
   fs.writeFileSync(OUT, `${lines.join("\n")}\n`, "utf8");
-  logLine("\nTrend report written to data/observability/reports/eval_trend.txt");
+  logLine(
+    "\nTrend report written to data/observability/reports/eval_trend.txt",
+  );
 }
 
 try {

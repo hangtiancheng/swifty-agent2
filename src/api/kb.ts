@@ -20,17 +20,29 @@ import * as chunking from "#/kb/chunking.ts";
 import { dedupeFingerprint } from "#/kb/dedup.ts";
 import * as documents from "#/kb/documents.ts";
 import * as dualwrite from "#/kb/dualwrite.ts";
-import { CONTENT_TYPE_DESC, CONTENT_TYPES, KB_DIR, SOURCE_TYPES } from "#/kb/sources.ts";
+import {
+  CONTENT_TYPE_DESC,
+  CONTENT_TYPES,
+  KB_DIR,
+  SOURCE_TYPES,
+} from "#/kb/sources.ts";
 import * as store from "#/kb/store.ts";
 import { childLogger } from "#/logger.ts";
-
 
 const log = childLogger("api.kb");
 export const kbRouter = new Hono();
 
 const MAX_TEXT_CHARS = 40_000;
 const STRATEGIES = ["vector", "bm25", "hybrid", "hybrid_rerank"] as const;
-const KB_JOBS = ["kb-preview", "kb-build", "kb-repatch", "kb-mine", "kb-vectorize", "seed-conv", "kb-reset"];
+const KB_JOBS = [
+  "kb-preview",
+  "kb-build",
+  "kb-repatch",
+  "kb-mine",
+  "kb-vectorize",
+  "seed-conv",
+  "kb-reset",
+];
 
 function fingerprint(questions: string, answer: string): string {
   return dedupeFingerprint(questions, answer);
@@ -42,7 +54,11 @@ interface ChunkViewInput {
   duplicate: boolean | null;
 }
 
-function chunkView({ seq, chunk, duplicate }: ChunkViewInput): Record<string, unknown> {
+function chunkView({
+  seq,
+  chunk,
+  duplicate,
+}: ChunkViewInput): Record<string, unknown> {
   return {
     seq,
     section_path: chunk.sectionPath || "(no heading hierarchy)",
@@ -66,9 +82,15 @@ function features(chunks: documents.Chunk[]): Record<string, unknown> {
   const values = [...groups.values()];
   return {
     sections: groups.size,
-    table_split: values.some((g) => g.length > 1 && chunking.isTableBlock(g[0].answer)),
-    overlap: values.some((g) => g.length > 1 && !chunking.isTableBlock(g[0].answer)),
-    multi_piece_sections: [...groups.entries()].filter(([, g]) => g.length > 1).map(([p]) => p),
+    table_split: values.some(
+      (g) => g.length > 1 && chunking.isTableBlock(g[0].answer),
+    ),
+    overlap: values.some(
+      (g) => g.length > 1 && !chunking.isTableBlock(g[0].answer),
+    ),
+    multi_piece_sections: [...groups.entries()]
+      .filter(([, g]) => g.length > 1)
+      .map(([p]) => p),
   };
 }
 
@@ -84,7 +106,11 @@ async function existingFingerprints(): Promise<Set<string> | null> {
 export async function milvusState(): Promise<Record<string, unknown>> {
   // The local store has no separate service to probe: "offline" here means the DB read failed.
   try {
-    return { online: true, count: await store.count(), collection: store.COLLECTION };
+    return {
+      online: true,
+      count: await store.count(),
+      collection: store.COLLECTION,
+    };
   } catch (error) {
     return {
       online: false,
@@ -151,40 +177,68 @@ kbRouter.get("/api/kb/overview", async () => {
   }
 
   return Response.json({
-    chunks: stats ?? { total: null, pending: null, done: null, by_content_type: {}, key_clause: null },
+    chunks: stats ?? {
+      total: null,
+      pending: null,
+      done: null,
+      by_content_type: {},
+      key_clause: null,
+    },
     recent,
     staging,
     db_error: dbError,
     milvus,
     consistent,
     sources: await sources(),
-    content_types: CONTENT_TYPES.map((k) => ({ key: k, desc: CONTENT_TYPE_DESC[k] })),
+    content_types: CONTENT_TYPES.map((k) => ({
+      key: k,
+      desc: CONTENT_TYPE_DESC[k],
+    })),
     jobs: KB_JOBS.map((n) => jobStatus(n)),
   });
 });
 
-function resolvePreview(body: { text: string | null; file: string | null; content_type: string }): [string, string, string] {
+function resolvePreview(body: {
+  text: string | null;
+  file: string | null;
+  content_type: string;
+}): [string, string, string] {
   if (body.file) {
     if (!(body.file in SOURCE_TYPES)) {
-      throw new HTTPException(400, { message: `Not in the KB material list: ${body.file}` });
+      throw new HTTPException(400, {
+        message: `Not in the KB material list: ${body.file}`,
+      });
     }
     const file = path.join(KB_DIR, body.file);
     if (!fs.existsSync(file)) {
-      throw new HTTPException(404, { message: `Material file not found: data/kb/${body.file}` });
+      throw new HTTPException(404, {
+        message: `Material file not found: data/kb/${body.file}`,
+      });
     }
-    return [fs.readFileSync(file, "utf8"), SOURCE_TYPES[body.file], `data/kb/${body.file}`];
+    return [
+      fs.readFileSync(file, "utf8"),
+      SOURCE_TYPES[body.file],
+      `data/kb/${body.file}`,
+    ];
   }
   const text = (body.text ?? "").trim();
   if (!text) {
-    throw new HTTPException(400, { message: "The text is empty; paste some Markdown before previewing" });
+    throw new HTTPException(400, {
+      message: "The text is empty; paste some Markdown before previewing",
+    });
   }
   if (text.length > MAX_TEXT_CHARS) {
     throw new HTTPException(400, {
       message: `The text is ${text.length} characters, over the single-ingest limit of ${MAX_TEXT_CHARS}; split it up`,
     });
   }
-  if (!Array.isArray(CONTENT_TYPES) || !CONTENT_TYPES.some((t) => t === body.content_type)) {
-    throw new HTTPException(400, { message: `content_type must be one of ${CONTENT_TYPES.join("/")}` });
+  if (
+    !Array.isArray(CONTENT_TYPES) ||
+    !CONTENT_TYPES.some((t) => t === body.content_type)
+  ) {
+    throw new HTTPException(400, {
+      message: `content_type must be one of ${CONTENT_TYPES.join("/")}`,
+    });
   }
   return [text, body.content_type, "manual entry"];
 }
@@ -221,14 +275,24 @@ kbRouter.post("/api/kb/preview", async (c) => {
 
 kbRouter.post("/api/kb/ingest", async (c) => {
   const body = await parseJsonBody(c, ingestRequestSchema);
-  const [text, ctype] = resolvePreview({ text: body.text, file: null, content_type: body.content_type });
+  const [text, ctype] = resolvePreview({
+    text: body.text,
+    file: null,
+    content_type: body.content_type,
+  });
   const chunks = await documents.buildChunks(text, ctype);
   if (chunks.length === 0) {
-    throw new HTTPException(400, { message: "This text produced no chunks; check whether it has headings but no body" });
+    throw new HTTPException(400, {
+      message:
+        "This text produced no chunks; check whether it has headings but no body",
+    });
   }
   const seen = await existingFingerprints();
   if (seen === null) {
-    throw new HTTPException(503, { message: "Cannot reach the local DB, so ingestion is impossible (both dedup and persistence need it)" });
+    throw new HTTPException(503, {
+      message:
+        "Cannot reach the local DB, so ingestion is impossible (both dedup and persistence need it)",
+    });
   }
 
   const kept: documents.Chunk[] = [];
@@ -236,7 +300,10 @@ kbRouter.post("/api/kb/ingest", async (c) => {
   for (const chunk of chunks) {
     const fp = fingerprint(chunk.questions, chunk.answer);
     if (seen.has(fp)) {
-      skipped.push({ questions: chunk.questions, answer: chunk.answer.slice(0, 80) });
+      skipped.push({
+        questions: chunk.questions,
+        answer: chunk.answer.slice(0, 80),
+      });
       continue;
     }
     seen.add(fp);
@@ -249,7 +316,10 @@ kbRouter.post("/api/kb/ingest", async (c) => {
     try {
       vectorized = await dualwrite.vectorizePending();
     } catch (error) {
-      const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
+      const detail =
+        error instanceof Error
+          ? `${error.constructor.name}: ${error.message}`
+          : String(error);
       throw new HTTPException(502, {
         message: `${ids.length} chunks stored (pending), but vectorization failed: ${detail}. After fixing the embedding service, run "Vectorize pending chunks" to catch up; no need to re-ingest`,
       });
@@ -271,10 +341,19 @@ kbRouter.post("/api/kb/ingest", async (c) => {
 kbRouter.post("/api/kb/vectorize", async () => {
   try {
     const n = await dualwrite.vectorizePending();
-    return Response.json({ vectorized: n, chunk_stats: await repository.knowledgeStats(), milvus: await milvusState() });
+    return Response.json({
+      vectorized: n,
+      chunk_stats: await repository.knowledgeStats(),
+      milvus: await milvusState(),
+    });
   } catch (error) {
-    const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
-    throw new HTTPException(502, { message: `Vectorization failed: ${detail}` });
+    const detail =
+      error instanceof Error
+        ? `${error.constructor.name}: ${error.message}`
+        : String(error);
+    throw new HTTPException(502, {
+      message: `Vectorization failed: ${detail}`,
+    });
   }
 });
 
@@ -282,13 +361,20 @@ kbRouter.post("/api/kb/search", async (c) => {
   const body = await parseJsonBody(c, searchRequestSchema);
   const q = body.q.trim();
   if (!q) {
-    throw new HTTPException(400, { message: "Enter a question before searching" });
+    throw new HTTPException(400, {
+      message: "Enter a question before searching",
+    });
   }
   if (!STRATEGIES.some((s) => s === body.strategy)) {
-    throw new HTTPException(400, { message: `strategy must be one of ${STRATEGIES.join("/")}` });
+    throw new HTTPException(400, {
+      message: `strategy must be one of ${STRATEGIES.join("/")}`,
+    });
   }
   try {
-    const hits = await retrieval.searchKnowledge(q, { strategy: body.strategy, topK: body.top_k });
+    const hits = await retrieval.searchKnowledge(q, {
+      strategy: body.strategy,
+      topK: body.top_k,
+    });
     return Response.json({
       q,
       strategy: body.strategy,
@@ -305,8 +391,13 @@ kbRouter.post("/api/kb/search", async (c) => {
       })),
     });
   } catch (error) {
-    const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
-    throw new HTTPException(502, { message: `Retrieval failed (${detail}); both the embedding upstream and the vector store must be up` });
+    const detail =
+      error instanceof Error
+        ? `${error.constructor.name}: ${error.message}`
+        : String(error);
+    throw new HTTPException(502, {
+      message: `Retrieval failed (${detail}); both the embedding upstream and the vector store must be up`,
+    });
   }
 });
 
@@ -315,13 +406,15 @@ kbRouter.get("/api/kb/staging", async (c) => {
   const stats = await repository.stagingStats();
   const rows: Record<string, unknown[]> = {};
   for (const st of ["extracted", "kept", "discarded", "approved", "rejected"]) {
-    rows[st] = (await repository.listStagingByStatus(st)).slice(0, limit).map((r) => ({
-      id: r.id,
-      batch_no: r.batchNo,
-      source_ref: r.sourceRef,
-      question: r.question,
-      answer: r.answer.slice(0, 160),
-    }));
+    rows[st] = (await repository.listStagingByStatus(st))
+      .slice(0, limit)
+      .map((r) => ({
+        id: r.id,
+        batch_no: r.batchNo,
+        source_ref: r.sourceRef,
+        question: r.question,
+        answer: r.answer.slice(0, 160),
+      }));
   }
   return Response.json({ stats, rows });
 });
@@ -330,7 +423,10 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
   const body = await parseJsonBody(c, stagingReviewRequestSchema);
   const rows = await repository.listStagingByIds(body.ids, "kept");
   if (rows.length === 0) {
-    throw new HTTPException(409, { message: "These rows are not in the pending-review state (they may have been processed already)" });
+    throw new HTTPException(409, {
+      message:
+        "These rows are not in the pending-review state (they may have been processed already)",
+    });
   }
   const chunks: documents.Chunk[] = rows.map((r) => ({
     category: "conversation_history",
@@ -345,20 +441,32 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
     ids = await dualwrite.writePending(chunks);
     await dualwrite.vectorizePending();
   } catch (error) {
-    log.error({ err: error, staging: rows.map((r) => r.id) }, "staging approval write-back failed; status unchanged");
+    log.error(
+      { err: error, staging: rows.map((r) => r.id) },
+      "staging approval write-back failed; status unchanged",
+    );
     if (ids.length > 0) {
       try {
         await repository.deleteKnowledgeChunks(ids);
       } catch (rollbackError) {
-        log.error({ err: rollbackError, ids }, "pending chunk rollback failed (manual cleanup needed)");
+        log.error(
+          { err: rollbackError, ids },
+          "pending chunk rollback failed (manual cleanup needed)",
+        );
       }
     }
     throw new HTTPException(502, {
       message: `Write-back to the knowledge base failed (${error instanceof Error ? error.constructor.name : "Error"}); these rows are still pending review — fix the embedding service/vector store and click again`,
     });
   }
-  await repository.setStagingStatus(rows.map((r) => r.id), "approved");
-  log.info({ staging: rows.map((r) => r.id), chunks: ids }, "staging approved into knowledge base");
+  await repository.setStagingStatus(
+    rows.map((r) => r.id),
+    "approved",
+  );
+  log.info(
+    { staging: rows.map((r) => r.id), chunks: ids },
+    "staging approved into knowledge base",
+  );
   return Response.json({ approved: rows.length, chunk_ids: ids });
 });
 
@@ -366,8 +474,14 @@ kbRouter.post("/api/kb/staging/reject", async (c) => {
   const body = await parseJsonBody(c, stagingReviewRequestSchema);
   const rows = await repository.listStagingByIds(body.ids, "kept");
   if (rows.length === 0) {
-    throw new HTTPException(409, { message: "These rows are not in the pending-review state (they may have been processed already)" });
+    throw new HTTPException(409, {
+      message:
+        "These rows are not in the pending-review state (they may have been processed already)",
+    });
   }
-  await repository.setStagingStatus(rows.map((r) => r.id), "rejected");
+  await repository.setStagingStatus(
+    rows.map((r) => r.id),
+    "rejected",
+  );
   return Response.json({ rejected: rows.length });
 });

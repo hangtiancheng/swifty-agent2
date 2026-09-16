@@ -20,7 +20,8 @@ export type ContentType = (typeof CONTENT_TYPES)[number];
 
 export const CONTENT_TYPE_DESC: Record<ContentType, string> = {
   faq: "Product FAQ: questions hold real user phrasings",
-  policy: "Policy clauses: questions hold section titles, category holds the parent path",
+  policy:
+    "Policy clauses: questions hold section titles, category holds the parent path",
   manual: "After-sales manual: same as policy, split by heading hierarchy",
   spec: "Product specs: contain concrete model numbers; exact-term recall relies on them",
 };

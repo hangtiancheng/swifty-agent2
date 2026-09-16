@@ -34,7 +34,10 @@ declare module "@huggingface/tokenizers" {
     constructor(tokenizer: object, config: object);
     encode(text: string, options?: EncodeOptions): Encoding;
     decode(tokenIds: number[], options?: DecodeOptions): string;
-    tokenize(text: string, options?: { text_pair?: string | null; add_special_tokens?: boolean }): string[];
+    tokenize(
+      text: string,
+      options?: { text_pair?: string | null; add_special_tokens?: boolean },
+    ): string[];
     token_to_id(token: string): number | undefined;
     id_to_token(id: number): string | undefined;
     get_vocab(withAddedTokens?: boolean): Map<string, number>;

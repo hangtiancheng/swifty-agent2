@@ -6,7 +6,6 @@ import { AdminNav } from "./admin-nav";
 
 import { cn } from "~/lib/cn";
 
-
 /* ---------- Buttons ---------- */
 
 type BtnVariant = "default" | "go" | "no" | "ok";
@@ -111,7 +110,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-block whitespace-nowrap border-2.5 border-ink px-2 py-px text-[11.5px] font-bold",
+        "border-2.5 border-ink inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap",
         PILL_TONE[tone],
         className,
       )}
@@ -144,7 +143,7 @@ export function Panel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
       className={cn(
-        "mt-4 border-4 border-ink bg-cream p-3.5 shadow-hard sm:px-4.5 sm:py-4",
+        "border-ink bg-cream shadow-hard mt-4 border-4 p-3.5 sm:px-4.5 sm:py-4",
         tight && "pb-3.5",
         className,
       )}
@@ -156,7 +155,7 @@ export function Panel({
         </h2>
       ) : null}
       {lede ? (
-        <p className="mt-1 mb-3 text-[12.5px] leading-7 text-ink-soft">
+        <p className="text-ink-soft mt-1 mb-3 text-[12.5px] leading-7">
           {lede}
         </p>
       ) : null}
@@ -175,9 +174,9 @@ export function TopBar({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-4 border-ink bg-cream px-4 py-3.5 shadow-hard-lg">
+    <div className="border-ink bg-cream shadow-hard-lg flex flex-wrap items-center gap-x-3.5 gap-y-2 border-4 px-4 py-3.5">
       <h1 className="text-base font-bold tracking-wide sm:text-lg">{title}</h1>
-      {sub ? <span className="text-xs text-muted">{sub}</span> : null}
+      {sub ? <span className="text-muted text-xs">{sub}</span> : null}
       <span className="flex-1" />
       {children}
     </div>
@@ -225,7 +224,7 @@ export function Stat({
   small?: boolean;
 }) {
   return (
-    <div className="min-w-[104px] border-3 border-ink bg-paper px-3.5 py-2 text-[12.5px] shadow-hard-sm">
+    <div className="border-ink bg-paper shadow-hard-sm min-w-[104px] border-3 px-3.5 py-2 text-[12.5px]">
       <span>{label}</span>
       <b
         className={cn(
@@ -259,7 +258,7 @@ export function Tip({
   return (
     <div
       className={cn(
-        "mt-3 border-3 border-dashed border-ink bg-paper px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:border-ink [&_b]:bg-fur [&_b]:px-1 [&_b]:font-bold",
+        "border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-3 border-3 border-dashed px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:px-1 [&_b]:font-bold",
         className,
       )}
     >
@@ -279,11 +278,12 @@ export function MissingBox({
   return (
     <div
       className={cn(
-        "border-3 border-dashed border-muted bg-paper p-3.5 text-center text-[12.5px] text-muted",
+        "border-muted bg-paper text-muted border-3 border-dashed p-3.5 text-center text-[12.5px]",
         className,
       )}
     >
-      {children ?? "Artifact not generated yet — run the corresponding make target first"}
+      {children ??
+        "Artifact not generated yet — run the corresponding make target first"}
     </div>
   );
 }
@@ -298,7 +298,9 @@ export function TableScroll({
   className?: string;
 }) {
   return (
-    <div className={cn("scroll-cat overflow-x-auto", className)}>{children}</div>
+    <div className={cn("scroll-cat overflow-x-auto", className)}>
+      {children}
+    </div>
   );
 }
 
@@ -311,7 +313,7 @@ export function Tbl({
 }) {
   return (
     <table
-      className={cn("w-full border-collapse bg-paper text-[12.5px]", className)}
+      className={cn("bg-paper w-full border-collapse text-[12.5px]", className)}
     >
       {children}
     </table>
@@ -328,7 +330,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "border-2 border-ink bg-fur px-2 py-1.5 text-left text-xs font-bold whitespace-nowrap",
+        "border-ink bg-fur border-2 px-2 py-1.5 text-left text-xs font-bold whitespace-nowrap",
         className,
       )}
     >
@@ -352,7 +354,7 @@ export function Td({
     <td
       colSpan={colSpan}
       className={cn(
-        "border-2 border-ink px-2 py-1.5 text-left align-middle",
+        "border-ink border-2 px-2 py-1.5 text-left align-middle",
         num && "num",
         className,
       )}
@@ -388,14 +390,18 @@ export function ScoreCell({
 }) {
   const width = Math.max(2, Math.round((v ?? 0) * 100));
   const hasLine = redLine !== null && redLine !== undefined;
-  const tone = !hasLine ? "bg-fur" : (v ?? 0) >= redLine ? "bg-online" : "bg-error";
+  const tone = !hasLine
+    ? "bg-fur"
+    : (v ?? 0) >= redLine
+      ? "bg-online"
+      : "bg-error";
   return (
     <Td num>
       <div className="flex items-center justify-end gap-1.5">
         <span className="tabular-nums">
           {v === null || v === undefined ? "—" : v.toFixed(3)}
         </span>
-        <span className="h-2 w-[54px] shrink-0 border-2 border-ink bg-cream">
+        <span className="border-ink bg-cream h-2 w-[54px] shrink-0 border-2">
           <span
             className={cn("block h-full", tone)}
             style={{ width: `${width}%` }}
@@ -416,7 +422,7 @@ export function KvBox({
   value: ReactNode;
 }) {
   return (
-    <div className="min-w-[84px] border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]">
+    <div className="border-ink bg-paper min-w-[84px] border-2 px-2.5 py-1 text-[11.5px]">
       <b className="block text-[17px] leading-snug">{value}</b>
       {label}
     </div>
@@ -439,12 +445,10 @@ export function SectionHead({
   className?: string;
 }) {
   return (
-    <div
-      className={cn("mt-4 mb-0.5 text-[13px] font-bold", className)}
-    >
+    <div className={cn("mt-4 mb-0.5 text-[13px] font-bold", className)}>
       {children}
       {unit ? (
-        <span className="ml-1.5 text-[11.5px] font-normal text-muted">
+        <span className="text-muted ml-1.5 text-[11.5px] font-normal">
           {unit}
         </span>
       ) : null}

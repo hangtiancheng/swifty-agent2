@@ -1,5 +1,5 @@
-"""ch10 training: full-parameter fine-tune of a BERT/RoBERTa encoder, 17-class multi-label
-(BCEWithLogitsLoss). Run: make ch10-train. Device auto-selects cuda->mps->cpu (Trainer picks);
+"""train training: full-parameter fine-tune of a BERT/RoBERTa encoder, 17-class multi-label
+(BCEWithLogitsLoss). Run: make train-train. Device auto-selects cuda->mps->cpu (Trainer picks);
 regularization weight_decay + early stopping watch validation micro-F1.
 
 Vendored Python (the JS ecosystem has no equivalent of full-parameter transformer train).
@@ -7,8 +7,8 @@ The authoritative taxonomy is read from data/train/taxonomy.json (exported by th
 so label ids/names/severity stay in sync with src/core/taxonomy.ts.
 
 Base model: the corpus is English, so the default is an English encoder. Override with
-CH10_BASE_MODEL (e.g. a domain or multilingual model). If HF download fails:
-HF_ENDPOINT=https://hf-mirror.com make ch10-train.
+TRAIN_BASE_MODEL (e.g. a domain or multilingual model). If HF download fails:
+HF_ENDPOINT=https://hf-mirror.com make train-train.
 """
 
 import json
@@ -36,7 +36,7 @@ from transformers import (
     default_data_collator,
 )
 
-BASE = os.environ.get("CH10_BASE_MODEL", "bert-base-uncased")
+BASE = os.environ.get("TRAIN_BASE_MODEL", "bert-base-uncased")
 DATA = pathlib.Path("data/train/dataset")
 OUT = pathlib.Path("data/train/model")
 

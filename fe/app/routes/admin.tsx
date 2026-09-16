@@ -4,9 +4,16 @@ import { useRevalidator } from "react-router";
 
 import type { Route } from "./+types/admin";
 
-import { Btn, BtnLink, MissingBox, PageShell, Pill, Tip, type PillTone } from "~/components/ui";
+import {
+  Btn,
+  BtnLink,
+  MissingBox,
+  PageShell,
+  Pill,
+  Tip,
+  type PillTone,
+} from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
-
 
 interface AdminMetric {
   label: string;
@@ -25,8 +32,7 @@ interface AdminModule {
 }
 
 type LoaderData =
-  | { ok: true; modules: AdminModule[] }
-  | { ok: false; error: string };
+  { ok: true; modules: AdminModule[] } | { ok: false; error: string };
 
 export async function clientLoader(): Promise<LoaderData> {
   try {
@@ -67,7 +73,7 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(i * 0.05, 0.3), duration: 0.22 }}
-      className="flex flex-col border-4 border-ink bg-cream p-3.5 shadow-hard"
+      className="border-ink bg-cream shadow-hard flex flex-col border-4 p-3.5"
     >
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-[15px] font-bold">{m.title}</h3>
@@ -76,8 +82,8 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
           {STATUS_LABEL[m.status] ?? m.status}
         </Pill>
       </div>
-      <p className="mt-1.5 text-xs leading-6 text-ink-soft">{m.lede}</p>
-      <div className="mt-2.5 border-2 border-ink bg-paper px-2.5 py-1.5 text-[13px] leading-6">
+      <p className="text-ink-soft mt-1.5 text-xs leading-6">{m.lede}</p>
+      <div className="border-ink bg-paper mt-2.5 border-2 px-2.5 py-1.5 text-[13px] leading-6">
         {m.headline}
       </div>
       {m.metrics.length ? (
@@ -85,7 +91,7 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
           {m.metrics.map((k) => (
             <div
               key={k.label}
-              className="min-w-19 border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]"
+              className="border-ink bg-paper min-w-19 border-2 px-2.5 py-1 text-[11.5px]"
             >
               <b className="block text-[17px] leading-snug">
                 {k.value === null || k.value === undefined ? "—" : k.value}
@@ -96,7 +102,7 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
         </div>
       ) : null}
       {m.note ? (
-        <div className="mt-2 text-[11.5px] leading-6 text-ink-soft">
+        <div className="text-ink-soft mt-2 text-[11.5px] leading-6">
           {m.note}
         </div>
       ) : null}
@@ -118,7 +124,9 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
       active="/admin"
       actions={
         <Btn
-          onClick={() => { void revalidate(); }}
+          onClick={() => {
+            void revalidate();
+          }}
           disabled={state === "loading"}
         >
           <RefreshCw
@@ -133,12 +141,11 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
         How to read statuses: <b>Healthy</b> — the module is live with nothing
         pending; <b>Needs work</b> — something is pending or the two sides
         disagree; <b>No data</b> — never run yet; open it and press once;{" "}
-        <b>Read failed</b> — a dependency of that module is down (mysql /
-        Milvus / embedding upstream / classifier :8110); only its own card is
-        affected.
+        <b>Read failed</b> — a dependency of that module is down (mysql / Milvus
+        / embedding upstream / classifier :8110); only its own card is affected.
       </Tip>
       {loaderData.ok ? (
-        <div className="mt-4 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))]">
+        <div className="mt-4 grid [grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-3.5">
           {loaderData.modules.map((m, i) => (
             <ModuleCard key={m.key} m={m} i={i} />
           ))}

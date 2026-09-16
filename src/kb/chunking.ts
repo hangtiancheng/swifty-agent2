@@ -9,7 +9,20 @@ const HEADERS: [string, string][] = [
 ];
 // Paragraphs/newlines first, then sentence punctuation, then words and chars. CJK
 // terminators are kept so mixed-language material still splits on sentence boundaries.
-const TEXT_SEPARATORS = ["\n\n", "\n", "。", "！", "？", "；", "!", "?", ";", "，", " ", ""];
+const TEXT_SEPARATORS = [
+  "\n\n",
+  "\n",
+  "。",
+  "！",
+  "？",
+  "；",
+  "!",
+  "?",
+  ";",
+  "，",
+  " ",
+  "",
+];
 
 export interface MarkdownSection {
   pageContent: string;
@@ -26,7 +39,10 @@ export function splitSections(md: string): MarkdownSection[] {
   let buffer: string[] = [];
   let started = false;
   const flush = (): void => {
-    sections.push({ pageContent: buffer.join("\n").trim(), metadata: { ...stack } });
+    sections.push({
+      pageContent: buffer.join("\n").trim(),
+      metadata: { ...stack },
+    });
     buffer = [];
   };
   for (const line of md.split("\n")) {
@@ -38,7 +54,7 @@ export function splitSections(md: string): MarkdownSection[] {
       const level = m[1].length;
       for (let l = level; l <= HEADERS.length; l += 1) {
         // delete stack[`h${l}`];
-        Reflect.deleteProperty(stack, `h${l}`)
+        Reflect.deleteProperty(stack, `h${l}`);
       }
       stack[`h${level}`] = m[2].trim();
       started = true;
@@ -50,7 +66,11 @@ export function splitSections(md: string): MarkdownSection[] {
   return sections;
 }
 
-export async function recursiveSplit(text: string, chunkSize: number, chunkOverlap = 0): Promise<string[]> {
+export async function recursiveSplit(
+  text: string,
+  chunkSize: number,
+  chunkOverlap = 0,
+): Promise<string[]> {
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize,
     chunkOverlap,
@@ -82,7 +102,10 @@ function trailingSentences(text: string, maxChars: number): string {
   return out.join("");
 }
 
-export function applySentenceOverlap(chunks: string[], overlap: number): string[] {
+export function applySentenceOverlap(
+  chunks: string[],
+  overlap: number,
+): string[] {
   if (chunks.length === 0) {
     return [];
   }
@@ -100,7 +123,11 @@ function findTableHeader(lines: string[]): number {
   for (let i = 0; i < lines.length - 1; i += 1) {
     const line = lines[i];
     const next = lines[i + 1];
-    if (line.trimStart().startsWith("|") && TABLE_SEP_RE.test(next) && next.includes("-")) {
+    if (
+      line.trimStart().startsWith("|") &&
+      TABLE_SEP_RE.test(next) &&
+      next.includes("-")
+    ) {
       return i;
     }
   }
@@ -136,7 +163,8 @@ export function splitTableRows(tableMd: string, maxRows: number): string[] {
   const out: string[] = [];
   for (let j = 0; j * maxRows < rows.length; j += 1) {
     const group = rows.slice(j * maxRows, (j + 1) * maxRows);
-    const block = j === 0 ? [...preamble, header, sep, ...group] : [header, sep, ...group];
+    const block =
+      j === 0 ? [...preamble, header, sep, ...group] : [header, sep, ...group];
     out.push(block.join("\n"));
   }
   return out;

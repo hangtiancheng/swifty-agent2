@@ -1,6 +1,6 @@
-// ch10 dataset: stratified 80/10/10 split + training-set augmentation (synonym swap / phrasing tweak).
+// train dataset: stratified 80/10/10 split + training-set augmentation (synonym swap / phrasing tweak).
 // Augmentation only expands the training set — validation/test are exam papers and must not change.
-// Run: make ch10-dataset (requires chat upstream).
+// Run: make train-dataset (requires chat upstream).
 import fs from "node:fs";
 import path from "node:path";
 
@@ -24,7 +24,10 @@ const OUT = path.join(settings.root, "data/train/dataset");
 // Targeted supplement from the first evaluation failure: bare "bought it too big, want to return"
 // short sentences (no product name, no "size" word) were under-covered, so sizing was not labeled.
 // Supplements go only into the training set — the exam papers do not move.
-const SUPPLEMENT = path.join(settings.root, "scripts/ch10/supplement_sizefit.jsonl");
+const SUPPLEMENT = path.join(
+  settings.root,
+  "scripts/train/supplement_sizefit.jsonl",
+);
 
 const AUGMENT_PROMPT = (text: string): string =>
   `Rewrite a variant of this e-commerce customer-service user question: swap synonyms, tweak the phrasing (e.g. turn it into an "I'd like to ask…" tone), without changing the original meaning or adding/removing any asks. Output only the rewritten sentence.\n\n${text}`;
@@ -40,18 +43,27 @@ function readJsonl(file: string): CorpusSample[] {
     .map((l) => corpusSampleSchema.parse(JSON.parse(l)));
 }
 
-async function augment(samples: CorpusSample[], concurrency = 8): Promise<CorpusSample[]> {
+async function augment(
+  samples: CorpusSample[],
+  concurrency = 8,
+): Promise<CorpusSample[]> {
   const model = getChatModel();
-  const outs = await mapPool(samples, concurrency, async (s): Promise<CorpusSample | null> => {
-    try {
-      const r = await model.invoke(AUGMENT_PROMPT(s.text));
-      const t = contentToString(r.content).trim();
-      return t ? { text: t, labels: s.labels, origin: "augmented" } : null;
-    } catch (error) {
-      console.log(`[augment] rewrite failed, dropping variant: ${s.text.slice(0, 30)}… (${error instanceof Error ? error.constructor.name : "Error"})`);
-      return null;
-    }
-  });
+  const outs = await mapPool(
+    samples,
+    concurrency,
+    async (s): Promise<CorpusSample | null> => {
+      try {
+        const r = await model.invoke(AUGMENT_PROMPT(s.text));
+        const t = contentToString(r.content).trim();
+        return t ? { text: t, labels: s.labels, origin: "augmented" } : null;
+      } catch (error) {
+        console.log(
+          `[augment] rewrite failed, dropping variant: ${s.text.slice(0, 30)}… (${error instanceof Error ? error.constructor.name : "Error"})`,
+        );
+        return null;
+      }
+    },
+  );
   return outs.filter((o): o is CorpusSample => o !== null);
 }
 
@@ -59,13 +71,17 @@ async function augment(samples: CorpusSample[], concurrency = 8): Promise<Corpus
 function dump(file: string, samples: CorpusSample[]): void {
   fs.writeFileSync(
     path.join(OUT, file),
-    samples.map((s) => JSON.stringify({ text: s.text, labels: s.labels })).join("\n"),
+    samples
+      .map((s) => JSON.stringify({ text: s.text, labels: s.labels }))
+      .join("\n"),
     "utf8",
   );
 }
 
 function dist(name: string, samples: CorpusSample[]): void {
-  const counts: Record<string, number> = Object.fromEntries(TOPIC_NAMES.map((n) => [n, 0]));
+  const counts: Record<string, number> = Object.fromEntries(
+    TOPIC_NAMES.map((n) => [n, 0]),
+  );
   for (const s of samples) {
     for (const lb of s.labels) {
       if (lb in counts) {
@@ -84,7 +100,7 @@ function dist(name: string, samples: CorpusSample[]): void {
 async function main(): Promise<void> {
   const samples = readJsonl(SRC);
   if (samples.length === 0) {
-    console.error(`No corpus at ${SRC}; run make ch10-corpus first`);
+    console.error(`No corpus at ${SRC}; run make train-corpus first`);
     process.exitCode = 1;
     return;
   }
@@ -96,7 +112,9 @@ async function main(): Promise<void> {
   if (fs.existsSync(SUPPLEMENT)) {
     const sup = readJsonl(SUPPLEMENT);
     train = train.concat(
-      sup.filter((s) => !seen.has(s.text)).map((s) => ({ ...s, origin: "supplement" })),
+      sup
+        .filter((s) => !seen.has(s.text))
+        .map((s) => ({ ...s, origin: "supplement" })),
     );
   }
   fs.mkdirSync(OUT, { recursive: true });

@@ -25,7 +25,6 @@ import { fmt3, fmtTime, pctFmt, thousands } from "~/lib/format";
 import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
-
 /* Each of the three reports renders exactly what /api/observability/overview
    serves: cost and calibration come from make-produced artifacts, trends from
    the eval_runs table — the page never recomputes a single number. Delta
@@ -156,16 +155,16 @@ function Kpis({
       {items.map((k) => (
         <div
           key={k.label}
-          className="border-3 border-ink bg-paper px-3 pt-2.5 pb-3 shadow-hard-sm"
+          className="border-ink bg-paper shadow-hard-sm border-3 px-3 pt-2.5 pb-3"
         >
-          <div className="text-[11.5px] text-muted">{k.label}</div>
+          <div className="text-muted text-[11.5px]">{k.label}</div>
           <div className="text-2xl leading-snug font-bold tabular-nums">
             {k.val}
             {k.unit ? (
               <small className="ml-0.5 text-[13px]">{k.unit}</small>
             ) : null}
           </div>
-          <div className="text-[11.5px] leading-6 text-ink-soft">{k.sub}</div>
+          <div className="text-ink-soft text-[11.5px] leading-6">{k.sub}</div>
         </div>
       ))}
     </div>
@@ -174,14 +173,16 @@ function Kpis({
 
 function NoteBox({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-3 border-ink bg-paper p-3">
+    <div className="border-ink bg-paper border-3 p-3">
       <h3 className="mb-1 text-[12.5px] font-bold">{title}</h3>
-      <p className="text-xs leading-7 text-ink-soft">{children}</p>
+      <p className="text-ink-soft text-xs leading-7">{children}</p>
     </div>
   );
 }
 
-export default function ObservabilityPage({ loaderData }: Route.ComponentProps) {
+export default function ObservabilityPage({
+  loaderData,
+}: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
 
   /** Footer shared by all three panels: re-run button + log output, invoking the same make as the terminal */
@@ -190,7 +191,9 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       <SectionHead>Re-run from this page</SectionHead>
       <JobRow
         specs={[block.job]}
-        onFinish={() => { void revalidate(); }}
+        onFinish={() => {
+          void revalidate();
+        }}
         note={block.make}
       />
     </>
@@ -246,7 +249,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
               <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
                 <div>
                   <b className="font-bold">{r.intent}</b>
-                  <span className="ml-2 text-[11px] text-muted">
+                  <span className="text-muted ml-2 text-[11px]">
                     {r.count} requests · avg {thousands(r.avg_tokens)} tokens
                   </span>
                 </div>
@@ -254,7 +257,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
                   {pctFmt(r.share)} · {thousands(r.tokens)}
                 </div>
               </div>
-              <div className="mt-1 h-4 border-2 border-ink bg-cream">
+              <div className="border-ink bg-cream mt-1 h-4 border-2">
                 <motion.span
                   className={cn(
                     "block h-full",
@@ -327,7 +330,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       <Panel
         title="Intent cost ledger"
         pill={
-          <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
             Source: Langfuse
           </span>
         }
@@ -465,14 +468,14 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
               <>
                 Versus the previous run,{" "}
                 <b>{drops.map((n) => METRIC_LABEL[n] ?? n).join(", ")}</b> are
-                declining. Check the recently approved items in the review
-                queue first — a faithfulness drop is the classic sign of dirty
+                declining. Check the recently approved items in the review queue
+                first — a faithfulness drop is the classic sign of dirty
                 knowledge entering the base.
               </>
             ) : (
               <>
-                No metric regressed versus the previous run. The value of
-                trends is not the absolute score of one run but{" "}
+                No metric regressed versus the previous run. The value of trends
+                is not the absolute score of one run but{" "}
                 <b>keeping the next run from dropping</b> — schedule it (cron,
                 one run a day) so regressions get seen.
               </>
@@ -486,7 +489,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       <Panel
         title="Evaluation trends"
         pill={
-          <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
             Source: eval_runs table
           </span>
         }
@@ -501,10 +504,10 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
     const w = d.weights;
     const wnote = (
       <NoteBox title="How confidence is computed">
-        Weighted from four signals: Top1 rerank score {w.top1} / valid
-        evidence count {w.valid_count} / Top1–Top2 margin {w.margin} /
-        key-clause hit {w.key_clause}. The weights are constants in code;
-        calibration decides where to draw the line.
+        Weighted from four signals: Top1 rerank score {w.top1} / valid evidence
+        count {w.valid_count} / Top1–Top2 margin {w.margin} / key-clause hit{" "}
+        {w.key_clause}. The weights are constants in code; calibration decides
+        where to draw the line.
       </NoteBox>
     );
     const body: ReactNode[] = [];
@@ -546,7 +549,9 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           ]}
         />,
       );
-      body.push(<SectionHead key="h">Evidence confidence distribution</SectionHead>);
+      body.push(
+        <SectionHead key="h">Evidence confidence distribution</SectionHead>,
+      );
       body.push(
         <TableScroll key="t">
           <Tbl>
@@ -586,7 +591,10 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
         </SectionHead>,
       );
       body.push(
-        <div key="lg" className="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+        <div
+          key="lg"
+          className="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
+        >
           {[
             { label: "Answerable pass rate", color: "bg-online" },
             { label: "Should-refuse leak rate", color: "bg-error" },
@@ -594,7 +602,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
             { label: "Threshold in use", color: "bg-violet" },
           ].map(({ label, color }) => (
             <span key={label} className="inline-flex items-center gap-1.5">
-              <i className={cn("h-3 w-3 border-2 border-ink", color)} />
+              <i className={cn("border-ink h-3 w-3 border-2", color)} />
               {label}
             </span>
           ))}
@@ -602,11 +610,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       );
       body.push(
         <div key="c">
-          <ScanLineChart
-            scan={d.scan}
-            pick={rec.threshold}
-            inUse={d.in_use}
-          />
+          <ScanLineChart scan={d.scan} pick={rec.threshold} inUse={d.in_use} />
         </div>,
       );
       body.push(
@@ -616,13 +620,13 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           fallback={
             <>
               The red line drops steeply, then flattens: raising the threshold
-              to <b>{rec.threshold.toFixed(2)}</b> drives the should-refuse
-              leak rate to zero — no out-of-scope question gets through — at
-              the cost of <b>{pctFmt(1 - rec.pass_rate)}</b> of answerable
-              questions wrongly blocked. Blocked ones fall back into the
-              low-confidence pool, which is exactly flywheel fuel, so the trade
-              pays off. To loosen it, move the line left — but accept that some
-              out-of-scope questions will get answered anyway.
+              to <b>{rec.threshold.toFixed(2)}</b> drives the should-refuse leak
+              rate to zero — no out-of-scope question gets through — at the cost
+              of <b>{pctFmt(1 - rec.pass_rate)}</b> of answerable questions
+              wrongly blocked. Blocked ones fall back into the low-confidence
+              pool, which is exactly flywheel fuel, so the trade pays off. To
+              loosen it, move the line left — but accept that some out-of-scope
+              questions will get answered anyway.
             </>
           }
         />,
@@ -631,14 +635,14 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
         <div key="sp" className="mt-3.5 grid gap-3.5 md:grid-cols-2">
           {wnote}
           <NoteBox title='What "wrongly blocked answerable" means'>
-            The base actually has the answer, but the evidence recalled that
-            one time was too scattered (the base says "cat bed cleaning & care
+            The base actually has the answer, but the evidence recalled that one
+            time was too scattered (the base says "cat bed cleaning & care
             instructions" while the user asks "can I toss it in the washing
             machine?"), so the rerank score stays low and computed confidence
             falls under the line. The gate only sees evidence scores, not that
             the base has an answer, so it treats the question as unanswerable.
-            The question lands in the pool, gets merged, reviewed, and added
-            to the Knowledge Base — next time the same phrasing recalls fine.
+            The question lands in the pool, gets merged, reviewed, and added to
+            the Knowledge Base — next time the same phrasing recalls fine.
           </NoteBox>
         </div>,
       );
@@ -648,7 +652,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       <Panel
         title="Confidence threshold calibration"
         pill={
-          <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
             Live run on rag eval set
           </span>
         }
@@ -665,7 +669,12 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       sub="Where spend goes by question type · whether metrics are regressing · how the fallback threshold is set"
       active="/observability"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -681,7 +690,9 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           {calibrationPanel(loaderData.d.calibration)}
         </>
       ) : (
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       )}
     </PageShell>
   );

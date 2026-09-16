@@ -1,5 +1,5 @@
-// ch10 corpus pipeline: fetch pool -> desensitize/dedup -> LLM typo fix -> LLM pre-label ->
-// simulate to fill -> export human spot-review. Run: make ch10-corpus (requires DB + chat upstream).
+// train corpus pipeline: fetch pool -> desensitize/dedup -> LLM typo fix -> LLM pre-label ->
+// simulate to fill -> export human spot-review. Run: make train-corpus (requires DB + chat upstream).
 // Artifacts land in data/train/; the spot-review file is reviewed in the conversation.
 // Also writes data/train/taxonomy.json so the vendored Python training side reads the same
 // authoritative taxonomy (single source of truth = src/core/taxonomy.ts).
@@ -13,7 +13,13 @@ import { prelabelBatch } from "./prelabel.ts";
 import { settings } from "#/config.ts";
 import { getChatModel, structured } from "#/core/llm.ts";
 import { contentToString } from "#/core/memory.ts";
-import { LABEL2ID, SEVERITY, TOPIC_CLASSES, TOPIC_NAMES, terminologyTable } from "#/core/taxonomy.ts";
+import {
+  LABEL2ID,
+  SEVERITY,
+  TOPIC_CLASSES,
+  TOPIC_NAMES,
+  terminologyTable,
+} from "#/core/taxonomy.ts";
 import { closeDb } from "#/db/client.ts";
 import * as repository from "#/db/repository.ts";
 import { mapPool } from "#/train/concurrency.ts";
@@ -58,7 +64,9 @@ async function cleanTexts(texts: string[], concurrency = 8): Promise<string[]> {
       const out = contentToString(r.content).trim();
       return out || t;
     } catch (error) {
-      console.log(`[clean] call failed, keeping as-is: ${t.slice(0, 30)}… (${error instanceof Error ? error.constructor.name : "Error"})`);
+      console.log(
+        `[clean] call failed, keeping as-is: ${t.slice(0, 30)}… (${error instanceof Error ? error.constructor.name : "Error"})`,
+      );
       return t;
     }
   });
@@ -74,7 +82,9 @@ async function simulate(name: string, need: number): Promise<CorpusSample[]> {
     try {
       r = await model.invoke(SIMULATE_PROMPT(n, name));
     } catch (error) {
-      console.log(`[simulate] ${name} batch failed (${error instanceof Error ? error.constructor.name : "Error"}), retrying (misses=${misses + 1})`);
+      console.log(
+        `[simulate] ${name} batch failed (${error instanceof Error ? error.constructor.name : "Error"}), retrying (misses=${misses + 1})`,
+      );
       misses += 1;
       continue;
     }
@@ -118,7 +128,12 @@ function writeTaxonomy(): void {
   fs.writeFileSync(
     path.join(OUT, "taxonomy.json"),
     `${JSON.stringify(
-      { names: TOPIC_NAMES, severity: SEVERITY, label2id: LABEL2ID, classes: TOPIC_CLASSES },
+      {
+        names: TOPIC_NAMES,
+        severity: SEVERITY,
+        label2id: LABEL2ID,
+        classes: TOPIC_CLASSES,
+      },
       null,
       2,
     )}\n`,
@@ -132,7 +147,11 @@ async function main(): Promise<void> {
 
   // 1) Fetch pool (normalized phrasing preferred)
   const pool = await repository.listPoolTexts();
-  const raw: CorpusSample[] = pool.map((p) => ({ text: p.text, labels: [], origin: "pool" }));
+  const raw: CorpusSample[] = pool.map((p) => ({
+    text: p.text,
+    labels: [],
+    origin: "pool",
+  }));
   dump("corpus_raw.jsonl", raw);
   console.log(`Fetched ${raw.length} from the pool`);
 
@@ -145,10 +164,15 @@ async function main(): Promise<void> {
 
   // 3) Pre-label the real questions
   const labels = await prelabelBatch(cleaned.map((s) => s.text));
-  let labeled: CorpusSample[] = cleaned.map((s, i) => ({ ...s, labels: labels[i] }));
+  let labeled: CorpusSample[] = cleaned.map((s, i) => ({
+    ...s,
+    labels: labels[i],
+  }));
 
   // 4) Simulate to fill: top up each class to TARGET_PER_CLASS (multi-ask sentences count for every hit class)
-  const counts: Record<string, number> = Object.fromEntries(TOPIC_CLASSES.map((c) => [c.name, 0]));
+  const counts: Record<string, number> = Object.fromEntries(
+    TOPIC_CLASSES.map((c) => [c.name, 0]),
+  );
   for (const s of labeled) {
     for (const lb of s.labels) {
       if (lb in counts) {
@@ -174,11 +198,13 @@ async function main(): Promise<void> {
   }
   labeled = dedupe(labeled);
   dump("corpus_labeled.jsonl", labeled);
-  console.log(`Corpus total ${labeled.length}; per class: ${JSON.stringify(counts)}`);
+  console.log(
+    `Corpus total ${labeled.length}; per class: ${JSON.stringify(counts)}`,
+  );
 
   // 5) Spot-review export: all real pool questions + 5 simulated per class
   const lines = [
-    "# ch10 corpus human spot-review (pre-label + simulation)",
+    "# train corpus human spot-review (pre-label + simulation)",
     "",
     "> Format: question -> labels. Point out the original sentence for any mislabel.",
     "",
@@ -192,15 +218,23 @@ async function main(): Promise<void> {
   }
   lines.push("", "## Simulated questions (5 per class)", "");
   for (const c of TOPIC_CLASSES) {
-    const sims = labeled.filter((s) => s.origin === "simulated" && s.labels.includes(c.name));
+    const sims = labeled.filter(
+      (s) => s.origin === "simulated" && s.labels.includes(c.name),
+    );
     lines.push(`### ${c.name}`);
     for (const s of seededSample(sims, Math.min(5, sims.length), 42)) {
       lines.push(`- ${s.text} -> ${s.labels.join(", ")}`);
     }
     lines.push("");
   }
-  fs.writeFileSync(path.join(OUT, "sample_review.md"), lines.join("\n"), "utf8");
-  console.log(`Spot-review file exported: ${path.join(OUT, "sample_review.md")}`);
+  fs.writeFileSync(
+    path.join(OUT, "sample_review.md"),
+    lines.join("\n"),
+    "utf8",
+  );
+  console.log(
+    `Spot-review file exported: ${path.join(OUT, "sample_review.md")}`,
+  );
 }
 
 await main();

@@ -4,7 +4,7 @@ description: Complete migration guide from Prisma ORM v6 to v7 covering all brea
 license: MIT
 metadata:
   author: prisma
-  version: '7.6.0'
+  version: "7.6.0"
 ---
 
 # Upgrade to Prisma ORM 7
@@ -160,18 +160,18 @@ generator client {
 ### 4. Create prisma.config.ts
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: 'prisma/migrations',
+    path: "prisma/migrations",
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
-})
+});
 ```
 
 ### 5. Install a driver adapter (SQL providers only)
@@ -202,30 +202,30 @@ MongoDB does not have a SQL `@prisma/adapter-*` package in the published Prisma 
 
 ```typescript
 // Before (v6)
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 // After (v7)
-import { PrismaClient } from '../generated/prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from "../generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL
-})
+  connectionString: process.env.DATABASE_URL,
+});
 
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient({ adapter });
 ```
 
 ### 7. Replace Prisma.validator with satisfies
 
 ```typescript
-import { Prisma } from '../generated/prisma/client'
+import { Prisma } from "../generated/prisma/client";
 
 const userSelect = {
   id: true,
   email: true,
   name: true,
-} satisfies Prisma.UserSelect
+} satisfies Prisma.UserSelect;
 ```
 
 ### 8. Run migrations and generate

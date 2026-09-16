@@ -9,18 +9,18 @@ Place `prisma.config.ts` at your project root (next to `package.json`).
 ## Basic Configuration
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   migrations: {
-    path: 'prisma/migrations',
+    path: "prisma/migrations",
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
-})
+});
 ```
 
 ## Configuration Options
@@ -30,7 +30,7 @@ export default defineConfig({
 Path to your Prisma schema file:
 
 ```typescript
-schema: 'prisma/schema.prisma'
+schema: "prisma/schema.prisma";
 ```
 
 ### datasource.url
@@ -89,26 +89,26 @@ migrations: {
 ## Full Example
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   // Schema location
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
 
   // Migration configuration
   migrations: {
-    path: 'prisma/migrations',
-    seed: 'tsx prisma/seed.ts',
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
   },
 
   // Database connection
   datasource: {
-    url: env('DATABASE_URL'),
-    directUrl: env('DIRECT_DATABASE_URL'),
-    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+    url: env("DATABASE_URL"),
+    directUrl: env("DIRECT_DATABASE_URL"),
+    shadowDatabaseUrl: env("SHADOW_DATABASE_URL"),
   },
-})
+});
 ```
 
 ## Environment Variables
@@ -136,8 +136,8 @@ npm install dotenv
 ```
 
 ```typescript
-import 'dotenv/config'  // Must be first import
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config"; // Must be first import
+import { defineConfig, env } from "prisma/config";
 ```
 
 ## Migrating from v6
@@ -155,16 +155,16 @@ datasource db {
 ### After (v7) - prisma.config.ts
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: "prisma/schema.prisma",
   datasource: {
-    url: env('DATABASE_URL'),
-    directUrl: env('DIRECT_URL'),
+    url: env("DATABASE_URL"),
+    directUrl: env("DIRECT_URL"),
   },
-})
+});
 ```
 
 And update schema.prisma:
@@ -187,17 +187,17 @@ prisma migrate dev --config ./config/prisma.config.ts
 ## Monorepo Configuration
 
 ```typescript
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
-import path from 'path'
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
+import path from "path";
 
 export default defineConfig({
-  schema: path.join(__dirname, 'packages/database/prisma/schema.prisma'),
+  schema: path.join(__dirname, "packages/database/prisma/schema.prisma"),
   migrations: {
-    path: path.join(__dirname, 'packages/database/prisma/migrations'),
+    path: path.join(__dirname, "packages/database/prisma/migrations"),
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: env("DATABASE_URL"),
   },
-})
+});
 ```

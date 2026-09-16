@@ -25,7 +25,6 @@ import { cn } from "~/lib/cn";
 import { fmtBytes, fmtTime } from "~/lib/format";
 import type { JobSpec } from "~/lib/types";
 
-
 /* Acceptance Data: corpus lineage · the three exam papers · training and ONNX artifact inventory. */
 
 interface FileStat {
@@ -81,8 +80,7 @@ interface DataDetail {
 }
 
 type LoaderData =
-  | { ok: true; d: DataDetail; jobs: JobSpec[] }
-  | { ok: false; error: string };
+  { ok: true; d: DataDetail; jobs: JobSpec[] } | { ok: false; error: string };
 
 export async function clientLoader(): Promise<LoaderData> {
   try {
@@ -99,7 +97,11 @@ export async function clientLoader(): Promise<LoaderData> {
 export function meta() {
   return [
     { title: "MeowMeow Select · Acceptance Data" },
-    { name: "description", content: "Corpus lineage · the three exam papers · training and ONNX artifact inventory" },
+    {
+      name: "description",
+      content:
+        "Corpus lineage · the three exam papers · training and ONNX artifact inventory",
+    },
   ];
 }
 
@@ -145,7 +147,9 @@ export default function AcceptanceDataPage({
   if (!loaderData.ok) {
     return (
       <PageShell title="Acceptance Data" active="/acceptance/data">
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       </PageShell>
     );
   }
@@ -164,7 +168,12 @@ export default function AcceptanceDataPage({
       sub="Corpus lineage · the three exam papers · training and ONNX artifact inventory"
       active="/acceptance/data"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -177,19 +186,25 @@ export default function AcceptanceDataPage({
         <Stat
           label="Corpus total"
           value={
-            (labeled?.present ? String(labeled.lines ?? "—") : "—") +
-            " rows"
+            (labeled?.present ? String(labeled.lines ?? "—") : "—") + " rows"
           }
         />
         {SPLIT_KEYS.map((k) => (
-          <Stat key={k} label={SPLIT_LABEL[k]} value={String(sp[k].size) + " rows"} />
+          <Stat
+            key={k}
+            label={SPLIT_LABEL[k]}
+            value={String(sp[k].size) + " rows"}
+          />
         ))}
         <Stat
           label="Exam leaks"
           value={ds.clean ? "0 rows" : "found"}
           tone={ds.clean ? "pass" : "fail"}
         />
-        <Stat label="Threshold in use" value={String(d.model.threshold ?? "—")} />
+        <Stat
+          label="Threshold in use"
+          value={String(d.model.threshold ?? "—")}
+        />
       </GateBar>
 
       {/* ① Corpus lineage */}
@@ -208,44 +223,49 @@ export default function AcceptanceDataPage({
             >
               <div
                 className={cn(
-                  "min-w-36 flex-1 border-3 border-ink bg-paper px-3 py-2",
+                  "border-ink bg-paper min-w-36 flex-1 border-3 px-3 py-2",
                   !s.present && "text-muted",
                 )}
               >
-                <div className="text-[11.5px] text-muted">{s.stage}</div>
+                <div className="text-muted text-[11.5px]">{s.stage}</div>
                 <b className="block text-2xl leading-tight tabular-nums">
                   {s.present ? String(s.lines ?? "—") : "Missing"}
                 </b>
                 <div className="mt-0.5 text-[11.5px] leading-5">{s.desc}</div>
-                <div className="mt-1 text-[11px] break-all text-muted">
+                <div className="text-muted mt-1 text-[11px] break-all">
                   {s.path}
                 </div>
               </div>
               <div className="self-center text-xl font-bold">→</div>
             </motion.div>
           ))}
-          <div className="min-w-36 flex-1 border-3 border-ink bg-cream px-3 py-2">
-            <div className="text-[11.5px] text-muted">Stratified split 80/10/10</div>
+          <div className="border-ink bg-cream min-w-36 flex-1 border-3 px-3 py-2">
+            <div className="text-muted text-[11.5px]">
+              Stratified split 80/10/10
+            </div>
             <b className="block text-2xl leading-tight tabular-nums">
               {SPLIT_KEYS.map((k) => String(sp[k].size)).join(" / ")}
             </b>
             <div className="mt-0.5 text-[11.5px] leading-5">
-              Train / validation / test; the training set also gets augmentation and targeted additions
+              Train / validation / test; the training set also gets augmentation
+              and targeted additions
             </div>
-            <div className="mt-1 text-[11px] break-all text-muted">
+            <div className="text-muted mt-1 text-[11px] break-all">
               data/train/dataset/*.jsonl
             </div>
           </div>
         </div>
         <FileTable rows={[...d.lineage, d.sample_review]} />
         <Tip>
-          The manual spot-check file sample_review.md is the human-readable copy (full real
-          pool + 5 simulated samples per class). If you spot a wrong label, fix the corpus —
-          never edit the exam papers to game the score.
+          The manual spot-check file sample_review.md is the human-readable copy
+          (full real pool + 5 simulated samples per class). If you spot a wrong
+          label, fix the corpus — never edit the exam papers to game the score.
         </Tip>
         <JobRow
           specs={pick(["train-corpus", "train-dataset"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
         />
       </Panel>
 
@@ -301,17 +321,14 @@ export default function AcceptanceDataPage({
                 <Tr key={name}>
                   <Td>{name}</Td>
                   {SPLIT_KEYS.map((k) => {
-                    const maxOf = Math.max(
-                      1,
-                      ...Object.values(sp[k].counts),
-                    );
+                    const maxOf = Math.max(1, ...Object.values(sp[k].counts));
                     const cnt = sp[k].counts[name] ?? 0;
                     return (
                       <Td key={k} className="p-0">
                         <div className="flex items-center gap-1.5 px-2 py-0.5">
-                          <span className="h-2.25 min-w-10 flex-1 border-2 border-ink bg-cream">
+                          <span className="border-ink bg-cream h-2.25 min-w-10 flex-1 border-2">
                             <motion.span
-                              className="block h-full bg-fur"
+                              className="bg-fur block h-full"
                               initial={{ width: 0 }}
                               animate={{
                                 width: `${Math.round((cnt / maxOf) * 100)}%`,
@@ -332,8 +349,8 @@ export default function AcceptanceDataPage({
           </Tbl>
         </TableScroll>
         <Tip>
-          Label counts are hit-based: a multi-label sentence counts once for each class it
-          hits, so column totals can exceed the row count.
+          Label counts are hit-based: a multi-label sentence counts once for
+          each class it hits, so column totals can exceed the row count.
         </Tip>
       </Panel>
 
@@ -351,13 +368,16 @@ export default function AcceptanceDataPage({
       >
         <FileTable rows={d.model.files} />
         <Tip>
-          <b>threshold.json</b> holds the decision threshold in use: {String(d.model.threshold)};{" "}
-          written at {fmtTime(d.model.threshold_file.mtime)},{" "}
+          <b>threshold.json</b> holds the decision threshold in use:{" "}
+          {String(d.model.threshold)}; written at{" "}
+          {fmtTime(d.model.threshold_file.mtime)},{" "}
           {fmtBytes(d.model.threshold_file.bytes)}.
         </Tip>
         <JobRow
           specs={pick(["train-train"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
           note="Training is a minutes-long heavy job and overwrites the current weights"
         />
       </Panel>
@@ -390,7 +410,9 @@ export default function AcceptanceDataPage({
         )}
         <JobRow
           specs={pick(["train-export", "classifier-up", "classifier-down"])}
-          onFinish={() => { void revalidate(); }}
+          onFinish={() => {
+            void revalidate();
+          }}
         />
       </Panel>
     </PageShell>

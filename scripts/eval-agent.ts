@@ -12,7 +12,7 @@ const SAMPLES: [string, Set<string> | null][] = [
   ["Where is the logistics for order 1001", new Set(["query_logistics"])],
   ["What is the returns policy", new Set(["query_faq"])], // acceptance 2: query_faq hit
   ["Can the shoes I bought be returned", new Set(["query_faq"])], // model extracts "return" -> hits "returns policy", not missed (semantic query params saved it)
-  ["How much is the shipping fee", new Set(["query_faq"])], // acceptance 3: model extracts "shipping fee" -> may miss on literal question match, but the answer lives in "how is the shipping fee calculated" -> semantic gap, left to ch03
+  ["How much is the shipping fee", new Set(["query_faq"])], // acceptance 3: model extracts "shipping fee" -> may miss on literal question match, but the answer lives in "how is the shipping fee calculated" -> semantic gap, left to db
   ["Is the iPhone still in stock", new Set(["query_product"])],
   ["How much is order 2002", new Set(["query_order"])],
   ["I want to complain, please register it for me", new Set(["create_ticket"])],
@@ -21,16 +21,29 @@ const SAMPLES: [string, Set<string> | null][] = [
 
 const agentResponseSchema = z.object({
   answer: z.string(),
-  tool_calls: z.array(z.object({ id: z.string(), name: z.string(), args: z.record(z.string(), z.unknown()) })),
+  tool_calls: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      args: z.record(z.string(), z.unknown()),
+    }),
+  ),
   tool_results: z.array(
-    z.object({ tool_call_id: z.string(), name: z.string(), ok: z.boolean(), content: z.string() }),
+    z.object({
+      tool_call_id: z.string(),
+      name: z.string(),
+      ok: z.boolean(),
+      content: z.string(),
+    }),
   ),
 });
 type AgentResponse = z.infer<typeof agentResponseSchema>;
 
 // NOTE: the Python original read the query_faq result key "hits"; the TS query_faq returns
 // "citations" instead (see src/tools/builtin/faq.ts), so the missed-recall check reads that.
-const faqContentSchema = z.object({ citations: z.array(z.unknown()).default([]) }).loose();
+const faqContentSchema = z
+  .object({ citations: z.array(z.unknown()).default([]) })
+  .loose();
 
 function faqNote(body: AgentResponse): string {
   // For samples that called query_faq, print the extracted keyword and whether the recall was missed.
@@ -59,14 +72,21 @@ async function main(): Promise<void> {
     }
     const body = agentResponseSchema.parse(await resp.json());
     const names = new Set(body.tool_calls.map((tc) => tc.name));
-    const ok = expect === null ? names.size === 0 : [...expect].some((e) => names.has(e));
+    const ok =
+      expect === null
+        ? names.size === 0
+        : [...expect].some((e) => names.has(e));
     passed += ok ? 1 : 0;
     const got = names.size > 0 ? JSON.stringify([...names]) : "(no tool call)";
     const want = expect === null ? "none" : JSON.stringify([...expect]);
-    console.log(`${ok ? "✅" : "❌"} ${JSON.stringify(msg)} -> ${got} expected=${want}${faqNote(body)}`);
+    console.log(
+      `${ok ? "✅" : "❌"} ${JSON.stringify(msg)} -> ${got} expected=${want}${faqNote(body)}`,
+    );
     console.log(`    answer: ${body.answer.slice(0, 70)}`);
   }
-  console.log(`\nCorrect tool selection ${passed}/${SAMPLES.length} (the LLM is non-deterministic; rerun and record honestly if results wobble)`);
+  console.log(
+    `\nCorrect tool selection ${passed}/${SAMPLES.length} (the LLM is non-deterministic; rerun and record honestly if results wobble)`,
+  );
 }
 
 await main();

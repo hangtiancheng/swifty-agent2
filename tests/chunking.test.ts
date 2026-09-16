@@ -23,8 +23,7 @@ describe("chunking", () => {
   });
 
   it("detects markdown tables", () => {
-    const table =
-      "| Timeframe | Note |\n| --- | --- |\n| 7 days | No reason |";
+    const table = "| Timeframe | Note |\n| --- | --- |\n| 7 days | No reason |";
     expect(isTableBlock(table)).toBe(true);
     expect(isTableBlock("A plain paragraph.")).toBe(false);
   });

@@ -14,7 +14,8 @@ function hit(
     id: 1,
     score,
     question: "Who pays the return shipping fee",
-    answer: "For exchanges not caused by quality issues, the buyer bears the shipping cost",
+    answer:
+      "For exchanges not caused by quality issues, the buyer bears the shipping cost",
     section_path: "Shipping Fees / Return Shipping",
     content_type: "policy",
     category: "Shipping Fees",

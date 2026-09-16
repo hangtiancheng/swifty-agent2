@@ -4,7 +4,7 @@ description: Set up a new Prisma Postgres database and connect it to a local pro
 license: MIT
 metadata:
   author: prisma
-  version: '1.1.0'
+  version: "1.1.0"
 ---
 
 # Prisma Postgres Setup
@@ -159,17 +159,17 @@ datasource db {
 7. Ensure `prisma.config.ts` loads the connection URL from the environment:
 
 ```typescript
-import path from 'node:path'
-import { defineConfig } from 'prisma/config'
-import 'dotenv/config'
+import path from "node:path";
+import { defineConfig } from "prisma/config";
+import "dotenv/config";
 
 export default defineConfig({
   earlyAccess: true,
-  schema: path.join(import.meta.dirname, 'prisma', 'schema.prisma'),
+  schema: path.join(import.meta.dirname, "prisma", "schema.prisma"),
   datasource: {
     url: process.env.DATABASE_URL!,
   },
-})
+});
 ```
 
 **Important Prisma 7 notes:**
@@ -203,20 +203,20 @@ After generating the client, create and run a quick verification script to confi
 Create a file named `test-connection.ts`:
 
 ```typescript
-import 'dotenv/config'
-import pg from 'pg'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from './generated/prisma/client.js'
+import "dotenv/config";
+import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/prisma/client.js";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
-const result = await prisma.$queryRawUnsafe('SELECT 1 as connected')
-console.log('Connected to Prisma Postgres:', result)
+const result = await prisma.$queryRawUnsafe("SELECT 1 as connected");
+console.log("Connected to Prisma Postgres:", result);
 
-await prisma.$disconnect()
-await pool.end()
+await prisma.$disconnect();
+await pool.end();
 ```
 
 Run it:

@@ -4,7 +4,7 @@ description: Decision and migration guide for Prisma ORM MongoDB projects on v6,
 license: MIT
 metadata:
   author: prisma
-  version: '0.1.0'
+  version: "0.1.0"
 ---
 
 # Prisma MongoDB Upgrade Path

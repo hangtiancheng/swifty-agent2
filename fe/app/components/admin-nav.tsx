@@ -5,7 +5,6 @@ import { ThemeToggle } from "./theme-toggle";
 
 import { cn } from "~/lib/cn";
 
-
 /* Admin navigation shell: a single nav bar shared by every admin page (from the
    original admin.js). Entries keep each module's own path; the nav only gathers
    them in one place and does not rewrite any routes. */
@@ -57,8 +56,8 @@ export function AdminNav({ active }: { active: string }) {
       className="mt-3"
       aria-label="Admin navigation"
     >
-      <div className="scroll-cat flex items-stretch overflow-x-auto border-3 border-ink bg-paper shadow-hard-sm">
-        <span className="flex shrink-0 items-center bg-ink px-3 py-1.5 text-xs font-bold tracking-wider whitespace-nowrap text-cream">
+      <div className="scroll-cat border-ink bg-paper shadow-hard-sm flex items-stretch overflow-x-auto border-3">
+        <span className="bg-ink text-cream flex shrink-0 items-center px-3 py-1.5 text-xs font-bold tracking-wider whitespace-nowrap">
           Admin
         </span>
         {NAV.map((m) => {
@@ -68,7 +67,7 @@ export function AdminNav({ active }: { active: string }) {
               key={m.href}
               to={m.href}
               className={cn(
-                "relative flex shrink-0 items-center gap-1.5 border-r-3 border-ink px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline text-ink hover:bg-fur-hover",
+                "border-ink text-ink hover:bg-fur-hover relative flex shrink-0 items-center gap-1.5 border-r-3 px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline",
                 on && "bg-fur hover:bg-fur",
               )}
               aria-current={on ? "page" : undefined}
@@ -77,26 +76,26 @@ export function AdminNav({ active }: { active: string }) {
               {on ? (
                 <motion.span
                   layoutId="admin-nav-dot"
-                  className="absolute inset-x-2 bottom-0 h-0.5 bg-ink"
+                  className="bg-ink absolute inset-x-2 bottom-0 h-0.5"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               ) : null}
             </Link>
           );
         })}
-        <span className="min-w-2 flex-1 border-r-3 border-ink max-sm:hidden" />
+        <span className="border-ink min-w-2 flex-1 border-r-3 max-sm:hidden" />
         <Link
           to="/"
-          className="flex shrink-0 items-center px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline text-ink hover:bg-fur-hover"
+          className="text-ink hover:bg-fur-hover flex shrink-0 items-center px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline"
         >
           Chat →
         </Link>
-        <span className="flex shrink-0 items-center border-l-3 border-ink px-2">
+        <span className="border-ink flex shrink-0 items-center border-l-3 px-2">
           <ThemeToggle className="h-7 w-7 border-2 shadow-none" />
         </span>
       </div>
       {mod?.children ? (
-        <div className="scroll-cat flex overflow-x-auto border-3 border-t-0 border-ink bg-cream shadow-hard-sm">
+        <div className="scroll-cat border-ink bg-cream shadow-hard-sm flex overflow-x-auto border-3 border-t-0">
           {mod.children.map(([href, label]) => {
             const on = href === path;
             return (
@@ -104,7 +103,7 @@ export function AdminNav({ active }: { active: string }) {
                 key={href}
                 to={href}
                 className={cn(
-                  "shrink-0 border-r-3 border-ink px-3 py-1 text-xs font-bold whitespace-nowrap no-underline text-ink last:border-r-0 hover:bg-fur-hover",
+                  "border-ink text-ink hover:bg-fur-hover shrink-0 border-r-3 px-3 py-1 text-xs font-bold whitespace-nowrap no-underline last:border-r-0",
                   on && "bg-fur hover:bg-fur",
                 )}
                 aria-current={on ? "page" : undefined}

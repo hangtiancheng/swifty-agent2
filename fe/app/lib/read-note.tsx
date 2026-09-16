@@ -10,8 +10,7 @@ import { cn } from "./cn";
 
 // Bold only real numbers, not digits inside names (the 25 in BM25, the 10 in
 // Recall@10, the 3 in qwen3.7-text-embedding-flash) — matching the boundary rule read_notes.py validates with.
-const NUM_RE =
-  /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?%?(?![A-Za-z_])/g;
+const NUM_RE = /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?%?(?![A-Za-z_])/g;
 
 function boldNumbers(s: string): ReactNode[] {
   const parts: ReactNode[] = [];
@@ -44,11 +43,11 @@ export function ReadNote({
   return (
     <div
       className={cn(
-        "mt-3 border-3 border-dashed border-ink bg-paper px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:border-ink [&_b]:bg-fur [&_b]:px-1 [&_b]:font-bold",
+        "border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-3 border-3 border-dashed px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:px-1 [&_b]:font-bold",
         className,
       )}
     >
-      <span className="mr-2 inline-block bg-ink px-1.5 py-px align-middle text-[11px] font-bold text-cream">
+      <span className="bg-ink text-cream mr-2 inline-block px-1.5 py-px align-middle text-[11px] font-bold">
         Insight
       </span>
       {note ? boldNumbers(note) : fallback}

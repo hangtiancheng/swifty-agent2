@@ -2,7 +2,6 @@
 // (never as "sufficient"), because the gate exists to stop unsupported answers.
 import { z } from "zod";
 
-
 import { structured } from "./llm.ts";
 import { SELF_CHECK_PROMPT } from "./prompts.ts";
 
@@ -20,15 +19,25 @@ export interface CheckResult {
   reason: string;
 }
 
-export async function checkSufficient(query: string, evidenceTexts: string[]): Promise<CheckResult> {
+export async function checkSufficient(
+  query: string,
+  evidenceTexts: string[],
+): Promise<CheckResult> {
   const evidence =
-    evidenceTexts.map((t, i) => `[${i + 1}] ${t}`).join("\n") || "(no evidence)";
+    evidenceTexts.map((t, i) => `[${i + 1}] ${t}`).join("\n") ||
+    "(no evidence)";
   try {
     const model = structured(checkSchema);
-    const result = await SELF_CHECK_PROMPT.pipe(model).invoke({ query, evidence });
+    const result = await SELF_CHECK_PROMPT.pipe(model).invoke({
+      query,
+      evidence,
+    });
     return { useful: Boolean(result.useful), reason: result.reason || "" };
   } catch (error) {
-    log.warn({ err: error, query }, "evidence self-check failed; treating evidence as insufficient");
+    log.warn(
+      { err: error, query },
+      "evidence self-check failed; treating evidence as insufficient",
+    );
     return { useful: false, reason: "Evidence self-check failed" };
   }
 }

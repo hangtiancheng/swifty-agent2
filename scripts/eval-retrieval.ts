@@ -28,12 +28,13 @@ for (const sample of samples) {
     strategy: "vector",
   });
   const top = hits[0];
-  const ok =
-    top?.answer.includes(sample.expect_answer_contains);
+  const ok = top?.answer.includes(sample.expect_answer_contains);
   if (!ok) {
     failures += 1;
   }
-  const detail = top ? `${top.question} | ${top.answer.slice(0, 30)}` : "(empty)";
+  const detail = top
+    ? `${top.question} | ${top.answer.slice(0, 30)}`
+    : "(empty)";
   console.log(
     `${ok ? "✅" : "❌"} ${JSON.stringify(sample.query)} -> ${detail}`,
   );

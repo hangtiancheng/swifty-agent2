@@ -37,7 +37,10 @@ async function main(): Promise<void> {
     }
     console.log(`\n▼ ${fname} [${ctype}]  →  ${chunks.length} chunks`);
     for (const [sectionPath, group] of byPath) {
-      const multi = group.length > 1 ? `  (this section split into ${group.length} chunks)` : "";
+      const multi =
+        group.length > 1
+          ? `  (this section split into ${group.length} chunks)`
+          : "";
       console.log(`  ┌ section: ${sectionPath}${multi}`);
       group.forEach((c, j) => {
         keyTotal += c.isKeyClause;

@@ -4,7 +4,7 @@ description: Prisma Compute deployment and hosting guide. Use whenever the user 
 license: MIT
 metadata:
   author: prisma
-  version: '1.5.1'
+  version: "1.5.1"
 ---
 
 # Prisma Compute

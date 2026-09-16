@@ -14,14 +14,14 @@ npm install @prisma/client @prisma/adapter-pg pg
 ## Basic instantiation
 
 ```typescript
-import 'dotenv/config'
-import pg from 'pg'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from './generated/prisma/client.js'
+import "dotenv/config";
+import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/prisma/client.js";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 ```
 
 ## Key rules
@@ -37,38 +37,38 @@ const prisma = new PrismaClient({ adapter })
 ## Usage in application code
 
 ```typescript
-import 'dotenv/config'
-import pg from 'pg'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from './generated/prisma/client.js'
+import "dotenv/config";
+import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "./generated/prisma/client.js";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // Create
 const user = await prisma.user.create({
-  data: { email: 'alice@example.com', name: 'Alice' },
-})
+  data: { email: "alice@example.com", name: "Alice" },
+});
 
 // Read with relations
 const posts = await prisma.post.findMany({
   where: { published: true },
   include: { author: true },
-})
+});
 
 // Update
 await prisma.post.update({
   where: { id: 1 },
   data: { published: true },
-})
+});
 
 // Delete
-await prisma.post.delete({ where: { id: 1 } })
+await prisma.post.delete({ where: { id: 1 } });
 
 // Cleanup
-await prisma.$disconnect()
-await pool.end()
+await prisma.$disconnect();
+await pool.end();
 ```
 
 ## Common mistakes

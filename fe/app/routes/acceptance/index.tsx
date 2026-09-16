@@ -20,7 +20,6 @@ import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import type { JobSpec } from "~/lib/types";
 
-
 /* Classifier acceptance overview: all nine evidence checks run on this page — no terminal needed.
    The numbers here come from the same artifacts as `make` in the terminal; the API never
    recomputes them, so there is no second source of truth. */
@@ -58,7 +57,10 @@ export async function clientLoader(): Promise<LoaderData> {
 export function meta() {
   return [
     { title: "MeowMeow Select · Acceptance Overview" },
-    { name: "description", content: "All nine evidence checks run on the page — no terminal needed" },
+    {
+      name: "description",
+      content: "All nine evidence checks run on the page — no terminal needed",
+    },
   ];
 }
 
@@ -74,7 +76,9 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
   if (!loaderData.ok) {
     return (
       <PageShell title="Acceptance Overview" active="/acceptance">
-        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       </PageShell>
     );
   }
@@ -88,7 +92,12 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
       sub="All nine evidence checks run on the page — no terminal needed"
       active="/acceptance"
       actions={
-        <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
+        <Btn
+          onClick={() => {
+            void revalidate();
+          }}
+          disabled={state === "loading"}
+        >
           <RefreshCw
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
@@ -120,14 +129,15 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
       </GateBar>
 
       <Tip>
-        How to read this: <b>Pass</b> means the artifact exists and clears its bar;{" "}
-        <b>Fail</b> means it ran but missed the bar — go fix the data;{" "}
-        <b>No artifact</b> means it has not run yet — use the buttons on the card to run
-        it now. The numbers here come from the same artifacts as terminal make — the API
-        never recomputes them, so there is no second source of truth.
+        How to read this: <b>Pass</b> means the artifact exists and clears its
+        bar; <b>Fail</b> means it ran but missed the bar — go fix the data;{" "}
+        <b>No artifact</b> means it has not run yet — use the buttons on the
+        card to run it now. The numbers here come from the same artifacts as
+        terminal make — the API never recomputes them, so there is no second
+        source of truth.
       </Tip>
 
-      <div className="mt-4 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))]">
+      <div className="mt-4 grid [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))] gap-3.5">
         {d.blocks.map((blk, i) => {
           const [tone, label] = PILL[blk.status] ?? ["plain", blk.status];
           const specs = blk.jobs
@@ -139,12 +149,12 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.22 }}
-              className="flex flex-col border-4 border-ink bg-cream p-3.5 shadow-hard"
+              className="border-ink bg-cream shadow-hard flex flex-col border-4 p-3.5"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <div
                   className={cn(
-                    "grid h-6.5 w-6.5 shrink-0 place-items-center border-3 border-ink bg-paper text-[13px] font-bold",
+                    "border-ink bg-paper grid h-6.5 w-6.5 shrink-0 place-items-center border-3 text-[13px] font-bold",
                     blk.status === "pass" && "bg-online",
                     blk.status === "fail" && "bg-error text-white",
                   )}
@@ -160,17 +170,22 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
                   </BtnLink>
                 ) : null}
               </div>
-              <div className="mt-2.5 border-2 border-ink bg-paper px-2.5 py-1.5 text-[13px] leading-6">
+              <div className="border-ink bg-paper mt-2.5 border-2 px-2.5 py-1.5 text-[13px] leading-6">
                 {blk.headline || "—"}
               </div>
               {blk.note ? (
-                <div className="mt-2 text-xs leading-6 text-ink-soft">
+                <div className="text-ink-soft mt-2 text-xs leading-6">
                   {blk.note}
                 </div>
               ) : null}
               {specs.length ? (
                 <div className="mt-auto pt-3">
-                  <JobRow specs={specs} onFinish={() => { void revalidate(); }} />
+                  <JobRow
+                    specs={specs}
+                    onFinish={() => {
+                      void revalidate();
+                    }}
+                  />
                 </div>
               ) : null}
             </motion.div>

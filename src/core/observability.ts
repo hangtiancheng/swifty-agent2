@@ -12,7 +12,11 @@ const log = childLogger("observability");
 let sdk: NodeSDK | null = null;
 
 export function langfuseEnabled(): boolean {
-  return Boolean(settings.langfusePublicKey && settings.langfuseSecretKey && settings.langfuseBaseUrl);
+  return Boolean(
+    settings.langfusePublicKey &&
+    settings.langfuseSecretKey &&
+    settings.langfuseBaseUrl,
+  );
 }
 
 export function initObservability(): void {
@@ -30,9 +34,15 @@ export function initObservability(): void {
       ],
     });
     sdk.start();
-    log.info({ base_url: settings.langfuseBaseUrl }, "langfuse tracing enabled");
+    log.info(
+      { base_url: settings.langfuseBaseUrl },
+      "langfuse tracing enabled",
+    );
   } catch (error) {
-    log.warn({ err: error }, "failed to start langfuse tracing; continuing without it");
+    log.warn(
+      { err: error },
+      "failed to start langfuse tracing; continuing without it",
+    );
     sdk = null;
   }
 }
@@ -66,20 +76,23 @@ export function recordTurn(record: TurnRecord): void {
     tags.push(`intent:${record.intent}`);
   }
   try {
-    propagateAttributes({ sessionId: String(record.sessionId), metadata, tags }, () => {
-      startActiveObservation(
-        "chat-turn",
-        (generation) => {
-          generation.update({
-            input: record.input,
-            output: record.output ?? "",
-            model: settings.chatModel,
-            usageDetails: { total: record.totalTokens ?? 0 },
-          });
-        },
-        { asType: "generation" },
-      );
-    });
+    propagateAttributes(
+      { sessionId: String(record.sessionId), metadata, tags },
+      () => {
+        startActiveObservation(
+          "chat-turn",
+          (generation) => {
+            generation.update({
+              input: record.input,
+              output: record.output ?? "",
+              model: settings.chatModel,
+              usageDetails: { total: record.totalTokens ?? 0 },
+            });
+          },
+          { asType: "generation" },
+        );
+      },
+    );
   } catch (error) {
     log.warn({ err: error }, "langfuse record_turn failed (ignored)");
   }

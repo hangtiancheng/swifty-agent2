@@ -22,10 +22,17 @@ register(
     handler: async (args) => {
       const { description, ticket_type } = createTicketSchema.parse(args);
       if (settings.demoTicketDelaySeconds > 0) {
-        await new Promise((resolve) => setTimeout(resolve, settings.demoTicketDelaySeconds * 1000));
+        await new Promise((resolve) =>
+          setTimeout(resolve, settings.demoTicketDelaySeconds * 1000),
+        );
       }
-      const conversationId = typeof args.conversation_id === "number" ? args.conversation_id : 0;
-      const ticketNo = await repository.createTicket(conversationId, description, ticket_type);
+      const conversationId =
+        typeof args.conversation_id === "number" ? args.conversation_id : 0;
+      const ticketNo = await repository.createTicket(
+        conversationId,
+        description,
+        ticket_type,
+      );
       return { ticket_no: ticketNo, status: "transferred" };
     },
   }),

@@ -27,8 +27,11 @@ const toolDefs = [
 async function main(): Promise<void> {
   const model = getChatModel(); // non-streaming, direct to settings.chatBaseUrl
   const bound = model.bindTools(toolDefs);
-  const ai = await bound.invoke("Please use the tool to compute what 23 plus 19 equals");
-  const toolCalls = (AIMessage.isInstance(ai) ? ai.tool_calls : undefined) ?? [];
+  const ai = await bound.invoke(
+    "Please use the tool to compute what 23 plus 19 equals",
+  );
+  const toolCalls =
+    (AIMessage.isInstance(ai) ? ai.tool_calls : undefined) ?? [];
   console.log("content:", JSON.stringify(ai.content));
   console.log("tool_calls:", JSON.stringify(toolCalls));
   if (toolCalls.length > 0 && toolCalls[0].name === "add") {
@@ -36,7 +39,9 @@ async function main(): Promise<void> {
       `✅ GO: ${settings.chatModel} supports tool calling, selected add, args=${JSON.stringify(toolCalls[0].args)}`,
     );
   } else {
-    console.log("❌ NO-GO: the expected tool_calls were not returned — stop and ask, do not switch approach on your own");
+    console.log(
+      "❌ NO-GO: the expected tool_calls were not returned — stop and ask, do not switch approach on your own",
+    );
     process.exitCode = 1;
   }
 }

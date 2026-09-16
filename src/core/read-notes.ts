@@ -4,7 +4,6 @@
 // dashboard never depends on a live model and every page load shows the same sentence.
 import type { ChatOpenAI } from "@langchain/openai";
 
-
 import { getChatModel } from "./llm.ts";
 import { contentToString } from "./memory.ts";
 
@@ -50,7 +49,7 @@ const KINDS: Record<string, [string, string]> = {
 };
 
 const RULES =
-  "You are writing a short \"read note\" for a technical dashboard; the reader is a developer learning this system. Requirements:\n" +
+  'You are writing a short "read note" for a technical dashboard; the reader is a developer learning this system. Requirements:\n' +
   "1. Only cite numbers that appear in the data I give you; never compute, estimate, or invent a single one;\n" +
   `2. At most ${MAX_CHARS} characters in total, one or two sentences, ending on "so what to look at / what to do";\n` +
   "3. Casual English, like a colleague pointing at the screen. No semicolons, no dashes, at most one period in the whole note;\n" +
@@ -68,7 +67,13 @@ function payloadNumbers(payload: unknown): Set<string> {
   // Accept raw form, common decimal forms, percentages and the 1-x complement.
   const out = new Set<string>();
   const add = (x: number): void => {
-    for (const s of [x.toFixed(0), x.toFixed(1), x.toFixed(2), x.toFixed(3), String(x)]) {
+    for (const s of [
+      x.toFixed(0),
+      x.toFixed(1),
+      x.toFixed(2),
+      x.toFixed(3),
+      String(x),
+    ]) {
       out.add(s);
     }
   };
@@ -103,19 +108,28 @@ function payloadNumbers(payload: unknown): Set<string> {
     }
   };
   walk(payload);
-  return new Set([...out].map((s) => (s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s)));
+  return new Set(
+    [...out].map((s) =>
+      s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s,
+    ),
+  );
 }
 
 function normalizeNumber(raw: string): string {
   const cleaned = raw.replaceAll(",", "");
-  return cleaned.includes(".") ? cleaned.replace(/0+$/, "").replace(/\.$/, "") : cleaned;
+  return cleaned.includes(".")
+    ? cleaned.replace(/0+$/, "").replace(/\.$/, "")
+    : cleaned;
 }
 
 export function verify(text: string, payload: unknown): boolean {
   const allowed = payloadNumbers(payload);
   for (const m of text.matchAll(NUM_RE)) {
     if (!allowed.has(normalizeNumber(m[0]))) {
-      log.warn({ number: m[0] }, "read note cites a number missing from the payload; discarding");
+      log.warn(
+        { number: m[0] },
+        "read note cites a number missing from the payload; discarding",
+      );
       return false;
     }
   }
@@ -123,13 +137,21 @@ export function verify(text: string, payload: unknown): boolean {
 }
 
 export function tidy(text: string): string {
-  let out = text.split(/\s+/).join(" ").trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, "");
+  let out = text
+    .split(/\s+/)
+    .join(" ")
+    .trim()
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "");
   out = out.replaceAll(";", ",");
   out = out.replace(/[!?.,…\s]+$/g, "");
   return out.endsWith(".") ? out : `${out}.`;
 }
 
-export async function generate(kind: string, payload: unknown, model: ChatOpenAI | null = null): Promise<string | null> {
+export async function generate(
+  kind: string,
+  payload: unknown,
+  model: ChatOpenAI | null = null,
+): Promise<string | null> {
   const spec = KINDS[kind];
   if (!spec) {
     return null;
@@ -141,12 +163,17 @@ export async function generate(kind: string, payload: unknown, model: ChatOpenAI
   let timer: NodeJS.Timeout | undefined;
   try {
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => { reject(new Error("read note timeout")); }, TIMEOUT_MS);
+      timer = setTimeout(() => {
+        reject(new Error("read note timeout"));
+      }, TIMEOUT_MS);
     });
     const response = await Promise.race([chat.invoke(prompt), timeout]);
     text = tidy(contentToString(response.content));
   } catch (error) {
-    log.warn({ kind, err: error }, "read note generation failed; page will use its fallback sentence");
+    log.warn(
+      { kind, err: error },
+      "read note generation failed; page will use its fallback sentence",
+    );
     return null;
   } finally {
     if (timer !== undefined) {
@@ -160,9 +187,14 @@ export async function generate(kind: string, payload: unknown, model: ChatOpenAI
   return verify(text, payload) ? text : null;
 }
 
-export async function generateAll(jobs: Record<string, unknown>, model: ChatOpenAI | null = null): Promise<Record<string, string>> {
+export async function generateAll(
+  jobs: Record<string, unknown>,
+  model: ChatOpenAI | null = null,
+): Promise<Record<string, string>> {
   const kinds = Object.keys(jobs);
-  const notes = await Promise.all(kinds.map((k) => generate(k, jobs[k], model)));
+  const notes = await Promise.all(
+    kinds.map((k) => generate(k, jobs[k], model)),
+  );
   const out: Record<string, string> = {};
   kinds.forEach((k, i) => {
     if (notes[i] !== null) {

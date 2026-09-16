@@ -28,11 +28,18 @@ function clip01(x: number): number {
   return Math.max(0, Math.min(1, x));
 }
 
-export function computeEvidenceConfidence(hits: KnowledgeHit[]): EvidenceConfidence {
+export function computeEvidenceConfidence(
+  hits: KnowledgeHit[],
+): EvidenceConfidence {
   if (hits.length === 0) {
     return {
       score: 0,
-      signals: { top1_score: 0, valid_count: 0, margin: 0, key_clause_hit: false },
+      signals: {
+        top1_score: 0,
+        valid_count: 0,
+        margin: 0,
+        key_clause_hit: false,
+      },
     };
   }
   const scores = hits.map((h) => Number(h.rerank_score ?? 0));
@@ -69,7 +76,10 @@ export interface RetrievalSnapshot {
   section_path: string;
 }
 
-export function snapshotFromHits(hits: KnowledgeHit[], topN = 3): RetrievalSnapshot[] {
+export function snapshotFromHits(
+  hits: KnowledgeHit[],
+  topN = 3,
+): RetrievalSnapshot[] {
   return hits.slice(0, topN).map((h) => ({
     question: h.question,
     answer: h.answer,

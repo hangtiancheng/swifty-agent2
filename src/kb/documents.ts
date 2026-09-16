@@ -1,7 +1,19 @@
 // Structured document chunk builder shared by the offline build job and the ingest API.
 import * as chunking from "./chunking.ts";
 
-const KEY_TERMS = ["refund", "return", "timeframe", "time limit", "shipping fee", "postage", "fee", "warranty", "compensation", "period", "free shipping"];
+const KEY_TERMS = [
+  "refund",
+  "return",
+  "timeframe",
+  "time limit",
+  "shipping fee",
+  "postage",
+  "fee",
+  "warranty",
+  "compensation",
+  "period",
+  "free shipping",
+];
 // Re-exported: the confidence signal and review write-back share the same term list.
 export { KEY_TERMS };
 
@@ -34,7 +46,12 @@ export async function buildChunks(
       .filter((v): v is string => typeof v === "string" && v.length > 0);
     const sectionPath = path.join(" / ");
     const title = path.length > 0 ? path[path.length - 1] : contentType;
-    const category = path.length > 1 ? path.slice(0, -1).join(" / ") : path.length === 1 ? path[0] : contentType;
+    const category =
+      path.length > 1
+        ? path.slice(0, -1).join(" / ")
+        : path.length === 1
+          ? path[0]
+          : contentType;
     const body = sec.pageContent.trim();
     if (!body) {
       continue;

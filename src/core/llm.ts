@@ -14,12 +14,24 @@ import { childLogger } from "#/logger.ts";
 const log = childLogger("llm");
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 
-function slotSettings(slot: string): { model: string; baseUrl: string; apiKey: string } {
+function slotSettings(slot: string): {
+  model: string;
+  baseUrl: string;
+  apiKey: string;
+} {
   if (slot === "intent") {
-    return { model: settings.intentModel, baseUrl: settings.intentBaseUrl, apiKey: settings.intentApiKey };
+    return {
+      model: settings.intentModel,
+      baseUrl: settings.intentBaseUrl,
+      apiKey: settings.intentApiKey,
+    };
   }
   if (slot === "summary") {
-    return { model: settings.summaryModel, baseUrl: settings.summaryBaseUrl, apiKey: settings.summaryApiKey };
+    return {
+      model: settings.summaryModel,
+      baseUrl: settings.summaryBaseUrl,
+      apiKey: settings.summaryApiKey,
+    };
   }
   return { model: "", baseUrl: "", apiKey: "" };
 }
@@ -49,13 +61,17 @@ function thinkingKwargs(): ThinkingOptions {
     extra.thinking = { type: settings.chatThinking };
   }
   if (settings.chatReasoningSplit) {
-    extra.reasoning_split = TRUTHY.has(settings.chatReasoningSplit.trim().toLowerCase());
+    extra.reasoning_split = TRUTHY.has(
+      settings.chatReasoningSplit.trim().toLowerCase(),
+    );
   }
   const kwargs: ThinkingOptions = {};
   if (Object.keys(extra).length > 0) {
     kwargs.modelKwargs = extra;
   }
-  const effort = z.enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"]).safeParse(settings.chatReasoningEffort);
+  const effort = z
+    .enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
+    .safeParse(settings.chatReasoningEffort);
   if (effort.success) {
     kwargs.reasoningEffort = effort.data;
   }
@@ -71,12 +87,22 @@ export interface GetModelOptions {
 }
 
 export function getChatModel(options: GetModelOptions = {}): ChatOpenAI {
-  const { streaming = false, model = null, temperature = null, slot = "chat", thinking = true } = options;
+  const {
+    streaming = false,
+    model = null,
+    temperature = null,
+    slot = "chat",
+    thinking = true,
+  } = options;
   const [slotModel, baseURL, apiKey] = resolveSlot(slot);
   if (!apiKey) {
-    throw new Error(`missing API key for slot "${slot}" (set CHAT_API_KEY or ${slot.toUpperCase()}_API_KEY)`);
+    throw new Error(
+      `missing API key for slot "${slot}" (set CHAT_API_KEY or ${slot.toUpperCase()}_API_KEY)`,
+    );
   }
-  const thinkingOptions = thinking ? thinkingKwargs() : { modelKwargs: { thinking: { type: "disabled" } } };
+  const thinkingOptions = thinking
+    ? thinkingKwargs()
+    : { modelKwargs: { thinking: { type: "disabled" } } };
   return new ChatOpenAI({
     model: model || slotModel,
     apiKey,
@@ -95,7 +121,10 @@ export function getChatModel(options: GetModelOptions = {}): ChatOpenAI {
 // then throw so the call site can fall back to a safe default.
 const NO_STREAM_TOOLCALL_FAMILIES = ["minimax"];
 
-export function needsNonStreamingTools(model: string | null = null, slot = "chat"): boolean {
+export function needsNonStreamingTools(
+  model: string | null = null,
+  slot = "chat",
+): boolean {
   const name = String(model || resolveSlot(slot)[0] || "").toLowerCase();
   return NO_STREAM_TOOLCALL_FAMILIES.some((f) => name.includes(f));
 }
@@ -119,7 +148,13 @@ export function structured<S extends z.ZodType>(
     streaming = false;
   }
 
-  const m = getChatModel({ streaming, model, temperature, slot, thinking: false });
+  const m = getChatModel({
+    streaming,
+    model,
+    temperature,
+    slot,
+    thinking: false,
+  });
   const fc = m.withStructuredOutput(schema, { method: "functionCalling" });
 
   const warn = (attempt: number, why: string): void => {
@@ -138,13 +173,18 @@ export function structured<S extends z.ZodType>(
         }
         warn(attempt, "no tool_calls in response");
       } catch (error) {
-        warn(attempt, error instanceof Error ? error.constructor.name : "Error");
+        warn(
+          attempt,
+          error instanceof Error ? error.constructor.name : "Error",
+        );
         if (attempt === 2) {
           throw error;
         }
       }
     }
-    throw new Error(`${name} via ${slotBase} did not return tool_calls after two attempts`);
+    throw new Error(
+      `${name} via ${slotBase} did not return tool_calls after two attempts`,
+    );
   };
 
   return RunnableLambda.from(run);

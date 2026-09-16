@@ -43,12 +43,18 @@ export const settings = {
   chatReasoningSplit: str("CHAT_REASONING_SPLIT"),
 
   // --- embeddings upstream (required at runtime) ---
-  embedBaseUrl: str("EMBED_BASE_URL", "https://maas.aliyuncs.com/compatible-mode/v1"),
+  embedBaseUrl: str(
+    "EMBED_BASE_URL",
+    "https://maas.aliyuncs.com/compatible-mode/v1",
+  ),
   embedApiKey: str("EMBED_API_KEY"),
   embedModel: str("EMBED_MODEL", "qwen3.7-text-embedding-flash"),
 
   // --- rerank upstream (required at runtime) ---
-  rerankBaseUrl: str("RERANK_BASE_URL", "https://maas.aliyuncs.com/compatible-mode/v1"),
+  rerankBaseUrl: str(
+    "RERANK_BASE_URL",
+    "https://maas.aliyuncs.com/compatible-mode/v1",
+  ),
   rerankApiKey: str("RERANK_API_KEY"),
   rerankModel: str("RERANK_MODEL", "qwen3.7-text-rerank"),
 
@@ -56,10 +62,7 @@ export const settings = {
 
   // --- database / checkpointer ---
   databaseUrl: str("DATABASE_URL", "file:./data/swifty-agent2.db"),
-  checkpointerDbPath: str(
-    "CHECKPOINTER_DB_PATH",
-    "data/checkpoints.sqlite",
-  ),
+  checkpointerDbPath: str("CHECKPOINTER_DB_PATH", "data/checkpoints.sqlite"),
 
   // --- retrieval ---
   recallTopK: num("RECALL_TOP_K", 50),

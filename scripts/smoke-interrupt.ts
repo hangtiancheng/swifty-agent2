@@ -1,4 +1,4 @@
-// ch06 red-line smoke: the interrupt / Command(resume) surface shapes on the current langgraph.
+// intent red-line smoke: the interrupt / Command(resume) surface shapes on the current langgraph.
 // Does NOT call the chat upstream — only a pure interrupt node. Run: node scripts/smoke-interrupt.ts
 //
 // Pins down four things (for fetch_order / runtime):
@@ -26,7 +26,10 @@ import { z } from "zod";
 import { contentToString } from "#/core/memory.ts";
 
 const S = Annotation.Root({
-  messages: Annotation<BaseMessage[]>({ reducer: messagesStateReducer, default: () => [] }),
+  messages: Annotation<BaseMessage[]>({
+    reducer: messagesStateReducer,
+    default: () => [],
+  }),
   picked: Annotation<string>(),
 });
 type SState = typeof S.State;
@@ -73,7 +76,10 @@ async function main(): Promise<void> {
 
   // A) Non-streaming: the first run should carry __interrupt__
   const config = { configurable: { thread_id: "smoke-int-1" } };
-  const out = await graph.invoke({ messages: [new AIMessage("I want a refund")] }, config);
+  const out = await graph.invoke(
+    { messages: [new AIMessage("I want a refund")] },
+    config,
+  );
   console.log("A invoke keys=", Object.keys(out));
   if (isInterrupted(out)) {
     const value = out[INTERRUPT][0]?.value;
@@ -93,9 +99,15 @@ async function main(): Promise<void> {
 
   // C) Streaming: which chunk carries the interrupt
   const streamModes: ("messages" | "updates")[] = ["messages", "updates"];
-  const config2 = { configurable: { thread_id: "smoke-int-2" }, streamMode: streamModes };
+  const config2 = {
+    configurable: { thread_id: "smoke-int-2" },
+    streamMode: streamModes,
+  };
   console.log("C stream chunks:");
-  const stream = await graph.stream({ messages: [new AIMessage("I want a refund")] }, config2);
+  const stream = await graph.stream(
+    { messages: [new AIMessage("I want a refund")] },
+    config2,
+  );
   for await (const chunk of stream) {
     const tuple = streamTupleSchema.safeParse(chunk);
     if (!tuple.success) {
@@ -104,7 +116,12 @@ async function main(): Promise<void> {
     const [mode, payload] = tuple.data;
     if (mode === "updates") {
       const update = updatesChunkSchema.safeParse(payload);
-      console.log("  UPD keys=", update.success ? Object.keys(update.data) : "(unparseable)", "val=", JSON.stringify(payload));
+      console.log(
+        "  UPD keys=",
+        update.success ? Object.keys(update.data) : "(unparseable)",
+        "val=",
+        JSON.stringify(payload),
+      );
     }
   }
   // C') After streaming, probe pending (an alternate detection path)
@@ -134,9 +151,15 @@ async function main(): Promise<void> {
     console.log("D no error (unexpected)");
   } catch (error) {
     if (error instanceof GraphInterrupt) {
-      console.log("D GraphInterrupt interrupts=", JSON.stringify(error.interrupts));
+      console.log(
+        "D GraphInterrupt interrupts=",
+        JSON.stringify(error.interrupts),
+      );
     } else if (error instanceof Error) {
-      console.log("D Error (interrupt cannot be called outside a graph):", error.message);
+      console.log(
+        "D Error (interrupt cannot be called outside a graph):",
+        error.message,
+      );
       console.log(
         "D conclusion: the fetch_order missing-order interrupt path must be tested through the " +
           "[compiled graph invoke], not by calling the node function directly.",

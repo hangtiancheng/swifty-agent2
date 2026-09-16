@@ -11,7 +11,6 @@ import * as runtime from "#/graph/runtime.ts";
 import type { GraphState } from "#/graph/state.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("api.agent");
 export const agentRouter = new Hono();
 
@@ -28,7 +27,10 @@ interface ToolResultView {
   content: string;
 }
 
-function viewsFromState(state: GraphState): { calls: ToolCallView[]; results: ToolResultView[] } {
+function viewsFromState(state: GraphState): {
+  calls: ToolCallView[];
+  results: ToolResultView[];
+} {
   const calls: ToolCallView[] = [];
   const results: ToolResultView[] = [];
   for (const m of state.messages) {
@@ -41,7 +43,8 @@ function viewsFromState(state: GraphState): { calls: ToolCallView[]; results: To
         tool_call_id: m.tool_call_id,
         name: m.name ?? "",
         ok: m.status !== "error",
-        content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+        content:
+          typeof m.content === "string" ? m.content : JSON.stringify(m.content),
       });
     }
   }
@@ -60,10 +63,16 @@ agentRouter.post("/api/agent", async (c) => {
     const name = error instanceof Error ? error.constructor.name : "";
     if (name.startsWith("Prisma")) {
       log.error({ err: error, user_id: req.user_id }, "database error");
-      throw new HTTPException(503, { message: "The database is temporarily unavailable; please try again later" });
+      throw new HTTPException(503, {
+        message:
+          "The database is temporarily unavailable; please try again later",
+      });
     }
     log.error({ err: error, user_id: req.user_id }, "agent turn failed");
-    throw new HTTPException(502, { message: "The upstream model is temporarily unavailable; please try again later" });
+    throw new HTTPException(502, {
+      message:
+        "The upstream model is temporarily unavailable; please try again later",
+    });
   }
 
   const state = out.state;

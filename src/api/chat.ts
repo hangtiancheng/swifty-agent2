@@ -12,7 +12,6 @@ import * as memory from "#/core/memory.ts";
 import * as runtime from "#/graph/runtime.ts";
 import { childLogger } from "#/logger.ts";
 
-
 const log = childLogger("api.chat");
 export const chatRouter = new Hono();
 
@@ -40,13 +39,21 @@ chatRouter.post("/api/chat", async (c) => {
 
   return streamSSE(c, async (stream) => {
     try {
-      for await (const ev of runtime.streamTurn(req.user_id, req.message, req.conversation_id)) {
+      for await (const ev of runtime.streamTurn(
+        req.user_id,
+        req.message,
+        req.conversation_id,
+      )) {
         if (ev.type === "tool") {
-          await stream.writeSSE({ data: JSON.stringify({ event: "tool", name: ev.name }) });
+          await stream.writeSSE({
+            data: JSON.stringify({ event: "tool", name: ev.name }),
+          });
         } else if (ev.type === "delta") {
           await stream.writeSSE({ data: JSON.stringify({ delta: ev.text }) });
         } else if (ev.type === "citations") {
-          await stream.writeSSE({ data: JSON.stringify({ event: "citations", items: ev.items }) });
+          await stream.writeSSE({
+            data: JSON.stringify({ event: "citations", items: ev.items }),
+          });
         } else if (ev.type === "interrupt") {
           await stream.writeSSE({
             data: JSON.stringify({
@@ -58,16 +65,24 @@ chatRouter.post("/api/chat", async (c) => {
             }),
           });
         } else if (ev.type === "actions") {
-          await stream.writeSSE({ data: JSON.stringify({ event: "actions", items: ev.items }) });
+          await stream.writeSSE({
+            data: JSON.stringify({ event: "actions", items: ev.items }),
+          });
         } else if (ev.type === "done") {
           await stream.writeSSE({
-            data: JSON.stringify({ event: "done", conversation_id: ev.conversation_id }),
+            data: JSON.stringify({
+              event: "done",
+              conversation_id: ev.conversation_id,
+            }),
           });
         }
       }
     } catch (error) {
       log.error({ err: error, user_id: req.user_id }, "chat stream failed");
-      await stream.writeSSE({ event: "error", data: JSON.stringify({ message: errorMessage(error) }) });
+      await stream.writeSSE({
+        event: "error",
+        data: JSON.stringify({ message: errorMessage(error) }),
+      });
       return;
     }
     await stream.writeSSE({ data: "[DONE]" });

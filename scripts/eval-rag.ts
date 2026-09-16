@@ -61,11 +61,16 @@ const sampleSchema = z.object({
 type Sample = z.infer<typeof sampleSchema>;
 
 const faithSchema = z.object({
-  faithful: z.boolean().describe("Whether the answer is faithful to the evidence"),
+  faithful: z
+    .boolean()
+    .describe("Whether the answer is faithful to the evidence"),
   reason: z.string().default(""),
 });
 const covSchema = z.object({
-  covered_count: z.number().int().describe("Number of key points the agent answer correctly covers"),
+  covered_count: z
+    .number()
+    .int()
+    .describe("Number of key points the agent answer correctly covers"),
 });
 
 const COVERAGE_SYS =
@@ -202,7 +207,9 @@ async function tryCall<T>(
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => { reject(new Error("call timeout")); }, ms);
+    timer = setTimeout(() => {
+      reject(new Error("call timeout"));
+    }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {
@@ -225,7 +232,9 @@ async function deterministic(samples: Sample[]): Promise<{
   > = {};
   const coverageOut: Record<string, Record<string, number>> = {};
   const hitsByStrategy: HitsByStrategy = {};
-  logLine(`=== Stage 1 retrieval: four strategies × buckets, Recall@${RECALL_K} / MRR ===`);
+  logLine(
+    `=== Stage 1 retrieval: four strategies × buckets, Recall@${RECALL_K} / MRR ===`,
+  );
   for (const strat of STRATEGIES) {
     const hitsList = await Promise.all(
       graded.map((s) =>
@@ -411,7 +420,9 @@ async function genOne(
 
 async function ledger(cases: FaithDetail[]): Promise<void> {
   if (cases.length === 0) {
-    logLine("\n-- Fabrication case ledger: 0 cases this round, nothing to write --");
+    logLine(
+      "\n-- Fabrication case ledger: 0 cases this round, nothing to write --",
+    );
     return;
   }
   try {
@@ -436,7 +447,9 @@ async function ledger(cases: FaithDetail[]): Promise<void> {
     logLine(
       `\n-- Fabrication case ledger: ${cases.length} cases written this round, ${total} entries in total` +
         ` (unresolved ${counts.unresolved} · resolved ${counts.resolved} · dismissed ${counts.dismissed})` +
-        (reopened > 0 ? `; ${reopened} of them recurred after being handled` : "") +
+        (reopened > 0
+          ? `; ${reopened} of them recurred after being handled`
+          : "") +
         " --",
     );
   } catch (error) {
@@ -446,9 +459,7 @@ async function ledger(cases: FaithDetail[]): Promise<void> {
   }
 }
 
-async function refusalOne(
-  sample: Sample,
-): Promise<{
+async function refusalOne(sample: Sample): Promise<{
   refused: boolean;
   detail: Record<string, unknown> | null;
 } | null> {
@@ -478,12 +489,14 @@ async function generation(
 ): Promise<Record<string, unknown>> {
   const graded = samples.filter((s) => GRADED_BUCKETS.includes(s.bucket));
   const absent = samples.filter((s) => s.bucket === "D_absent");
-  logLine("\n=== Stage 3 generation: four-strategy answer coverage (graded) + Faithfulness + bucket-D refusal ===");
+  logLine(
+    "\n=== Stage 3 generation: four-strategy answer coverage (graded) + Faithfulness + bucket-D refusal ===",
+  );
   const tasks: Promise<
-      | GenResult
-      | { refused: boolean; detail: Record<string, unknown> | null }
-      | null
-    >[] = [];
+    | GenResult
+    | { refused: boolean; detail: Record<string, unknown> | null }
+    | null
+  >[] = [];
   for (const strat of STRATEGIES) {
     for (const sample of graded) {
       tasks.push(genOne(strat, sample, hits));
@@ -513,7 +526,9 @@ async function generation(
   }
 
   const answerCov: Record<string, Record<string, number | null>> = {};
-  logLine("\n-- Answer coverage (share of standard key points covered by the generated answer) --");
+  logLine(
+    "\n-- Answer coverage (share of standard key points covered by the generated answer) --",
+  );
   for (const strat of STRATEGIES) {
     const by: Record<string, number | null> = {};
     const allc: number[] = [];
@@ -536,7 +551,9 @@ async function generation(
 
   const faithfulness: Record<string, { v: number | null; answered: number }> =
     {};
-  logLine("\n-- Faithfulness (hybrid_rerank production pipeline; the answer fabricates nothing) --");
+  logLine(
+    "\n-- Faithfulness (hybrid_rerank production pipeline; the answer fabricates nothing) --",
+  );
   for (const bucket of GRADED_BUCKETS) {
     const fsVals = genResults
       .filter(
@@ -580,7 +597,9 @@ async function generation(
     );
   }
   if (refusalSkipped.length > 0) {
-    logLine(`   not graded (call failed/timed out): ${refusalSkipped.join(", ")}`);
+    logLine(
+      `   not graded (call failed/timed out): ${refusalSkipped.join(", ")}`,
+    );
   }
 
   const guardHits = genResults.flatMap((r) => r.guardHits);
@@ -687,7 +706,9 @@ async function main(): Promise<void> {
   } = await deterministic(samples);
   let generationData: Record<string, unknown> | null = null;
   if (SKIP_GEN) {
-    logLine("\n[Generation stage skipped] --skip-gen: only the two deterministic stages ran this round.");
+    logLine(
+      "\n[Generation stage skipped] --skip-gen: only the two deterministic stages ran this round.",
+    );
   } else {
     try {
       generationData = await generation(samples, hits);
@@ -695,7 +716,9 @@ async function main(): Promise<void> {
       logLine(
         `\n[Generation stage incomplete] ${error instanceof Error ? error.message.slice(0, 140) : "Error"}`,
       );
-      logLine("The retrieval stage and evidence coverage are done; re-run to complete it once the upstream recovers.");
+      logLine(
+        "The retrieval stage and evidence coverage are done; re-run to complete it once the upstream recovers.",
+      );
     }
   }
   if (errors.length > 0) {

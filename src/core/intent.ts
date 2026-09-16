@@ -1,7 +1,6 @@
 // Intent classification: nine classes + confidence, with a conservative fallback.
 import { z } from "zod";
 
-
 import { structured } from "./llm.ts";
 import { INTENT_CLASSIFY_PROMPT } from "./prompts.ts";
 
@@ -24,7 +23,12 @@ export type Intent = (typeof INTENTS)[number];
 
 const intentSchema = z.object({
   intent: z.enum(INTENTS).describe("One of the nine intent labels"),
-  confidence: z.number().min(0).max(1).default(0.5).describe("Confidence in the judgment, 0-1"),
+  confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .default(0.5)
+    .describe("Confidence in the judgment, 0-1"),
 });
 
 export interface IntentResult {
@@ -32,7 +36,10 @@ export interface IntentResult {
   confidence: number;
 }
 
-export async function classify(query: string, history = ""): Promise<IntentResult> {
+export async function classify(
+  query: string,
+  history = "",
+): Promise<IntentResult> {
   // Flat fields avoid upstream 502s on nested schemas. Parse failure falls back to other.
   const model = structured(intentSchema, { slot: "intent" });
   try {
@@ -42,7 +49,10 @@ export async function classify(query: string, history = ""): Promise<IntentResul
     });
     return { intent: result.intent, confidence: Number(result.confidence) };
   } catch (error) {
-    log.warn({ err: error, query }, "intent classification failed; falling back to other");
+    log.warn(
+      { err: error, query },
+      "intent classification failed; falling back to other",
+    );
     return { intent: "other", confidence: 0 };
   }
 }

@@ -15,7 +15,10 @@ export interface DedupItem {
   answer: string;
 }
 
-export function dedupe<T extends DedupItem>(items: T[], existingQuestions: string[]): { kept: T[]; discarded: T[] } {
+export function dedupe<T extends DedupItem>(
+  items: T[],
+  existingQuestions: string[],
+): { kept: T[]; discarded: T[] } {
   const seen = new Set(existingQuestions.map((q) => normalizeQuestion(q)));
   const kept: T[] = [];
   const discarded: T[] = [];
