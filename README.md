@@ -31,7 +31,7 @@ Jina/Cohere shaped). Intent and summary slots fall back to the chat group unless
 
 ## Storage
 
-The Python project used MySQL + Milvus. This server uses a single SQLite database:
+The Python project used MySQL + Milvus Standalone. This server uses a single SQLite database:
 
 - relational tables live in `data/swifty-agent2.db` (Prisma schema in `prisma/schema.prisma`);
 - dense embeddings are stored on `knowledge_chunks` and scored in-process;
@@ -39,6 +39,27 @@ The Python project used MySQL + Milvus. This server uses a single SQLite databas
   strategies (`vector` / `bm25` / `hybrid` / `hybrid_rerank`) keep working without a
   vector database;
 - the LangGraph checkpointer uses `CHECKPOINTER_DB_PATH`.
+
+### Optional: Milvus dense bridge
+
+Dense retrieval can instead run against real Milvus (Lite, no docker) through a Python gRPC
+bridge — `src/milvus/server.py` wraps `pymilvus` behind `src/milvus/kb_store.proto`, and
+`src/kb/milvus-rpc.ts` is the Node client:
+
+```bash
+make milvus-up                                  # start the bridge on 127.0.0.1:50051
+echo 'MILVUS_RPC_URL=127.0.0.1:50051' >> .env   # then restart the Node server
+make kb-vectorize                               # re-embed: vectors now upsert into Milvus
+node scripts/smoke-milvus.ts                    # end-to-end smoke (throwaway collection)
+make milvus-down                                # stop the bridge
+```
+
+With `MILVUS_RPC_URL` set, Milvus is the authoritative dense store (the SQLite `embedding`
+column stays null; `vector_id` + status are still recorded) and a down bridge surfaces as an
+error instead of silently degrading. BM25 always stays in-process, and `hybrid` fuses the two
+with reciprocal-rank fusion — unlike the Python original, which ran dense + BM25 + hybrid all
+inside Milvus Standalone (its BM25 Function needs Standalone; Lite does not support it).
+`make milvus-proto` regenerates the Python stubs after editing the proto.
 
 ## train topic classifier (hybrid Python/TypeScript)
 

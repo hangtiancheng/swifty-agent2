@@ -82,6 +82,18 @@ export const JOBS: Record<string, JobSpec> = Object.fromEntries(
       "Requires the local DB + embedding upstream",
     ),
     spec(
+      "milvus-up",
+      "Start the Milvus dense bridge",
+      makeTarget("milvus-up"),
+      "Optional; then set MILVUS_RPC_URL=127.0.0.1:50051 to route dense retrieval through Milvus Lite",
+    ),
+    spec(
+      "milvus-down",
+      "Stop the Milvus dense bridge",
+      makeTarget("milvus-down"),
+      "—",
+    ),
+    spec(
       "kb-repatch",
       "Patch-style re-embed (md changes → update text in place)",
       script("kb-repatch"),

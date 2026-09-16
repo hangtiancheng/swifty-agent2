@@ -70,6 +70,13 @@ export const settings = {
   subquerySplit: bool("SUBQUERY_SPLIT", true),
   rerankMinScore: num("RERANK_MIN_SCORE", 0.3),
 
+  // --- milvus dense bridge (optional) ---
+  // Empty = disabled: dense retrieval runs in-process over SQLite embeddings (legacy).
+  // Set to "host:port" of the Python gRPC bridge (src/milvus/server.py) to make Milvus the
+  // authoritative dense store; BM25 always stays in-process. See src/kb/milvus-rpc.ts.
+  milvusRpcUrl: str("MILVUS_RPC_URL"),
+  milvusCollection: str("MILVUS_COLLECTION", "knowledge"),
+
   // --- graph orchestration ---
   maxAgentSteps: num("MAX_AGENT_STEPS", 6),
 

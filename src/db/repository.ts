@@ -243,6 +243,15 @@ export async function markChunkVectorized(
   });
 }
 
+// Milvus-bridge variant: the dense vector lives in Milvus, so only the vector id and status
+// are recorded here and the embedding column is left null (see src/kb/milvus-rpc.ts).
+export async function markChunkVectorizedExternal(chunkId: number, vectorId: string): Promise<void> {
+  await prisma.knowledgeChunk.updateMany({
+    where: { id: chunkId },
+    data: { vectorId, vectorizeStatus: "done" },
+  });
+}
+
 export async function setChunkNeighbors(
   chunkId: number,
   prevId: number | null,
@@ -358,8 +367,10 @@ export interface VectorizedChunk {
 }
 
 export async function listVectorizedChunks(): Promise<VectorizedChunk[]> {
+  // No `embedding != null` filter: when the Milvus bridge is enabled the dense vectors live
+  // in Milvus and this column stays null, but the in-process BM25 index still needs the text.
   const rows = await prisma.knowledgeChunk.findMany({
-    where: { vectorizeStatus: "done", NOT: { embedding: null } },
+    where: { vectorizeStatus: "done" },
     orderBy: { id: "asc" },
   });
   return rows.map((r) => ({

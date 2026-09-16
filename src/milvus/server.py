@@ -24,10 +24,9 @@ import grpc
 
 # The generated stubs live next to this file and use flat imports (import kb_store_pb2).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import kb_store_pb2 as pb2  # noqa: E402
-import kb_store_pb2_grpc as pb2_grpc  # noqa: E402
-
-from pymilvus import DataType, MilvusClient  # noqa: E402
+import kb_store_pb2 as pb2
+import kb_store_pb2_grpc as pb2_grpc
+from pymilvus import DataType, MilvusClient
 
 _OUTPUT = ["question", "answer", "section_path", "content_type", "category"]
 

@@ -16,6 +16,21 @@ kb-preview:
 kb-repatch:
 	node scripts/kb-repatch.ts
 
+# Milvus dense bridge (src/milvus/server.py): dense-only gRPC bridge over Milvus Lite.
+# Start it, then set MILVUS_RPC_URL=127.0.0.1:50051 in .env to make dense retrieval use it.
+milvus-up:
+	@mkdir -p log data/milvus
+	@nohup uv run python src/milvus/server.py > log/milvus.log 2>&1 & echo $$! > data/milvus.pid
+	@sleep 3 && grep -q "listening" log/milvus.log && echo "Milvus bridge started: 127.0.0.1:50051 (pid in data/milvus.pid)" || (echo "Start failed; see log/milvus.log:"; tail -5 log/milvus.log)
+
+milvus-down:
+	-@kill `cat data/milvus.pid 2>/dev/null` 2>/dev/null; rm -f data/milvus.pid
+	@echo "Milvus bridge stopped"
+
+milvus-proto:
+	uv run python -m grpc_tools.protoc -I src/milvus --python_out=src/milvus --grpc_python_out=src/milvus src/milvus/kb_store.proto
+	@echo "Regenerated src/milvus/kb_store_pb2.py and kb_store_pb2_grpc.py"
+
 seed-conv:
 	node scripts/seed-conv.ts
 

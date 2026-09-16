@@ -1,12 +1,20 @@
-// Knowledge vector store backed by SQLite rows.
+// Knowledge vector store: dense retrieval over the Milvus bridge, BM25 in-process.
 //
-// The Python project used Milvus for dense+sparse retrieval; the selected stack has no
-// Milvus client, so the same capabilities (dense / BM25 / hybrid / hybrid+rerank) are
-// implemented over the knowledge_chunks table: embeddings are stored as JSON and scored
-// in-process, BM25 is computed on the fly with CJK-aware tokenization.
+// The Python original (~/Downloads/python app/kb/milvus_client.py) ran Milvus Standalone and
+// pushed dense + sparse(BM25 Function) + hybrid(RRFRanker) all inside Milvus. This port keeps
+// the same four strategies (vector / bm25 / hybrid / hybrid_rerank) but splits the backends:
+//   - dense ANN goes to Milvus Lite through the Python gRPC bridge (src/milvus/server.py)
+//     when MILVUS_RPC_URL is set, and Milvus is then the authoritative vector store;
+//   - BM25 is always computed in-process over the knowledge_chunks text (CJK-aware bigrams);
+//   - hybrid fuses the two with the existing reciprocal-rank-fusion code below.
+// With MILVUS_RPC_URL empty, dense falls back to the legacy in-process cosine over SQLite
+// embeddings, so the server still runs without the bridge. See src/milvus/kb_store.proto.
+import * as milvus from "./milvus-rpc.ts";
+
+import { settings } from "#/config.ts";
 import { listVectorizedChunks } from "#/db/repository.ts";
 
-export const COLLECTION = "knowledge";
+export const COLLECTION = settings.milvusCollection;
 
 const K1 = 1.5;
 const B = 0.75;
@@ -121,6 +129,12 @@ export async function denseSearch(
   topK: number,
   category: string | null = null,
 ): Promise<KnowledgeHit[]> {
+  // Milvus is the authoritative dense store when the bridge is configured; the gRPC error
+  // propagates (no in-process fallback) so a down bridge surfaces instead of silently
+  // degrading. MilvusHit is structurally a KnowledgeHit (rerank_score is filled later).
+  if (milvus.milvusEnabled()) {
+    return milvus.search(vector, topK, category);
+  }
   const { docs } = await loadChunks();
   const scored = docs
     .filter((d) => !category || d.category === category)
@@ -192,11 +206,19 @@ export async function hybridSearch(
 }
 
 export async function count(): Promise<number> {
+  // In Milvus mode this is the authoritative vector count (used by the kb overview
+  // dual-write consistency check: SQLite done-count === Milvus vector-count).
+  if (milvus.milvusEnabled()) {
+    return milvus.count();
+  }
   const { docs } = await loadChunks();
   return docs.length;
 }
 
 export async function drop(): Promise<void> {
+  if (milvus.milvusEnabled()) {
+    await milvus.drop();
+  }
   const { prisma } = await import("../db/client.ts");
   await prisma.knowledgeChunk.updateMany({
     data: { embedding: null, vectorId: null, vectorizeStatus: "pending" },
