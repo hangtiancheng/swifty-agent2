@@ -4,6 +4,8 @@ allowBuilds:
   prisma: true
   "@prisma/engines": true
   onnxruntime-node: true
+  esbuild: true
+  sharp: true
 
 packages:
   - fe

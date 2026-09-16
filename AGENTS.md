@@ -4,6 +4,7 @@
 - NEVER add MIT license header manually
 - Swifty Agent2 is a pure English project
 - Ensure good type annotation for python code
+- @package.json
 
 ## Milvus migration (Python Milvus => Node -> gRPC -> Milvus Lite)
 
