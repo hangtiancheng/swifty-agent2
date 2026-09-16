@@ -1,6 +1,6 @@
 // Flywheel batch: pool -> normalize/dedup -> review queue.
-import { closeDb } from "../src/db/client.ts";
 import { processPending } from "../src/core/flywheel.ts";
+import { closeDb } from "../src/db/client.ts";
 
 const stats = await processPending(200);
 console.log(

@@ -13,7 +13,8 @@ if (fs.existsSync(ENV_FILE)) {
   process.loadEnvFile(ENV_FILE);
 }
 
-const str = (name: string, fallback = ""): string => (process.env[name] ?? fallback).trim();
+const str = (name: string, fallback = ""): string =>
+  (process.env[name] ?? fallback).trim();
 const num = (name: string, fallback: number): number => {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === "") {
@@ -54,8 +55,11 @@ export const settings = {
   tokenBudget: num("TOKEN_BUDGET", 2000),
 
   // --- database / checkpointer ---
-  databaseUrl: str("DATABASE_URL", "file:./data/mewhelp.db"),
-  checkpointerDbPath: str("CHECKPOINTER_DB_PATH", "data/ch05_checkpoints.sqlite"),
+  databaseUrl: str("DATABASE_URL", "file:./data/swifty-agent2.db"),
+  checkpointerDbPath: str(
+    "CHECKPOINTER_DB_PATH",
+    "data/ch05_checkpoints.sqlite",
+  ),
 
   // --- retrieval ---
   recallTopK: num("RECALL_TOP_K", 50),

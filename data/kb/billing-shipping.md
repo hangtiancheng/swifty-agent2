@@ -1,22 +1,22 @@
-# 开票与配送
+# Invoicing & Delivery
 
-## 可开票类型
+## Invoice Types Available
 
-个人账户默认开具电子普通发票,抬头填个人姓名或单位名称均可。
-电子专票仅企业账户可申请,提交时必须填写完整的纳税人识别号、开户行与对公账号,信息不全不予受理。
-纸质发票需在申请时备注邮寄地址,快递费到付,不接受面单改寄。
-一笔订单只开一次票,发票金额以实付金额为准,不含运费与积分抵扣部分。
+Personal accounts are issued electronic general invoices by default; the invoice title may be either a personal name or an organization name.
+Electronic special VAT invoices can only be applied for by business accounts; the application must include the complete taxpayer identification number, bank of account, and corporate account number — incomplete information will not be accepted.
+For paper invoices, the mailing address must be noted in the application remarks; the courier fee is collect on delivery, and redirection by changing the waybill is not accepted.
+Each order can be invoiced only once; the invoice amount is based on the amount actually paid, excluding shipping fees and the portion offset by points.
 
-## 开票时效
+## Invoicing Timeframes
 
-订单完成收货后 30 天内可申请开票,超过 30 天需联系客服单独处理。
-电子发票在申请通过后 3 个工作日内开出,开好后发送到申请时填写的邮箱。
-纸质发票在开出后 3 个工作日内寄出,物流以实际快递为准。
-开票相关问题可在人工客服工作时间 9:00 至 22:00 咨询。
+Invoice applications can be submitted within 30 days after the order is confirmed received; beyond 30 days, customer service must be contacted for case-by-case handling.
+Electronic invoices are issued within 3 business days after the application is approved, and are sent to the email address provided in the application once issued.
+Paper invoices are mailed within 3 business days after issuance; delivery is subject to the actual courier service.
+Invoicing questions can be consulted during human customer service hours, 9:00 to 22:00.
 
-## 运费与包邮
+## Shipping Fees & Free Shipping
 
-单笔实付满 99 元包邮,未满收取 6 元基础运费。
-偏远地区(新疆、西藏、内蒙古部分区域)加收 12 元附加运费,该附加运费不参与包邮,
-需单独支付。偏远地区的配送时效在正常时效基础上顺延 2 至 4 天。
-港澳台及海外暂不支持配送,下单前请确认收货地址在可配送范围内。
+Orders with an actual payment of 99 yuan or more ship free; below that, a base shipping fee of 6 yuan is charged.
+Remote areas (parts of Xinjiang, Tibet, and Inner Mongolia) incur an additional 12-yuan surcharge; this surcharge does not count toward free shipping
+and must be paid separately. Delivery times to remote areas are extended by 2 to 4 days beyond the standard timeframe.
+Delivery to Hong Kong, Macao, Taiwan, and overseas is currently not supported; please confirm the delivery address is within the deliverable range before placing an order.

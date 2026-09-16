@@ -1,62 +1,62 @@
-# 商品与购物 FAQ
+# Product & Shopping FAQ
 
-## 退货政策是什么
+## What Is the Returns Policy?
 
-支持 7 天无理由退货,商品需保持完好、不影响二次销售,具体以平台售后规则为准。
+7-day no-reason returns are supported; items must remain intact and not affect resale. Details are subject to the platform's after-sales rules.
 
-## 如何申请退款
+## How Do I Apply for a Refund?
 
-在「我的订单」找到对应订单点击「申请退款」,按提示提交,审核通过后原路退回。
+Find the relevant order under "My Orders", tap "Apply for Refund", and submit as prompted; once the application is approved, the refund is returned via the original payment channel.
 
-## 换货流程怎么走
+## How Does the Exchange Process Work?
 
-收到商品 7 天内可申请换货,联系客服登记后将商品寄回,平台核验无误后补发新品。
+Exchanges can be requested within 7 days of receiving the item; contact customer service to register, then mail the item back. After the platform verifies it, a replacement will be shipped.
 
-## 发货时效多久
+## How Long Does Dispatch Take?
 
-现货商品付款后 48 小时内发货,预售商品以商品详情页标注的发货时间为准。
+In-stock items are dispatched within 48 hours of payment; pre-order items follow the dispatch time indicated on the product detail page.
 
-## 运费怎么算
+## How Is the Shipping Fee Calculated?
 
-单笔订单满 99 元包邮,未满收取 10 元运费,偏远地区运费另计。邮费即运费,按此规则收取。
+Orders of 99 yuan or more ship free; below that, a 10-yuan shipping fee is charged; shipping to remote areas is calculated separately. Postage is the shipping fee and is charged according to this rule.
 
-## 发票如何开具
+## How Are Invoices Issued?
 
-在「我的订单」-「申请开票」提交抬头与税号,电子发票将于 3 个工作日内发送至邮箱。
+Submit the invoice title and tax number under "My Orders" → "Apply for Invoice"; the electronic invoice will be sent to your email within 3 business days.
 
-## 支持哪些支付方式
+## What Payment Methods Are Supported?
 
-下单支持支付宝、微信支付与主流银行储蓄卡/信用卡在线支付。暂不支持线下汇款,支付遇到问题可重试或更换支付方式。
+Orders support Alipay, WeChat Pay, and online payment via major bank debit/credit cards. Offline bank transfers are not currently supported; if you encounter payment issues, retry or switch to another payment method.
 
-## 会员等级与积分规则
+## Membership Tiers & Points Rules
 
-会员分为普通、银卡、金卡三档,按累计消费自动升级。每消费 1 元得 1 积分,积分可在结算时抵扣,100 积分抵 1 元。
+Members are divided into three tiers — Regular, Silver, and Gold — and are upgraded automatically based on cumulative spending. Every 1 yuan spent earns 1 point; points can be applied at checkout, with 100 points offsetting 1 yuan.
 
-## 优惠券和满减怎么用
+## How Do Coupons and Spend-and-Save Promotions Work?
 
-优惠券在结算页「使用优惠券」中勾选,满减活动自动叠加在商品页标示的门槛上;同一订单一般限用一张店铺券,活动细则以页面为准。
+Coupons are selected under "Use Coupon" on the checkout page; spend-and-save promotions apply automatically based on the thresholds marked on the product page; generally only one store coupon may be used per order, and campaign details are subject to the information on the page.
 
-## 配送范围与偏远地区
+## Delivery Range & Remote Areas
 
-全国大部分地区支持配送,新疆、西藏、内蒙古等偏远地区运费另计且时效顺延;港澳台及海外暂不支持自营配送。
+Delivery is supported to most regions nationwide; shipping to remote areas such as Xinjiang, Tibet, and Inner Mongolia is calculated separately with extended delivery times; self-operated delivery to Hong Kong, Macao, Taiwan, and overseas is currently not supported.
 
-## 订单可以修改或取消吗
+## Can Orders Be Modified or Canceled?
 
-订单未发货前可在「我的订单」自助取消;已发货订单无法修改收货信息,可拒收后走退款流程。修改商品数量需取消后重新下单。
+Orders can be canceled by yourself under "My Orders" before shipment; shipped orders cannot have their delivery information modified — you may refuse the delivery and go through the refund process. To change item quantities, cancel the order and place a new one.
 
-## 商品缺货多久补货
+## How Long Until Out-of-Stock Items Are Restocked?
 
-现货售罄的商品通常 3 至 7 天内补货,可在商品页点击「到货通知」,补货后系统会推送提醒。
+Sold-out in-stock items are usually restocked within 3 to 7 days; tap "Restock Notification" on the product page and the system will push a reminder once the item is back in stock.
 
-## 价格保护怎么申请
+## How Do I Apply for Price Protection?
 
-自营商品支持下单后 7 天内价保,期间若同款降价可在「我的订单」-「申请价保」提交,差价将退回原支付渠道。价保的 7 天**自下单时间起算**,不是从签收之日起算;签收之日起 7 天内的那条是无理由退货,两者起算点不同、别混用。
+Self-operated items support price protection within 7 days of placing the order; if the same item drops in price during that period, submit a request under "My Orders" → "Apply for Price Protection", and the difference will be refunded to the original payment channel. The 7 days for price protection are **counted from the order time**, not from the date of receipt; the rule covering 7 days from the date of receipt is no-reason returns — the two have different starting points, so do not mix them up.
 
-## 会员运费权益
+## Member Shipping Benefits
 
-金卡会员每月享 3 次免运费权益,银卡会员享 1 次;权益不与偏远地区附加运费冲抵,当月未用完不结转。免运费权益直接抵掉该订单的基础运费(即未满 99 元包邮门槛时收取的那笔),按实际运费全额抵扣,不设每单抵扣上限——「未满 99 元收 10 元运费」里的 10 元是运费本身,不是权益上限。
+Gold members enjoy 3 free-shipping benefits per month; Silver members enjoy 1; the benefit does not offset the remote-area surcharge, and unused benefits within the month do not roll over. The free-shipping benefit directly offsets the order's base shipping fee (i.e., the fee charged when the 99-yuan free-shipping threshold is not met), deducted in full against the actual shipping fee with no per-order deduction cap — the 10 yuan in "a 10-yuan shipping fee is charged below 99 yuan" is the shipping fee itself, not a cap on the benefit.
 
-## 猫窝是否可以机洗
+## Can the Cat Bed Be Machine-Washed?
 
-猫窝外套可以机洗,拆掉内部垫芯后装进洗衣袋,选轻柔模式冷水洗,洗后阴干不要暴晒。
-内部垫芯不可机洗,进水后填充物会结块变形,只能局部擦洗后晾干。
+The cat bed's outer cover can be machine-washed: remove the inner cushion insert, put the cover in a laundry bag, and wash on a gentle cycle with cold water; after washing, air-dry it in the shade — do not expose it to direct sunlight.
+The inner cushion insert cannot be machine-washed — the filling will clump and deform once soaked; it can only be spot-cleaned and air-dried.

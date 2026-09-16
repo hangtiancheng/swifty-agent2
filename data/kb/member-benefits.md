@@ -1,22 +1,22 @@
-# 会员权益
+# Membership Benefits
 
-## 会员等级
+## Membership Tiers
 
-会员分普通、银卡、金卡三档,按累计消费自动升级,升级后立即生效,等级有效期为自然年。
-累计消费 1000 元起升银卡,累计消费 5000 元起升金卡。
-银卡享商品 9 折,金卡享商品 95 折并额外获赠一张店铺券。
-金卡会员每月享 3 次免运费,银卡会员每月 1 次。
-金卡会员生日当月可领取猫罐头礼盒一份,需在会员中心手动领取,过期不补发。
+Members are divided into three tiers — Regular, Silver, and Gold — and are upgraded automatically based on cumulative spending. Upgrades take effect immediately, and tier status is valid for the calendar year.
+Silver tier begins at 1,000 yuan of cumulative spending; Gold tier begins at 5,000 yuan of cumulative spending.
+Silver members get 10% off products; Gold members get 5% off products and additionally receive one store coupon as a gift.
+Gold members enjoy free shipping 3 times per month; Silver members enjoy it once per month.
+Gold members may claim one canned cat food gift box during their birthday month; it must be claimed manually in the Member Center, and no reissue is provided after it expires.
 
-## 积分怎么攒
+## How to Earn Points
 
-实付金额每 1 元累计 1 积分,运费与优惠券抵扣部分不计积分。
-订单完成收货后 7 天入账,发生退货或退款时积分同步扣回。
-活动期间的双倍积分只影响可用积分,双倍积分不计入等级升级的累计消费。
+1 point is earned for every 1 yuan actually paid; shipping fees and the portion deducted by coupons do not earn points.
+Points are credited 7 days after the order is confirmed received; if a return or refund occurs, the corresponding points are deducted at the same time.
+Double points during promotional periods only affect available points; double points do not count toward the cumulative spending used for tier upgrades.
 
-## 积分怎么用
+## How to Use Points
 
-积分在结算页勾选使用,100 积分抵 1 元现金,单笔最多抵 30 元。
-积分可直接抵扣运费,未满包邮门槛的 6 元运费可用 600 积分抵掉,抵满即视为包邮。
-积分也可在会员中心兑换实物:800 积分兑猫零食小样一份,1500 积分兑自动饮水机滤芯 3 片,
-2000 积分兑上门更换一次滤芯的服务。积分有效期 24 个月,过期自动清零。
+Points are applied by checking the option on the checkout page: 100 points offset 1 yuan in cash, up to 30 yuan per order.
+Points can directly offset shipping fees: the 6-yuan shipping fee charged below the free-shipping threshold can be offset with 600 points; once fully offset, the order is treated as free shipping.
+Points can also be redeemed for physical items in the Member Center: 800 points for one cat treat sample, 1,500 points for 3 automatic water fountain filter cartridges,
+and 2,000 points for one on-site filter replacement service. Points are valid for 24 months and are automatically cleared upon expiration.

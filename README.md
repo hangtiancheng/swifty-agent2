@@ -1,6 +1,6 @@
-# MewHelp server
+# swifty-agent2 server
 
-Node.js/TypeScript backend for the MewHelp e-commerce customer-service agent. This is the
+Node.js/TypeScript backend for the swifty-agent2 e-commerce customer-service agent. This is the
 migrated backend of the Python project in `../python` (static pages and the ch10
 training/export pipeline are out of scope). It is not wire-compatible with the Python
 service; capabilities are aligned, response shapes are kept close.
@@ -22,7 +22,7 @@ Jina/Cohere shaped). Intent and summary slots fall back to the chat group unless
 
 The Python project used MySQL + Milvus. This server uses a single SQLite database:
 
-- relational tables live in `data/mewhelp.db` (Prisma schema in `prisma/schema.prisma`);
+- relational tables live in `data/swifty-agent2.db` (Prisma schema in `prisma/schema.prisma`);
 - dense embeddings are stored on `knowledge_chunks` and scored in-process;
 - BM25 is computed in-process with CJK bigram tokenization, so the four retrieval
   strategies (`vector` / `bm25` / `hybrid` / `hybrid_rerank`) keep working without a

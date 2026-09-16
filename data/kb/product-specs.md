@@ -1,113 +1,113 @@
-# 商品规格手册
+# Product Specifications Manual
 
-本手册收录喵喵优选自营智能硬件的型号、规格与使用要点,便于按具体型号查询。
+This manual covers the models, specifications, and usage notes for MeowMeow Select's self-operated smart hardware, for easy lookup by specific model.
 
-## 智能猫砂盆 Pro(型号 MH-LP100)
+## Smart Litter Box Pro (Model MH-LP100)
 
-- 型号:MH-LP100
-- 适用猫咪体重:1.5kg 至 8kg
-- 猫砂容量:9L,废砂盒容量约 7 天(单猫)
-- 核心功能:自动感应清理、活性炭除臭、App 远程监控与健康记录
-- 供电:220V 市电,断电后配置自动保存
-- 清理提示:废砂盒满时 App 推送提醒,建议每 5 至 7 天倾倒一次(单猫);两只猫建议每 3 至 4 天倾倒一次
+- Model: MH-LP100
+- Suitable cat weight: 1.5kg to 8kg
+- Litter capacity: 9L; waste bin capacity lasts approx. 7 days (single cat)
+- Core features: automatic sensor-triggered cleaning, activated carbon deodorization, app remote monitoring and health records
+- Power: 220V mains; settings are automatically saved after a power outage
+- Cleaning reminder: the app pushes a reminder when the waste bin is full; emptying every 5 to 7 days is recommended (single cat); for two cats, emptying every 3 to 4 days is recommended
 
-## 智能猫砂盆 Lite(型号 MH-LP50)
+## Smart Litter Box Lite (Model MH-LP50)
 
-- 型号:MH-LP50
-- 适用猫咪体重:1.5kg 至 6kg
-- 猫砂容量:6L,废砂盒容量约 5 天(单猫)
-- 核心功能:自动感应清理、物理除臭盖板;不含 App 联网功能
-- 清理提示:无 App 联网,不支持满溢推送提醒,建议每 4 至 5 天倾倒一次废砂盒
-- 与 Pro 差异:Lite 无 App 远程监控与健康记录,价格更低,适合单猫家庭
+- Model: MH-LP50
+- Suitable cat weight: 1.5kg to 6kg
+- Litter capacity: 6L; waste bin capacity lasts approx. 5 days (single cat)
+- Core features: automatic sensor-triggered cleaning, physical deodorizing lid; no app connectivity
+- Cleaning reminder: no app connectivity, so full-bin push reminders are not supported; emptying the waste bin every 4 to 5 days is recommended
+- Differences from Pro: the Lite lacks app remote monitoring and health records, is lower in price, and suits single-cat households
 
-## 智能猫砂盆 Max(型号 MH-LP200)
+## Smart Litter Box Max (Model MH-LP200)
 
-- 型号:MH-LP200
-- 适用猫咪体重:2kg 至 12kg,适合大型猫与多猫家庭
-- 猫砂容量:12L,废砂盒容量约 10 天(单猫)
-- 核心功能:超大滚筒、双重称重防夹、活性炭除臭、App 多猫健康档案
-- 供电:220V 市电
-- 清理提示:废砂盒满时 App 推送提醒,多猫家庭建议每 3 至 5 天倾倒一次废砂盒
+- Model: MH-LP200
+- Suitable cat weight: 2kg to 12kg; suited for large cats and multi-cat households
+- Litter capacity: 12L; waste bin capacity lasts approx. 10 days (single cat)
+- Core features: extra-large drum, dual weighing anti-pinch protection, activated carbon deodorization, app-based multi-cat health profiles
+- Power: 220V mains
+- Cleaning reminder: the app pushes a reminder when the waste bin is full; for multi-cat households, emptying the waste bin every 3 to 5 days is recommended
 
-## 自动饮水机(型号 MH-W20)
+## Automatic Water Fountain (Model MH-W20)
 
-- 型号:MH-W20
-- 水箱容量:2L
-- 过滤:三重过滤棉,建议每 2 周更换一次滤芯
-- 核心功能:静音水泵、缺水断电保护、水位窗口
-- 清洗:水泵可拆卸,建议每周清洗一次
+- Model: MH-W20
+- Tank capacity: 2L
+- Filtration: triple-layer filter cotton; replacing the filter every 2 weeks is recommended
+- Core features: quiet water pump, low-water power-off protection, water level window
+- Cleaning: the pump is removable; weekly cleaning is recommended
 
-## 自动饮水机 Plus(型号 MH-W40)
+## Automatic Water Fountain Plus (Model MH-W40)
 
-- 型号:MH-W40
-- 水箱容量:4L
-- 过滤:五重过滤棉 + 椰壳活性炭,建议每 3 周更换一次滤芯
-- 核心功能:UV 紫外杀菌、静音变频水泵、缺水断电保护
-- 清洗:整机可拆分水洗,建议每周清洗一次
+- Model: MH-W40
+- Tank capacity: 4L
+- Filtration: five-layer filter cotton + coconut shell activated carbon; replacing the filter every 3 weeks is recommended
+- Core features: UV sterilization, quiet variable-frequency pump, low-water power-off protection
+- Cleaning: the whole unit can be disassembled and washed with water; weekly cleaning is recommended
 
-## 自动饮水机 Pro 不锈钢(型号 MH-W60)
+## Automatic Water Fountain Pro Stainless Steel (Model MH-W60)
 
-- 型号:MH-W60
-- 水箱容量:6L,304 不锈钢表面盘
-- 过滤:双滤芯并联,建议每 4 周更换一次滤芯
-- 核心功能:双泵冗余、无线水位提醒推送 App、缺水断电保护
-- 清洗:不锈钢面盘可高温消毒,建议每周清洗一次
+- Model: MH-W60
+- Tank capacity: 6L; 304 stainless steel surface tray
+- Filtration: dual filters in parallel; replacing the filters every 4 weeks is recommended
+- Core features: dual-pump redundancy, wireless water-level reminders pushed to the app, low-water power-off protection
+- Cleaning: the stainless steel tray can be sterilized at high temperatures; weekly cleaning is recommended
 
-## 大型猫爬架(型号 MH-CT30)
+## Large Cat Tree (Model MH-CT30)
 
-- 型号:MH-CT30
-- 高度:1.6m,共四层带顶层吊床
-- 承重:单层最大 10kg
-- 材质:剑麻柱身、绒布平台
-- 安装:需自行组装,随附六角扳手与图解说明书
+- Model: MH-CT30
+- Height: 1.6m; four levels in total, with a top-level hammock
+- Load capacity: maximum 10kg per level
+- Materials: sisal-wrapped posts, plush platforms
+- Installation: self-assembly required; includes a hex wrench and illustrated instructions
 
-## 恒温加热垫(型号 MH-HP12)
+## Constant-Temperature Heating Pad (Model MH-HP12)
 
-- 型号:MH-HP12
-- 尺寸:40cm × 30cm
-- 温控:恒温 38℃,内置过热保护,连续通电不超过 12 小时为宜
-- 防护:防水防抓咬电线套管
-- 适用:幼猫、老年猫及冬季保暖
+- Model: MH-HP12
+- Dimensions: 40cm × 30cm
+- Temperature control: constant 38℃, built-in overheat protection; continuous power-on should not exceed 12 hours
+- Protection: waterproof, anti-scratch/bite cable sleeve
+- Suitable for: kittens, senior cats, and winter warmth
 
-## 大号三档加热垫(型号 MH-HP20)
+## Large Three-Level Heating Pad (Model MH-HP20)
 
-- 型号:MH-HP20
-- 尺寸:60cm × 45cm
-- 温控:三档可调 30℃ / 38℃ / 45℃,内置过热保护与定时关机
-- 防护:防水防抓咬电线套管,表面绒布可拆洗
-- 适用:大型猫、多猫窝及冬季保暖
+- Model: MH-HP20
+- Dimensions: 60cm × 45cm
+- Temperature control: three adjustable levels — 30℃ / 38℃ / 45℃, built-in overheat protection and timer shut-off
+- Protection: waterproof, anti-scratch/bite cable sleeve; removable, washable plush surface
+- Suitable for: large cats, multi-cat beds, and winter warmth
 
-## 自动喂食器 基础版(型号 MH-FD10)
+## Automatic Feeder Basic (Model MH-FD10)
 
-- 型号:MH-FD10
-- 粮桶容量:4L
-- 核心功能:定时定量投喂,每日最多 6 餐,语音呼唤进食
-- 供电:市电供电 + 4 节 5 号电池断电应急
-- 断电应对:市电断开时靠 4 节 5 号电池维持定时定量投喂约 24 小时;基础版没有 App,断电期间不推送提醒
-- 说明:基础版不含摄像头与 App 远程投喂
+- Model: MH-FD10
+- Food container capacity: 4L
+- Core features: scheduled portion-controlled feeding, up to 6 meals per day, voice call for meals
+- Power: mains power + 4 AA batteries for power-outage backup
+- Power-outage handling: when mains power is cut, 4 AA batteries maintain scheduled portion-controlled feeding for approx. 24 hours; the Basic version has no app, so no reminders are pushed during an outage
+- Notes: the Basic version does not include a camera or app-based remote feeding
 
-## 自动喂食器 摄像头版(型号 MH-FD30)
+## Automatic Feeder Camera Edition (Model MH-FD30)
 
-- 型号:MH-FD30
-- 粮桶容量:6L
-- 核心功能:1080P 摄像头、双向语音、App 远程手动投喂与定时投喂
-- 供电:市电供电 + 内置应急电池
-- 断电应对:市电断开时自动切换到内置应急电池,可维持定时投喂约 48 小时;断电期间不支持视频回看与 App 远程手动投喂
-- 说明:摄像头版支持视频回看,需连接 2.4G Wi-Fi;「摄像头版」指喂食器内置的摄像头,独立的全景看护摄像头是另一款商品 MH-CAM1
+- Model: MH-FD30
+- Food container capacity: 6L
+- Core features: 1080P camera, two-way audio, app remote manual feeding and scheduled feeding
+- Power: mains power + built-in backup battery
+- Power-outage handling: when mains power is cut, it automatically switches to the built-in backup battery, maintaining scheduled feeding for approx. 48 hours; video playback and app remote manual feeding are not supported during an outage
+- Notes: the Camera Edition supports video playback and requires a 2.4G Wi-Fi connection; "Camera Edition" refers to the camera built into the feeder — the standalone panoramic monitoring camera is a different product, MH-CAM1
 
-## 全景看护摄像头(型号 MH-CAM1)
+## Panoramic Monitoring Camera (Model MH-CAM1)
 
-- 型号:MH-CAM1
-- 画质:2K 分辨率,355° 水平旋转、90° 俯仰
-- 核心功能:移动侦测报警、夜视、双向语音、逗猫激光
-- 存储:支持最大 128G TF 卡或云存储
-- 供电:Type-C 供电,需连接 2.4G Wi-Fi
-- 说明:独立的全景看护摄像头只有 MH-CAM1 这一个型号;自动喂食器摄像头版 MH-FD30 是另一款商品,型号不要混用
+- Model: MH-CAM1
+- Image quality: 2K resolution, 355° horizontal rotation, 90° tilt
+- Core features: motion detection alerts, night vision, two-way audio, cat-teasing laser
+- Storage: supports up to a 128G TF card or cloud storage
+- Power: Type-C powered; requires a 2.4G Wi-Fi connection
+- Notes: MH-CAM1 is the only model of the standalone panoramic monitoring camera; the Automatic Feeder Camera Edition MH-FD30 is a different product — do not mix up the model numbers
 
-## 四季保暖猫窝(型号 MH-NEST20)
+## All-Season Warm Cat Bed (Model MH-NEST20)
 
-- 型号:MH-NEST20
-- 尺寸:直径 50cm,适合 8kg 以内成猫
-- 材质:外层短毛绒,内部垫芯可拆卸
-- 保修:整机保修 12 个月,人为损坏与自然磨损不在保修范围
-- 清洗:外套可手洗,内部垫芯不可机洗,详见 FAQ「猫窝是否可以机洗」
+- Model: MH-NEST20
+- Dimensions: 50cm diameter; suitable for adult cats up to 8kg
+- Materials: short-plush outer layer; removable inner cushion insert
+- Warranty: 12-month whole-unit warranty; user-caused damage and natural wear are not covered
+- Cleaning: the outer cover can be hand-washed; the inner cushion insert cannot be machine-washed — see the FAQ "Can the Cat Bed Be Machine-Washed?" for details

@@ -11,6 +11,6 @@ try {
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: process.env.DATABASE_URL ?? "file:./data/mewhelp.db",
+    url: process.env.DATABASE_URL ?? "file:./data/swifty-agent2.db",
   },
 });

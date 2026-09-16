@@ -3,9 +3,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 import { settings } from "../src/config.ts";
 import { getChatModel, structured } from "../src/core/llm.ts";
@@ -14,11 +14,11 @@ import * as modelGuard from "../src/core/model-guard.ts";
 import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "../src/core/prompts.ts";
 import * as readNotes from "../src/core/read-notes.ts";
 import * as retrieval from "../src/core/retrieval.ts";
+import { closeDb } from "../src/db/client.ts";
+import * as repository from "../src/db/repository.ts";
 import type { KnowledgeHit } from "../src/kb/store.ts";
 import * as store from "../src/kb/store.ts";
 import { queryFaq } from "../src/tools/builtin/faq.ts";
-import { closeDb } from "../src/db/client.ts";
-import * as repository from "../src/db/repository.ts";
 
 const ROOT = settings.root;
 const OUT_DIR = path.join(ROOT, "data/ch04/reports");

@@ -1,45 +1,45 @@
-# 售后手册
+# After-Sales Manual
 
-## 常见问题处理时限
+## Handling Time Limits for Common Issues
 
-| 问题类型 | 首次响应 | 处理时限 |
+| Issue Type | First Response | Resolution Time Limit |
 | --- | --- | --- |
-| 退款 | 2 小时 | 3 个工作日 |
-| 换货 | 2 小时 | 5 个工作日 |
-| 维修 | 4 小时 | 7 个工作日 |
-| 投诉 | 1 小时 | 3 个工作日 |
-| 发票 | 4 小时 | 3 个工作日 |
-| 物流异常 | 2 小时 | 5 个工作日 |
-| 商品咨询 | 1 小时 | 当日 |
-| 价格保护 | 2 小时 | 3 个工作日 |
-| 账户问题 | 2 小时 | 3 个工作日 |
-| 退换货运费 | 2 小时 | 3 个工作日 |
-| 缺货补发 | 2 小时 | 5 个工作日 |
-| 其他 | 4 小时 | 7 个工作日 |
+| Refund | 2 hours | 3 business days |
+| Exchange | 2 hours | 5 business days |
+| Repair | 4 hours | 7 business days |
+| Complaint | 1 hour | 3 business days |
+| Invoice | 4 hours | 3 business days |
+| Logistics anomaly | 2 hours | 5 business days |
+| Product inquiry | 1 hour | Same day |
+| Price protection | 2 hours | 3 business days |
+| Account issues | 2 hours | 3 business days |
+| Return/exchange shipping | 2 hours | 3 business days |
+| Out-of-stock reshipment | 2 hours | 5 business days |
+| Other | 4 hours | 7 business days |
 
-## 保修说明
+## Warranty Notes
 
-电子类商品保修 12 个月,自签收日起算;人为损坏不在保修范围。
+Electronic items carry a 12-month warranty, counted from the date of receipt; user-caused damage is not covered.
 
-## 设备安装与激活
+## Device Installation & Activation
 
-智能设备首次使用需下载「喵喵优选」App,按说明书扫码添加设备并连接 2.4G Wi-Fi 完成激活;猫爬架等非联网商品按随附图解自行组装。
+For first use of smart devices, download the "MeowMeow Select" app, scan the QR code per the manual to add the device, and connect to 2.4G Wi-Fi to complete activation. Non-connected items such as cat trees are self-assembled following the included illustrated instructions.
 
-## 常见故障自查
+## Common Fault Self-Checks
 
-- 饮水机不出水:检查水位是否低于最低线、水泵是否卡阻,断电清洗水泵后重试。
-- 猫砂盆报错:清空废砂盒并检查滚筒是否卡砂,重启设备;仍报错联系售后。
-- 喂食器卡粮:检查粮食颗粒直径是否超 12mm、粮桶是否受潮结块,清理出粮口后重试。
-- 摄像头离线:确认 Wi-Fi 为 2.4G 频段、信号良好,重启设备或在 App 内重新配网。
+- Water fountain not dispensing water: check whether the water level is below the minimum line or the pump is jammed; power off, clean the pump, then retry.
+- Litter box showing an error: empty the waste bin and check whether the drum is jammed with litter; restart the device; if the error persists, contact after-sales.
+- Feeder food jam: check whether the food pellet diameter exceeds 12mm or the food has clumped from moisture in the container; clear the food outlet, then retry.
+- Camera offline: confirm the Wi-Fi is on the 2.4G band with a good signal; restart the device or re-pair it to the network in the app.
 
-## 人工客服入口与时间
+## Human Customer Service Access & Hours
 
-遇到退款、退货、换货、维修、破损、少发漏发等售后问题需要人工协助时,可在「喵喵优选」App 内通过「我的」-「联系客服」或订单详情页的「订单售后 / 联系客服」入口转接在线人工客服,并按页面指引提交订单号、开箱视频或商品照片等凭证。人工客服服务时间为每日 9:00 至 22:00,高峰期请耐心等待或留言。
+When human assistance is needed for after-sales issues such as refunds, returns, exchanges, repairs, damage, or short/missing items, you can be transferred to online human customer service in the "MeowMeow Select" app via "Me" → "Contact Customer Service", or via the "Order After-Sales / Contact Customer Service" entry on the order detail page, and submit evidence such as the order number, unboxing video, or product photos as guided on the page. Human customer service hours are 9:00 to 22:00 daily; during peak hours, please wait patiently or leave a message.
 
-## 维修寄修流程
+## Mail-In Repair Process
 
-保修期内设备故障,联系客服登记后按指引将设备寄回指定维修点,核验后免费维修并寄回;超保或人为损坏维修可能收取工本费,费用会提前告知。
+For device failures within the warranty period, contact customer service to register, then mail the device to the designated repair point as instructed; after verification, it will be repaired free of charge and mailed back. Repairs for out-of-warranty items or user-caused damage may incur parts and labor fees, which will be communicated in advance.
 
-## 会员专属售后权益
+## Member-Exclusive After-Sales Benefits
 
-金卡会员享优先客服接入与上门取件退换货;银卡会员享退换货运费权益 1 次/月。具体权益以会员中心页面标注为准。
+Gold members enjoy priority customer service access and door-to-door pickup for returns and exchanges; Silver members enjoy a return/exchange shipping benefit once per month. Specific benefits are subject to what is stated on the Member Center page.

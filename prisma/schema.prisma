@@ -1,4 +1,4 @@
-// MewHelp server data model (SQLite via Prisma driver adapter).
+// swifty-agent2 server data model (SQLite via Prisma driver adapter).
 // Enum-like columns are plain strings; the allowed values live in src/db/constants.js.
 
 generator client {

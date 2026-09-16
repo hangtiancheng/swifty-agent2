@@ -6,10 +6,10 @@ import { z } from "zod";
 
 import { settings } from "../src/config.ts";
 import { getChatModel, structured } from "../src/core/llm.ts";
+import { contentToString } from "../src/core/memory.ts";
 import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "../src/core/prompts.ts";
 import * as readNotes from "../src/core/read-notes.ts";
 import * as retrieval from "../src/core/retrieval.ts";
-import { contentToString } from "../src/core/memory.ts";
 import { closeDb } from "../src/db/client.ts";
 import * as repository from "../src/db/repository.ts";
 import { queryFaq } from "../src/tools/builtin/faq.ts";

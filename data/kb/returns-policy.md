@@ -1,41 +1,41 @@
-# 退货退款政策
+# Returns & Refunds Policy
 
-## 无理由退货
+## No-Reason Returns
 
-### 适用范围
+### Scope
 
-自签收之日起 7 天内,商品完好、不影响二次销售的,支持无理由退货。定制类、生鲜类商品除外。本条的 7 天自签收之日起算,只管无理由退货;价保是另一条规则,它的 7 天从下单时间起算。
+Within 7 days from the date of receipt, items that are intact and do not affect resale are eligible for no-reason returns. Customized and perishable items are excluded. The 7 days in this clause are counted from the date of receipt and apply only to no-reason returns; price protection is a separate rule whose 7 days are counted from the order time.
 
-### 退款时效
+### Refund Timeframe
 
-退货商品经平台核验通过后,退款原路退回,到账时效以平台售后规则为准。平台不承诺具体到账天数,实际到账时间取决于支付渠道;不要向用户给出「几个工作日到账」这类具体数字。
+After returned items pass the platform's verification, refunds are returned via the original payment channel; the crediting timeframe is subject to the platform's after-sales rules. The platform does not commit to a specific number of days for crediting — the actual arrival time depends on the payment channel; do not give users specific figures such as "credited within X business days."
 
-## 换货政策
+## Exchange Policy
 
-### 换货条件
+### Exchange Conditions
 
-收到商品 7 天内,商品完好且配件齐全的,可申请一次同款换货;不同型号或颜色需先退货再重新下单。
+Within 7 days of receiving the item, if the item is intact and all accessories are complete, one exchange for the same product may be requested; for a different model or color, the item must first be returned and a new order placed.
 
-### 换货运费
+### Exchange Shipping Costs
 
-非质量问题的换货,往返运费由买家承担;因质量问题或发错货的换货,往返运费由平台承担。少发漏发导致的换货,往返运费同样由平台承担。
+For exchanges not caused by quality issues, round-trip shipping is borne by the buyer; for exchanges caused by quality issues or a wrong item shipped, round-trip shipping is borne by the platform. Exchanges caused by short-shipped or missing items likewise have round-trip shipping borne by the platform.
 
-## 退换货运费承担
+## Who Bears Return/Exchange Shipping Costs
 
-无理由退货的退回运费由买家承担;因商品质量问题、发错货、少发漏发导致的退换货,运费由平台承担。换货的往返运费另有区分:非质量问题的换货由买家承担,详见「换货运费」。运费承担以平台售后规则最终判定为准。
+Return shipping for no-reason returns is borne by the buyer; for returns and exchanges caused by product quality issues, a wrong item shipped, or short/missing items, shipping is borne by the platform. Round-trip shipping for exchanges is distinguished separately: exchanges not caused by quality issues are borne by the buyer — see "Exchange Shipping Costs" for details. Final responsibility for shipping costs is subject to the determination made under the platform's after-sales rules.
 
-## 质量问题与保修
+## Quality Issues & Warranty
 
-电子类商品自签收起保修 12 个月,保修期内非人为损坏可申请免费维修或换货;人为损坏、超保商品维修可能收取工本费。
+Electronic items carry a 12-month warranty from the date of receipt; within the warranty period, damage not caused by the user qualifies for free repair or exchange; repairs for user-caused damage or out-of-warranty items may incur parts and labor fees.
 
-## 运输破损处理
+## Transit Damage Handling
 
-商品运输途中破损的,请在签收后 48 小时内联系客服并提供开箱视频与照片,核实后可免费补发或退款,相关运费由平台承担。
+If an item is damaged in transit, please contact customer service within 48 hours of receipt and provide an unboxing video and photos; after verification, a free replacement or refund will be provided, with related shipping borne by the platform.
 
-## 不支持退货的商品
+## Non-Returnable Items
 
-定制类、生鲜类、已拆封的猫砂等消耗品,以及标注「不支持无理由退货」的商品,非质量问题不支持退货。
+Customized items, perishable items, opened consumables such as cat litter, and items marked "no-reason returns not supported" cannot be returned for reasons other than quality issues.
 
-## 预售与定金
+## Pre-Orders & Deposits
 
-预售商品以详情页标注的时间发货;定金支付后不支持无理由退定金,尾款未按时支付的,定金按活动规则处理。
+Pre-order items ship at the time indicated on the product detail page; once paid, deposits are not refundable without reason; if the balance is not paid on time, the deposit is handled according to the promotion rules.
