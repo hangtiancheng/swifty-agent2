@@ -38,21 +38,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 /** SPA mode: this is baked into index.html at build time, so users see a waiting
-    cat before the JS bundle loads. */
+    cat before the JS bundle loads. Pure CSS animation — no JS dependency here. */
 export function HydrateFallback() {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-5">
-      <div className="border-ink bg-paper shadow-hard border-4 p-3">
-        <Cat className="h-16 w-16" strokeWidth={1.5} />
+    <div className="bg-surface flex min-h-dvh flex-col items-center justify-center gap-6">
+      <div className="bg-primary-container shadow-e2 grid h-24 w-24 place-items-center rounded-3xl">
+        <Cat className="text-primary h-14 w-14" strokeWidth={1.5} />
       </div>
-      <div className="flex items-center gap-1.5">
-        <span className="animate-blink bg-coral h-2.5 w-2.5" />
-        <span className="animate-blink bg-coral h-2.5 w-2.5 [animation-delay:.2s]" />
-        <span className="animate-blink bg-coral h-2.5 w-2.5 [animation-delay:.4s]" />
+      <div className="flex flex-col items-center gap-3">
+        <p className="text-title-medium text-on-surface">MeowMeow Select</p>
+        <div className="bg-surface-container-highest relative h-1 w-40 overflow-hidden rounded-full">
+          <div className="bg-primary animate-progress absolute inset-y-0 left-0 w-1/4 rounded-full" />
+        </div>
       </div>
-      <p className="text-muted text-xs font-bold tracking-widest">
-        MeowMeow Select · Loading…
-      </p>
     </div>
   );
 }
@@ -82,23 +80,29 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="border-ink bg-cream shadow-hard-lg w-full max-w-lg border-4 p-6">
-        <div className="flex items-center gap-3">
-          <Cat className="h-10 w-10" strokeWidth={1.5} />
-          <h1 className="text-xl font-bold tracking-wider">{message}</h1>
+    <main className="bg-surface flex min-h-dvh items-center justify-center p-4">
+      <div className="bg-card shadow-e3 w-full max-w-lg rounded-xl p-7">
+        <div className="flex items-center gap-3.5">
+          <span className="bg-primary-container grid h-12 w-12 shrink-0 place-items-center rounded-2xl">
+            <Cat className="text-primary h-7 w-7" strokeWidth={1.5} />
+          </span>
+          <h1 className="text-headline-small text-on-surface font-medium">
+            {message}
+          </h1>
         </div>
-        <p className="text-ink-soft mt-3 text-sm leading-7">{details}</p>
+        <p className="text-body-medium text-on-surface-variant mt-4 leading-6">
+          {details}
+        </p>
         {stack ? (
-          <pre className="scroll-cat border-ink bg-paper mt-4 max-h-64 overflow-auto border-3 p-3 text-xs">
+          <pre className="scroll-slim bg-surface-container-high text-on-surface-variant mt-4 max-h-64 overflow-auto rounded-md p-3.5 font-mono text-xs">
             <code>{stack}</code>
           </pre>
         ) : null}
         <a
           href="/"
-          className="press border-ink bg-fur shadow-hard-sm mt-5 inline-block border-3 px-4 py-2 text-sm font-bold"
+          className="bg-primary text-on-primary hover:bg-primary-hover hover:shadow-e1 text-label-large mt-6 inline-flex h-10 items-center rounded-full px-6 no-underline transition-all duration-200 active:scale-[0.97]"
         >
-          Back to chat →
+          Back to chat
         </a>
       </div>
     </main>

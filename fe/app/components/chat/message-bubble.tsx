@@ -1,4 +1,12 @@
-import { Cat, ClipboardList, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
+import {
+  Cat,
+  CircleCheck,
+  ClipboardList,
+  ThumbsDown,
+  ThumbsUp,
+  Wrench,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { memo, useState } from "react";
 
 import type { BotMsg, Msg } from "./use-chat";
@@ -6,6 +14,7 @@ import type { BotMsg, Msg } from "./use-chat";
 import { Btn } from "~/components/ui";
 import { cn } from "~/lib/cn";
 import { Markdown } from "~/lib/markdown";
+import { EASE_DECEL, springTransition } from "~/lib/motion";
 import type { Citation, Order, TicketPreview } from "~/lib/types";
 
 /* ticket_type arrives as the backend enum value (after_sales/complaint/inquiry);
@@ -29,19 +38,25 @@ export interface BubbleCallbacks {
 
 function TypingDots() {
   return (
-    <span className="inline-flex gap-1.5 px-0.5 py-1">
+    <span className="flex items-center gap-1.5 py-1.5">
       {[0, 1, 2].map((i) => (
-        <span
+        <motion.span
           key={i}
-          className="animate-blink bg-coral h-2 w-2"
-          style={{ animationDelay: `${i * 0.2}s` }}
+          className="bg-primary h-2 w-2 rounded-full"
+          animate={{ opacity: [0.35, 1, 0.35], y: [0, -3, 0] }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            delay: i * 0.16,
+            ease: "easeInOut",
+          }}
         />
       ))}
     </span>
   );
 }
 
-/* ---------- Per-reply satisfaction feedback (👍/👎; one-shot, one click highlights + confirms) ---------- */
+/* ---------- Per-reply satisfaction feedback (thumbs up/down; one-shot, one click highlights + confirms) ---------- */
 
 function FbBtn({
   down,
@@ -59,26 +74,28 @@ function FbBtn({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       aria-label={label}
       title={label}
       disabled={disabled}
       onClick={onClick}
+      whileTap={active || disabled ? undefined : { scale: 0.85 }}
       className={cn(
-        "press-sm border-ink bg-paper text-ink shadow-hard-xs hover:bg-fur-hover grid h-7 w-8 cursor-pointer place-items-center border-2",
-        active &&
-          "bg-coral hover:bg-coral translate-x-0.5 translate-y-0.5 text-white shadow-none",
+        "grid h-8 w-8 cursor-pointer place-items-center rounded-full transition-colors duration-200",
+        active
+          ? "bg-primary-container text-primary hover:bg-primary-container-hover"
+          : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
         dim && "opacity-40",
-        disabled && "cursor-default",
+        disabled && !active && "cursor-default",
       )}
     >
       {down ? (
-        <ThumbsDown className="h-[18px] w-[18px]" aria-hidden />
+        <ThumbsDown className="h-4.5 w-4.5" aria-hidden />
       ) : (
-        <ThumbsUp className="h-[18px] w-[18px]" aria-hidden />
+        <ThumbsUp className="h-4.5 w-4.5" aria-hidden />
       )}
-    </button>
+    </motion.button>
   );
 }
 
@@ -91,7 +108,7 @@ function FeedbackBar({
 }) {
   const given = msg.feedback;
   return (
-    <div className="mt-2.5 flex items-center gap-2">
+    <div className="mt-2 flex items-center gap-1.5">
       <FbBtn
         active={given === "up"}
         dim={given === "down"}
@@ -111,11 +128,18 @@ function FeedbackBar({
           onFeedback(msg.id, "down");
         }}
       />
-      {given ? (
-        <span className="text-muted text-[11px] tracking-wide">
-          Thanks for your feedback!
-        </span>
-      ) : null}
+      <AnimatePresence>
+        {given ? (
+          <motion.span
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25, ease: EASE_DECEL }}
+            className="text-on-surface-variant text-label-small ml-1"
+          >
+            Thanks for your feedback!
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
@@ -135,7 +159,7 @@ export function OrderCards({
   const locked = decided || picked !== null;
   return (
     <div>
-      <div className="text-sm">
+      <div className="text-body-medium text-on-surface">
         {orders.length
           ? "Please select the order you'd like to handle:"
           : "No selectable orders found. Please provide the order number directly."}
@@ -143,27 +167,47 @@ export function OrderCards({
       {orders.length ? (
         <div className="mt-2.5 flex flex-col gap-2">
           {orders.map((o) => (
-            <button
+            <motion.button
               key={o.order_id}
               type="button"
               disabled={locked}
+              whileHover={locked ? undefined : { y: -1 }}
+              whileTap={locked ? undefined : { scale: 0.985 }}
               className={cn(
-                "press-sm border-ink bg-cream shadow-hard-sm hover:bg-fur-hover cursor-pointer border-3 px-3 py-2 text-left",
-                "disabled:cursor-not-allowed disabled:opacity-55",
-                picked === o.order_id &&
-                  "bg-picked hover:bg-picked opacity-100",
+                "cursor-pointer rounded-lg border px-4 py-3 text-left transition-all duration-200",
+                picked === o.order_id
+                  ? "border-primary bg-primary-container/45 shadow-e1"
+                  : "border-outline-variant bg-card hover:border-primary hover:shadow-e1",
+                locked && picked !== o.order_id && "opacity-50",
+                locked && "cursor-not-allowed",
               )}
               onClick={() => {
                 setPicked(o.order_id);
                 onPick(o);
               }}
             >
-              <div className="text-[13px] font-bold">Order {o.order_id}</div>
-              <div className="mt-0.5 text-[12.5px]">{o.product ?? ""}</div>
-              <div className="text-muted mt-0.5 text-[11.5px]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-title-small text-on-surface">
+                  Order {o.order_id}
+                </span>
+                {picked === o.order_id ? (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={springTransition}
+                    className="text-primary grid place-items-center"
+                  >
+                    <CircleCheck className="h-5 w-5" aria-hidden />
+                  </motion.span>
+                ) : null}
+              </div>
+              <div className="text-body-small text-on-surface mt-0.5">
+                {o.product ?? ""}
+              </div>
+              <div className="text-label-small text-on-surface-variant mt-0.5">
                 {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
       ) : null}
@@ -185,27 +229,31 @@ function TicketConfirm({
   return (
     <div
       className={cn(
-        "border-ink bg-cream shadow-hard-sm mt-2.5 border-3 p-3",
-        decided && "opacity-75",
+        "border-outline-variant bg-card mt-3 rounded-lg border p-4 transition-opacity",
+        decided && "opacity-70",
       )}
     >
-      <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-bold">
-        <ClipboardList className="h-4 w-4" aria-hidden />
+      <div className="text-title-small text-on-surface mb-2 flex items-center gap-2">
+        <span className="bg-primary-container text-primary grid h-7 w-7 place-items-center rounded-full">
+          <ClipboardList className="h-4 w-4" aria-hidden />
+        </span>
         Ticket preview
       </div>
-      <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="text-muted shrink-0">Ticket type</span>
-        <span>
+      <div className="text-body-small flex gap-2">
+        <span className="text-on-surface-variant shrink-0">Ticket type</span>
+        <span className="text-on-surface">
           {preview.ticket_type
             ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type)
             : "Inquiry"}
         </span>
       </div>
-      <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="text-muted shrink-0">Description</span>
-        <span className="break-words">{preview.description ?? ""}</span>
+      <div className="text-body-small mt-1.5 flex gap-2">
+        <span className="text-on-surface-variant shrink-0">Description</span>
+        <span className="text-on-surface wrap-break-word">
+          {preview.description ?? ""}
+        </span>
       </div>
-      <div className="mt-2.5 flex gap-2">
+      <div className="mt-3.5 flex gap-2">
         <Btn
           size="sm"
           variant="go"
@@ -218,6 +266,7 @@ function TicketConfirm({
         </Btn>
         <Btn
           size="sm"
+          variant="text"
           disabled={decided}
           onClick={() => {
             onDecide(false);
@@ -258,6 +307,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
         <Btn
           key="transfer"
           size="sm"
+          variant="tonal"
           disabled={transferred}
           onClick={() => {
             setTransferred(true);
@@ -272,6 +322,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
         <Btn
           key="ticket"
           size="sm"
+          variant="tonal"
           disabled={msg.acted}
           onClick={() => {
             cb.onCreateTicket(msg.id);
@@ -285,6 +336,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
         <Btn
           key="refund"
           size="sm"
+          variant="tonal"
           disabled={msg.acted}
           onClick={() => {
             cb.onRefund(msg.id, a.draft ?? {});
@@ -299,7 +351,14 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
     <>
       {extras}
       {buttons.length ? (
-        <div className="mt-3 flex flex-wrap gap-2.5">{buttons}</div>
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: EASE_DECEL }}
+          className="mt-3 flex flex-wrap gap-2"
+        >
+          {buttons}
+        </motion.div>
       ) : null}
     </>
   );
@@ -316,11 +375,16 @@ export const MessageBubble = memo(function MessageBubble({
 }) {
   if (msg.role === "user") {
     return (
-      <div className="animate-pop-in flex items-end justify-end gap-2.5">
-        <div className="border-ink bg-coral shadow-hard-sm max-w-[85%] border-3 px-3.5 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap text-white sm:max-w-[74%]">
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.3, ease: EASE_DECEL }}
+        className="flex items-end justify-end"
+      >
+        <div className="bg-primary-container text-on-primary-container max-w-[85%] rounded-lg rounded-br-md px-4 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap sm:max-w-[74%]">
           {msg.text}
         </div>
-      </div>
+      </motion.div>
     );
   }
   const m = msg;
@@ -329,31 +393,41 @@ export const MessageBubble = memo(function MessageBubble({
       ? new Map(m.citations.map((c) => [String(c.n), c]))
       : undefined;
   return (
-    <div className="animate-pop-in flex items-end justify-start gap-2.5">
-      <div className="border-ink bg-paper shadow-hard-xs hidden shrink-0 border-3 p-1 sm:block">
-        <Cat className="h-8.5 w-8.5" strokeWidth={1.5} />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: EASE_DECEL }}
+      className="flex items-start justify-start gap-2.5"
+    >
+      <div className="bg-primary-container hidden h-9 w-9 shrink-0 place-items-center rounded-full sm:grid">
+        <Cat className="text-primary h-5 w-5" strokeWidth={1.5} />
       </div>
       <div
         className={cn(
-          "border-ink shadow-hard-sm max-w-[85%] border-3 px-3.5 py-2.5 text-[14.5px] leading-relaxed sm:max-w-[74%]",
-          m.error ? "bg-error-bg text-error" : "bg-paper text-ink",
+          "max-w-[85%] rounded-lg rounded-bl-md px-4 py-3 text-[14.5px] leading-relaxed sm:max-w-[78%]",
+          m.error
+            ? "bg-error-container text-on-error-container"
+            : "bg-surface-container-low text-on-surface",
         )}
       >
         {m.error ??
           (m.plain ? (
-            <span className="break-words whitespace-pre-wrap">{m.raw}</span>
+            <span className="wrap-break-word whitespace-pre-wrap">{m.raw}</span>
           ) : (
             <>
               {m.tools.length ? (
-                <div className="mb-1.5 flex flex-col items-start gap-1">
+                <div className="mb-2 flex flex-col items-start gap-1.5">
                   {m.tools.map((t, i) => (
-                    <span
+                    <motion.span
                       key={i}
-                      className="border-muted bg-ink/5 text-muted inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-px text-xs"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.2, ease: EASE_DECEL }}
+                      className="bg-surface-container-high text-on-surface-variant text-label-small inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
                     >
                       <Wrench className="h-3 w-3" aria-hidden />
                       Called {t}
-                    </span>
+                    </motion.span>
                   ))}
                 </div>
               ) : null}
@@ -380,7 +454,7 @@ export const MessageBubble = memo(function MessageBubble({
                   {m.streaming && m.raw === "" ? (
                     <TypingDots />
                   ) : m.raw === "" ? (
-                    <span>(No reply)</span>
+                    <span className="text-on-surface-variant">(No reply)</span>
                   ) : (
                     <Markdown
                       text={m.raw}
@@ -399,6 +473,6 @@ export const MessageBubble = memo(function MessageBubble({
             </>
           ))}
       </div>
-    </div>
+    </motion.div>
   );
 });

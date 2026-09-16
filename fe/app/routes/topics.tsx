@@ -5,9 +5,10 @@ import { Link } from "react-router";
 
 import type { Route } from "./+types/topics";
 
-import { Btn, MissingBox, PageShell } from "~/components/ui";
+import { Btn, BtnLink, MissingBox, PageShell } from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
+import { EASE_DECEL, enterTransition } from "~/lib/motion";
 
 export interface TopicClass {
   label: string;
@@ -76,11 +77,11 @@ function TopicRow({
   return (
     <details className={cn("group my-1.5", c.count === 0 && "opacity-45")}>
       <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
-        <span className="w-24 shrink-0 text-right text-[13px] font-bold sm:w-28">
+        <span className="w-24 shrink-0 text-right text-[13px] font-medium sm:w-28">
           {c.count ? (
             <Link
               to={href}
-              className="border-fur hover:bg-fur border-b-2 text-inherit no-underline"
+              className="text-primary no-underline hover:underline"
             >
               {c.label}
             </Link>
@@ -88,24 +89,24 @@ function TopicRow({
             c.label
           )}
         </span>
-        <span className="border-ink bg-paper relative h-5.5 flex-1 border-2">
+        <span className="bg-surface-container-highest relative h-5.5 flex-1 overflow-hidden rounded-full">
           {c.count ? (
             <motion.span
               className={cn(
-                "border-ink absolute inset-y-0 left-0 block border-r-2",
-                top1 ? "bg-coral" : "bg-fur",
+                "absolute inset-y-0 left-0 block rounded-full",
+                top1 ? "bg-primary" : "bg-primary-container",
               )}
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
+              transition={{ duration: 0.45, ease: EASE_DECEL }}
             />
           ) : null}
         </span>
-        <span className="w-10 shrink-0 text-[13px] font-bold tabular-nums">
+        <span className="w-10 shrink-0 text-[13px] font-medium tabular-nums">
           {c.count}
         </span>
       </summary>
-      <div className="border-ink bg-paper mt-1.5 mb-2.5 ml-0 border-2 border-dashed px-3 py-2 text-[12.5px] sm:ml-[7.4rem]">
+      <div className="bg-surface-container-low text-on-surface mt-1.5 mb-2.5 ml-0 rounded-md px-3 py-2 text-[12.5px] sm:ml-[7.4rem]">
         {c.samples.length ? (
           <>
             {c.samples.map((s, i) => (
@@ -113,15 +114,12 @@ function TopicRow({
                 · {s}
               </div>
             ))}
-            <Link
-              to={href}
-              className="border-ink bg-cream shadow-hard-xs hover:bg-fur-hover mt-2 inline-block border-3 px-2.5 py-0.5 text-xs font-bold no-underline"
-            >
+            <BtnLink to={href} size="sm" className="mt-2">
               View all {c.count} →
-            </Link>
+            </BtnLink>
           </>
         ) : (
-          <div className="text-muted">No examples yet</div>
+          <div className="text-on-surface-variant">No examples yet</div>
         )}
       </div>
     </details>
@@ -159,16 +157,21 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
       {loaderData.ok && d ? (
         <>
           <div className="mt-4 flex flex-wrap gap-3.5">
-            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
-              Classified questions<b className="block text-xl">{d.total}</b>
+            <div className="bg-card shadow-e1 text-label-medium text-on-surface-variant rounded-lg px-4 py-2.5">
+              Classified questions
+              <b className="text-title-large text-on-surface block font-medium">
+                {d.total}
+              </b>
             </div>
-            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
+            <div className="bg-card shadow-e1 text-label-medium text-on-surface-variant rounded-lg px-4 py-2.5">
               Last classified
-              <b className="block text-sm leading-7">{fmtLatest(d.latest)}</b>
+              <b className="text-title-small text-on-surface block leading-7">
+                {fmtLatest(d.latest)}
+              </b>
             </div>
-            <div className="border-ink bg-paper shadow-hard-sm border-3 px-4 py-2.5 text-[13px]">
+            <div className="bg-card shadow-e1 text-label-medium text-on-surface-variant rounded-lg px-4 py-2.5">
               Classes hit
-              <b className="block text-xl">
+              <b className="text-title-large text-on-surface block font-medium">
                 {hit} / {d.classes.length || 17}
               </b>
             </div>
@@ -177,10 +180,10 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22 }}
-            className="border-ink bg-cream shadow-hard mt-4 border-4 p-4"
+            transition={enterTransition}
+            className="bg-card shadow-e1 mt-4 rounded-lg p-4"
           >
-            <h2 className="mb-3 text-sm font-bold">
+            <h2 className="text-title-small mb-3">
               {d.classes.length || 17} authoritative classes · question volume
               (descending — click a row to expand samples, click a class name to
               view all)
@@ -195,7 +198,7 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
                 />
               ))}
             </div>
-            <div className="text-muted mt-2.5 text-xs">
+            <div className="text-on-surface-variant mt-2.5 text-xs">
               Data comes from topic_classifications (make classify-pool runs the
               bypass batch classification); multi-label questions count toward
               every class they hit.

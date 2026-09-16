@@ -4,14 +4,16 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useToast } from "~/components/toast";
 import { Btn } from "~/components/ui";
 import { api, jsonPost } from "~/lib/api";
+import { cn } from "~/lib/cn";
+import { EASE_DECEL } from "~/lib/motion";
 
 /* The create-ticket / refund form modals (from the original index.html).
    On success, onSuccess(ticketNo) is called; the page then disables the trigger
    button and appends a system message. */
 
-const FIELD_LABEL = "mb-1.5 block text-[12.5px] font-bold";
+const FIELD_LABEL = "text-label-medium text-on-surface-variant mb-1.5 block";
 const FIELD_INPUT =
-  "w-full border-3 border-ink bg-cream p-2.5 text-[13px] text-ink shadow-hard-sm outline-none focus:bg-paper";
+  "border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary w-full rounded-sm border bg-transparent px-3.5 py-2.5 text-body-medium outline-none transition-[border-color,box-shadow] duration-200 focus:ring-1";
 
 function ModalShell({
   open,
@@ -45,11 +47,11 @@ function ModalShell({
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="bg-ink/45 fixed inset-0 z-50 flex items-center justify-center p-5"
+          className="bg-scrim/50 fixed inset-0 z-50 flex items-center justify-center p-5 backdrop-blur-[2px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.2 }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               onClose();
@@ -60,14 +62,18 @@ function ModalShell({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="scroll-cat border-ink bg-paper shadow-hard-lg max-h-[90dvh] w-full max-w-[420px] overflow-y-auto border-4 p-5"
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            className="scroll-slim bg-surface-container-high shadow-e5 max-h-[90dvh] w-full max-w-[440px] overflow-y-auto rounded-xl p-6"
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ duration: 0.16 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.3, ease: EASE_DECEL }}
           >
-            <h3 className="text-base font-bold">{title}</h3>
-            <p className="text-muted mt-1 mb-4 text-xs">{sub}</p>
+            <h3 className="text-headline-small text-on-surface font-medium">
+              {title}
+            </h3>
+            <p className="text-body-medium text-on-surface-variant mt-2 mb-5 leading-6">
+              {sub}
+            </p>
             {children}
           </motion.div>
         </motion.div>
@@ -78,7 +84,9 @@ function ModalShell({
 
 function FieldError({ text }: { text: string }) {
   return (
-    <div className="text-error -mt-1.5 mb-2.5 min-h-4 text-xs">{text}</div>
+    <div className="text-error text-label-medium -mt-1 mb-2.5 min-h-4">
+      {text}
+    </div>
   );
 }
 
@@ -180,8 +188,10 @@ export function TicketModal({
         />
       </div>
       <FieldError text={err} />
-      <div className="flex justify-end gap-2.5">
-        <Btn onClick={onClose}>Cancel</Btn>
+      <div className="mt-1.5 flex justify-end gap-2">
+        <Btn variant="text" onClick={onClose}>
+          Cancel
+        </Btn>
         <Btn
           variant="go"
           disabled={submitting}
@@ -260,7 +270,10 @@ export function RefundModal({
           type="text"
           readOnly
           value={order}
-          className={FIELD_INPUT + " bg-track text-muted cursor-not-allowed"}
+          className={cn(
+            FIELD_INPUT,
+            "bg-surface-container-high text-on-surface-variant cursor-not-allowed border-transparent",
+          )}
         />
       </div>
       <div className="mb-3.5">
@@ -286,8 +299,10 @@ export function RefundModal({
         </select>
       </div>
       <FieldError text={err} />
-      <div className="flex justify-end gap-2.5">
-        <Btn onClick={onClose}>Cancel</Btn>
+      <div className="mt-1.5 flex justify-end gap-2">
+        <Btn variant="text" onClick={onClose}>
+          Cancel
+        </Btn>
         <Btn
           variant="go"
           disabled={submitting}

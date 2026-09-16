@@ -1,3 +1,4 @@
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   createContext,
@@ -7,6 +8,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+
+import { cn } from "~/lib/cn";
+import { EASE_DECEL } from "~/lib/motion";
 
 type ToastKind = "info" | "error";
 interface ToastItem {
@@ -48,17 +52,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <motion.div
               key={t.id}
               layout
-              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              initial={{ opacity: 0, y: 28, scale: 0.92 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ duration: 0.18 }}
-              className={
-                "shadow-hard-sm max-w-[84vw] border-3 px-4 py-2.5 text-[13px] font-bold " +
-                (t.kind === "error"
-                  ? "border-ink bg-error text-white"
-                  : "border-ink bg-ink text-cream")
-              }
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: EASE_DECEL }}
+              className={cn(
+                "text-label-large shadow-e3 pointer-events-auto flex max-w-[84vw] items-center gap-2.5 rounded-md px-4 py-3",
+                t.kind === "error"
+                  ? "bg-error-container text-on-error-container"
+                  : "bg-inverse-surface text-inverse-on-surface",
+              )}
             >
+              {t.kind === "error" ? (
+                <CircleAlert className="h-4.5 w-4.5 shrink-0" aria-hidden />
+              ) : (
+                <CircleCheck className="h-4.5 w-4.5 shrink-0" aria-hidden />
+              )}
               {t.msg}
             </motion.div>
           ))}

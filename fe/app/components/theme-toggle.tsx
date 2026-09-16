@@ -14,23 +14,23 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       className={cn(
-        "press-sm border-ink bg-paper text-ink shadow-hard-xs hover:bg-fur-hover grid h-8 w-8 shrink-0 cursor-pointer place-items-center border-3",
+        "text-on-surface-variant hover:bg-on-surface/8 active:bg-on-surface/12 grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full transition-colors duration-200",
         className,
       )}
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={theme}
-          initial={{ rotate: -90, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          exit={{ rotate: 90, opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          initial={{ rotate: -60, opacity: 0, scale: 0.7 }}
+          animate={{ rotate: 0, opacity: 1, scale: 1 }}
+          exit={{ rotate: 60, opacity: 0, scale: 0.7 }}
+          transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }}
           className="grid place-items-center"
         >
           {dark ? (
-            <Moon className="h-4 w-4" aria-hidden />
+            <Moon className="h-5 w-5" aria-hidden />
           ) : (
-            <Sun className="h-4 w-4" aria-hidden />
+            <Sun className="h-5 w-5" aria-hidden />
           )}
         </motion.span>
       </AnimatePresence>

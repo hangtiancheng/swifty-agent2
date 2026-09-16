@@ -1,5 +1,7 @@
+import { motion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { EASE_DECEL } from "~/lib/motion";
 import type { Citation } from "~/lib/types";
 
 export interface CiteTarget {
@@ -75,26 +77,37 @@ export function CitePopover({
   }
   const c = target.c;
   return (
-    <div
+    <motion.div
       ref={popRef}
-      className="scroll-cat border-ink bg-paper shadow-hard fixed z-50 max-h-[50vh] overflow-y-auto border-3 p-3 text-[13px] leading-relaxed"
+      initial={{ opacity: 0, scale: 0.96, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: EASE_DECEL }}
+      className="scroll-slim border-outline-variant bg-card text-body-small text-on-surface shadow-e4 fixed z-50 max-h-[50vh] overflow-y-auto rounded-lg border p-4 leading-relaxed"
       style={
         pos
           ? { left: pos.left, top: pos.top, width: pos.width }
           : { left: 0, top: 0, visibility: "hidden" }
       }
     >
-      <div className="border-muted text-coral mb-1.5 border-b-2 border-dashed pb-1.5 text-xs font-bold break-words">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="bg-primary-container text-on-primary-container rounded-full px-2.5 py-0.5 text-[11px] font-medium">
+          {"Source [" + String(c.n) + "]"}
+        </span>
+        {c.content_type ? (
+          <span className="text-on-surface-variant text-label-small">
+            {c.content_type}
+          </span>
+        ) : null}
+      </div>
+      <div className="text-label-medium text-primary break-words">
         {c.section_path ?? "Source"}
       </div>
-      {c.question ? <div className="mb-1 font-bold">{c.question}</div> : null}
-      <div className="wrap-break-word whitespace-pre-wrap">
+      {c.question ? (
+        <div className="text-on-surface mt-2 font-medium">{c.question}</div>
+      ) : null}
+      <div className="text-on-surface-variant mt-1.5 wrap-break-word whitespace-pre-wrap">
         {c.answer ?? ""}
       </div>
-      <div className="text-muted mt-2 text-[11px]">
-        {"Source [" + String(c.n) + "]"}
-        {c.content_type ? " · " + c.content_type : ""}
-      </div>
-    </div>
+    </motion.div>
   );
 }

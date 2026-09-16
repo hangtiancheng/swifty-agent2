@@ -43,11 +43,11 @@ export function ReadNote({
   return (
     <div
       className={cn(
-        "border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-3 border-3 border-dashed px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:px-1 [&_b]:font-bold",
+        "bg-secondary-container text-on-secondary-container text-body-small mt-3 rounded-lg px-4 py-3 leading-relaxed [&_b]:font-semibold",
         className,
       )}
     >
-      <span className="bg-ink text-cream mr-2 inline-block px-1.5 py-px align-middle text-[11px] font-bold">
+      <span className="bg-primary text-on-primary mr-2 inline-block rounded-full px-2.5 py-0.5 align-middle text-[11px] font-medium">
         Insight
       </span>
       {note ? boldNumbers(note) : fallback}

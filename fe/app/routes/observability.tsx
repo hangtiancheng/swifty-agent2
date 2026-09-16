@@ -22,6 +22,7 @@ import {
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmt3, fmtTime, pctFmt, thousands } from "~/lib/format";
+import { EASE_DECEL } from "~/lib/motion";
 import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
@@ -155,16 +156,18 @@ function Kpis({
       {items.map((k) => (
         <div
           key={k.label}
-          className="border-ink bg-paper shadow-hard-sm border-3 px-3 pt-2.5 pb-3"
+          className="bg-card shadow-e1 border-outline-variant rounded-lg border px-3 pt-2.5 pb-3"
         >
-          <div className="text-muted text-[11.5px]">{k.label}</div>
-          <div className="text-2xl leading-snug font-bold tabular-nums">
+          <div className="text-on-surface-variant text-[11.5px]">{k.label}</div>
+          <div className="text-headline-small font-medium tabular-nums">
             {k.val}
             {k.unit ? (
               <small className="ml-0.5 text-[13px]">{k.unit}</small>
             ) : null}
           </div>
-          <div className="text-ink-soft text-[11.5px] leading-6">{k.sub}</div>
+          <div className="text-on-surface-variant text-[11.5px] leading-6">
+            {k.sub}
+          </div>
         </div>
       ))}
     </div>
@@ -173,9 +176,9 @@ function Kpis({
 
 function NoteBox({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-ink bg-paper border-3 p-3">
-      <h3 className="mb-1 text-[12.5px] font-bold">{title}</h3>
-      <p className="text-ink-soft text-xs leading-7">{children}</p>
+    <div className="bg-surface-container-low rounded-lg p-3">
+      <h3 className="mb-1 text-[12.5px] font-medium">{title}</h3>
+      <p className="text-on-surface-variant text-xs leading-7">{children}</p>
     </div>
   );
 }
@@ -248,24 +251,24 @@ export default function ObservabilityPage({
             <div key={r.intent}>
               <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
                 <div>
-                  <b className="font-bold">{r.intent}</b>
-                  <span className="text-muted ml-2 text-[11px]">
+                  <b className="font-semibold">{r.intent}</b>
+                  <span className="text-on-surface-variant ml-2 text-[11px]">
                     {r.count} requests · avg {thousands(r.avg_tokens)} tokens
                   </span>
                 </div>
-                <div className="font-bold tabular-nums">
+                <div className="font-medium tabular-nums">
                   {pctFmt(r.share)} · {thousands(r.tokens)}
                 </div>
               </div>
-              <div className="border-ink bg-cream mt-1 h-4 border-2">
+              <div className="bg-surface-container-highest mt-1 h-4 overflow-hidden rounded-full">
                 <motion.span
                   className={cn(
-                    "block h-full",
-                    top === r ? "bg-coral" : "bg-sky",
+                    "block h-full rounded-full",
+                    top === r ? "bg-primary" : "bg-primary/40",
                   )}
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.max(1.5, r.share * 100)}%` }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  transition={{ duration: 0.45, ease: EASE_DECEL }}
                 />
               </div>
             </div>
@@ -330,7 +333,7 @@ export default function ObservabilityPage({
       <Panel
         title="Intent cost ledger"
         pill={
-          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="bg-secondary-container text-on-secondary-container inline-block rounded-full px-2.5 py-0.5 text-[11.5px] font-medium whitespace-nowrap">
             Source: Langfuse
           </span>
         }
@@ -433,13 +436,14 @@ export default function ObservabilityPage({
                       ) {
                         const delta = v - o;
                         if (delta > DELTA_EPS) {
-                          cls = "text-online-deep";
+                          cls = "text-success";
                           arrow = "↑";
                         } else if (delta < -DELTA_EPS) {
-                          cls = "bg-error-bg font-bold text-error";
+                          cls =
+                            "bg-error-container font-medium text-on-error-container";
                           arrow = "⚠↓";
                         } else {
-                          cls = "text-muted";
+                          cls = "text-on-surface-variant";
                           arrow = "→";
                         }
                       }
@@ -489,7 +493,7 @@ export default function ObservabilityPage({
       <Panel
         title="Evaluation trends"
         pill={
-          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="bg-secondary-container text-on-secondary-container inline-block rounded-full px-2.5 py-0.5 text-[11.5px] font-medium whitespace-nowrap">
             Source: eval_runs table
           </span>
         }
@@ -596,13 +600,16 @@ export default function ObservabilityPage({
           className="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
         >
           {[
-            { label: "Answerable pass rate", color: "bg-online" },
+            { label: "Answerable pass rate", color: "bg-success" },
             { label: "Should-refuse leak rate", color: "bg-error" },
-            { label: "Selected threshold", color: "bg-ink" },
-            { label: "Threshold in use", color: "bg-violet" },
+            { label: "Selected threshold", color: "bg-primary" },
+            { label: "Threshold in use", color: "bg-tertiary" },
           ].map(({ label, color }) => (
-            <span key={label} className="inline-flex items-center gap-1.5">
-              <i className={cn("border-ink h-3 w-3 border-2", color)} />
+            <span
+              key={label}
+              className="text-on-surface-variant inline-flex items-center gap-1.5"
+            >
+              <i className={cn("h-3 w-3 rounded-full", color)} />
               {label}
             </span>
           ))}
@@ -652,7 +659,7 @@ export default function ObservabilityPage({
       <Panel
         title="Confidence threshold calibration"
         pill={
-          <span className="border-2.5 border-ink bg-sky inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
+          <span className="bg-secondary-container text-on-secondary-container inline-block rounded-full px-2.5 py-0.5 text-[11.5px] font-medium whitespace-nowrap">
             Live run on rag eval set
           </span>
         }

@@ -18,6 +18,7 @@ import {
 } from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
+import { EASE_DECEL } from "~/lib/motion";
 import type { JobSpec } from "~/lib/types";
 
 /* Classifier acceptance overview: all nine evidence checks run on this page — no terminal needed.
@@ -148,20 +149,26 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
               key={blk.key}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.22 }}
-              className="border-ink bg-cream shadow-hard flex flex-col border-4 p-3.5"
+              transition={{
+                delay: Math.min(i * 0.04, 0.3),
+                duration: 0.22,
+                ease: EASE_DECEL,
+              }}
+              className="bg-card shadow-e1 hover:shadow-e2 flex flex-col rounded-lg p-3.5 transition-shadow duration-200"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <div
                   className={cn(
-                    "border-ink bg-paper grid h-6.5 w-6.5 shrink-0 place-items-center border-3 text-[13px] font-bold",
-                    blk.status === "pass" && "bg-online",
-                    blk.status === "fail" && "bg-error text-white",
+                    "grid h-6.5 w-6.5 shrink-0 place-items-center rounded-full text-[13px] font-medium",
+                    blk.status === "pass" && "bg-success text-on-success",
+                    blk.status === "fail" && "bg-error text-on-error",
+                    blk.status === "missing" &&
+                      "bg-surface-container-high text-on-surface-variant",
                   )}
                 >
                   {blk.no}
                 </div>
-                <h3 className="text-sm font-bold">{blk.title}</h3>
+                <h3 className="text-title-small">{blk.title}</h3>
                 <Pill tone={tone}>{label}</Pill>
                 <span className="flex-1" />
                 {blk.page ? (
@@ -170,11 +177,11 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
                   </BtnLink>
                 ) : null}
               </div>
-              <div className="border-ink bg-paper mt-2.5 border-2 px-2.5 py-1.5 text-[13px] leading-6">
+              <div className="bg-surface-container-low mt-2.5 rounded-md px-2.5 py-1.5 text-[13px] leading-6">
                 {blk.headline || "—"}
               </div>
               {blk.note ? (
-                <div className="text-ink-soft mt-2 text-xs leading-6">
+                <div className="text-on-surface-variant mt-2 text-xs leading-6">
                   {blk.note}
                 </div>
               ) : null}

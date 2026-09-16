@@ -14,6 +14,7 @@ import {
   type PillTone,
 } from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
+import { EASE_DECEL } from "~/lib/motion";
 
 interface AdminMetric {
   label: string;
@@ -70,20 +71,27 @@ const STATUS_TONE: Record<string, PillTone> = {
 function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(i * 0.05, 0.3), duration: 0.22 }}
-      className="border-ink bg-cream shadow-hard flex flex-col border-4 p-3.5"
+      whileHover={{ y: -2 }}
+      transition={{
+        delay: Math.min(i * 0.05, 0.3),
+        duration: 0.35,
+        ease: EASE_DECEL,
+      }}
+      className="bg-card shadow-e1 hover:shadow-e2 flex flex-col rounded-lg p-4 transition-shadow duration-200"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-[15px] font-bold">{m.title}</h3>
+        <h3 className="text-title-small text-on-surface">{m.title}</h3>
         <span className="flex-1" />
         <Pill tone={STATUS_TONE[m.status] ?? "plain"}>
           {STATUS_LABEL[m.status] ?? m.status}
         </Pill>
       </div>
-      <p className="text-ink-soft mt-1.5 text-xs leading-6">{m.lede}</p>
-      <div className="border-ink bg-paper mt-2.5 border-2 px-2.5 py-1.5 text-[13px] leading-6">
+      <p className="text-on-surface-variant text-body-small mt-1.5 leading-6">
+        {m.lede}
+      </p>
+      <div className="bg-surface-container-low text-on-surface mt-2.5 rounded-md px-3 py-2 text-[13px] leading-6">
         {m.headline}
       </div>
       {m.metrics.length ? (
@@ -91,9 +99,9 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
           {m.metrics.map((k) => (
             <div
               key={k.label}
-              className="border-ink bg-paper min-w-19 border-2 px-2.5 py-1 text-[11.5px]"
+              className="bg-surface-container-high text-on-surface-variant text-label-small min-w-19 rounded-md px-2.5 py-1.5"
             >
-              <b className="block text-[17px] leading-snug">
+              <b className="text-title-medium text-on-surface block font-medium tabular-nums">
                 {k.value === null || k.value === undefined ? "—" : k.value}
               </b>
               {k.label}
@@ -102,7 +110,7 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
         </div>
       ) : null}
       {m.note ? (
-        <div className="text-ink-soft mt-2 text-[11.5px] leading-6">
+        <div className="text-on-surface-variant text-label-small mt-2 leading-5">
           {m.note}
         </div>
       ) : null}

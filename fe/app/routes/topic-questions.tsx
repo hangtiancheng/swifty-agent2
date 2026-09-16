@@ -102,20 +102,22 @@ export function meta() {
 
 function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
   return (
-    <div className="border-ink bg-paper shadow-hard-sm mt-2.5 border-3 p-3">
-      <div className="text-[13.5px] leading-6 font-bold">
-        <span className="text-muted mr-1.5 text-[11px] font-normal">
+    <div className="bg-card border-outline-variant shadow-e1 mt-2.5 rounded-lg border p-3">
+      <div className="text-[13.5px] leading-6 font-medium">
+        <span className="text-on-surface-variant mr-1.5 text-[11px] font-normal">
           #{it.question_id}
         </span>
         {it.text}
       </div>
-      <div className="text-ink-soft mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px]">
+      <div className="text-on-surface-variant mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px]">
         {(it.labels ?? []).map((lb) => (
           <span
             key={lb}
             className={cn(
-              "border-ink bg-cream border-2 px-1 text-[11px]",
-              lb === label && "bg-fur font-bold",
+              "text-label-small rounded-full px-2.5 py-0.5",
+              lb === label
+                ? "bg-primary-container text-on-primary-container font-medium"
+                : "bg-surface-container-high text-on-surface-variant",
             )}
           >
             {lb}
@@ -123,11 +125,13 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
         ))}
         <span>
           Source{" "}
-          <b className="text-ink">{SOURCE_LABEL[it.source] ?? it.source}</b>
+          <b className="text-on-surface font-medium">
+            {SOURCE_LABEL[it.source] ?? it.source}
+          </b>
         </span>
         <span>
           Synonym merge{" "}
-          <b className="text-ink">
+          <b className="text-on-surface font-medium">
             {it.occurrence_count
               ? String(it.occurrence_count) + " originals"
               : "not merged"}
@@ -135,7 +139,7 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
         </span>
         <span>
           Review{" "}
-          <b className="text-ink">
+          <b className="text-on-surface font-medium">
             {it.review_status
               ? (REVIEW_LABEL[it.review_status] ?? it.review_status)
               : "Not queued"}
@@ -143,13 +147,15 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
         </span>
         <span>
           Classified at{" "}
-          <b className="text-ink">{fmtTime(it.classified_at).slice(5, 16)}</b>
+          <b className="text-on-surface font-medium">
+            {fmtTime(it.classified_at).slice(5, 16)}
+          </b>
         </span>
       </div>
       {/* Merged questions show the normalized phrasing; keep the user's original wording visible so the entry's origin stays clear */}
       {it.normalized && it.raw_question && it.raw_question !== it.text ? (
-        <div className="text-ink-soft mt-1.5 text-xs leading-6">
-          <span className="text-muted block text-[10.5px]">
+        <div className="text-on-surface-variant mt-1.5 text-xs leading-6">
+          <span className="text-on-surface-variant block text-[10.5px]">
             Original wording
           </span>
           {it.raw_question}
@@ -220,16 +226,20 @@ export default function TopicQuestionsPage({
                   "&page=1"
                 }
                 className={cn(
-                  "border-ink bg-paper shadow-hard-xs hover:bg-fur-hover border-3 px-2.5 py-1 text-xs no-underline",
-                  c.label === label && "bg-fur font-bold",
+                  "shadow-e1 hover:shadow-e2 text-label-small cursor-pointer rounded-full px-3 py-1 no-underline transition-all duration-200 active:scale-[0.97]",
+                  c.label === label
+                    ? "bg-primary-container text-on-primary-container font-medium"
+                    : "bg-card text-on-surface hover:bg-card-hover",
                   c.count === 0 && "opacity-45",
                 )}
               >
                 {c.label}
                 <span
                   className={cn(
-                    "text-muted ml-1.5",
-                    c.label === label && "text-ink",
+                    "ml-1.5",
+                    c.label === label
+                      ? "text-on-primary-container"
+                      : "text-on-surface-variant",
                   )}
                 >
                   {c.count}
@@ -254,15 +264,15 @@ export default function TopicQuestionsPage({
           class, or run the bypass batch classification first.
         </MissingBox>
       ) : (
-        <div className="border-ink bg-cream shadow-hard mt-4 border-4 p-3.5 sm:p-4">
-          <h2 className="flex flex-wrap items-center gap-2.5 text-sm font-bold">
+        <div className="bg-card shadow-e1 mt-4 rounded-lg p-3.5 sm:p-4">
+          <h2 className="text-title-small flex flex-wrap items-center gap-2.5">
             {loaderData.d.label}
             <Pill tone="info">
               {loaderData.d.total} questions · page {loaderData.d.page}/
               {loaderData.d.pages}
             </Pill>
           </h2>
-          <p className="text-ink-soft mt-1 mb-1 text-[12.5px] leading-7">
+          <p className="text-on-surface-variant mt-1 mb-1 text-[12.5px] leading-7">
             Lists the questions the classifier grouped into this class;
             multi-label questions appear under every class they hit. The
             phrasing shown is the normalized question from the merge stage — the
@@ -295,10 +305,11 @@ export default function TopicQuestionsPage({
               Next →
             </Btn>
             <span className="text-[12.5px]">
-              Page <b className="tabular-nums">{loaderData.d.page}</b> /{" "}
+              Page{" "}
+              <b className="font-medium tabular-nums">{loaderData.d.page}</b>/{" "}
               {loaderData.d.pages} ·{" "}
-              <b className="tabular-nums">{loaderData.d.total}</b> questions in
-              this class · {loaderData.d.size} per page
+              <b className="font-medium tabular-nums">{loaderData.d.total}</b>
+              questions in this class · {loaderData.d.size} per page
             </span>
           </div>
         </div>

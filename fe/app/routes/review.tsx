@@ -9,6 +9,7 @@ import { useToast } from "~/components/toast";
 import { Btn, MissingBox, PageShell } from "~/components/ui";
 import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
+import { EASE_STANDARD, enterTransition, softSpring } from "~/lib/motion";
 
 /* Flywheel review queue: unanswerable questions → normalize & dedupe → human
    review → write back to the Knowledge Base. Status tabs ride the URL
@@ -79,15 +80,15 @@ const SRC_LABEL: Record<string, string> = {
 };
 
 const SRC_CLS: Record<string, string> = {
-  retrieval_low_conf: "bg-warn-bg",
-  self_check: "bg-violet",
-  user_feedback: "bg-pink",
+  retrieval_low_conf: "bg-warning-container text-on-warning-container",
+  self_check: "bg-tertiary-container text-on-tertiary",
+  user_feedback: "bg-error-container text-on-error-container",
 };
 
 const ST_CLS: Record<string, string> = {
-  pending_review: "bg-fur",
-  approved: "bg-online",
-  rejected: "bg-error text-white",
+  pending_review: "bg-primary-container text-on-primary-container",
+  approved: "bg-success text-on-success",
+  rejected: "bg-error text-on-error",
 };
 
 // Display labels for backend status values (keys are contract strings)
@@ -107,14 +108,14 @@ const TABS: [string, string][] = [
 function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
   if (chunks === null || chunks === undefined) {
     return (
-      <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
+      <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
         Retrieval never ran for this entry — no recall snapshots
       </div>
     );
   }
   if (!chunks.length) {
     return (
-      <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
+      <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
         Retrieval ran with zero hits — the Knowledge Base truly has no relevant
         content
       </div>
@@ -127,15 +128,15 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
         return (
           <div
             key={i}
-            className="border-ink bg-paper border-2 border-dashed px-2.5 py-2 text-[12.5px]"
+            className="bg-surface-container-low rounded-md px-2.5 py-2 text-[12.5px]"
           >
-            <div className="font-bold">{c.question || "(untitled)"}</div>
-            <div className="text-ink-soft my-1">{c.answer ?? ""}</div>
-            <div className="text-muted flex items-center gap-2 text-[11.5px]">
+            <div className="font-medium">{c.question || "(untitled)"}</div>
+            <div className="text-on-surface-variant my-1">{c.answer ?? ""}</div>
+            <div className="text-on-surface-variant flex items-center gap-2 text-[11.5px]">
               <span>Rerank score {score.toFixed(3)}</span>
-              <span className="border-ink bg-paper h-2 w-35 border-2">
+              <span className="bg-surface-container-highest h-1.5 w-35 shrink-0 overflow-hidden rounded-full">
                 <span
-                  className="bg-coral block h-full"
+                  className="bg-primary block h-full rounded-full"
                   style={{
                     width: `${Math.min(100, Math.round(score * 100))}%`,
                   }}
@@ -235,15 +236,16 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
       maxW="max-w-[1080px]"
       actions={
         <>
-          <div className="border-ink bg-paper flex border-3">
-            {TABS.map(([st, label], i) => (
+          <div className="bg-surface-container-low flex rounded-full p-1">
+            {TABS.map(([st, label]) => (
               <button
                 key={label}
                 type="button"
                 className={cn(
-                  "border-ink hover:bg-fur-hover cursor-pointer border-r-3 px-3 py-1.5 font-[inherit] text-[13px] last:border-r-0",
-                  curStatus === st && "bg-fur font-bold",
-                  i === 0 && "rounded-none",
+                  "text-label-medium cursor-pointer rounded-full px-3.5 py-1.5 font-[inherit] transition-all duration-200",
+                  curStatus === st
+                    ? "bg-primary text-on-primary shadow-e1"
+                    : "text-on-surface-variant hover:bg-on-surface/8",
                 )}
                 onClick={() => {
                   setParams(
@@ -274,7 +276,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
         </>
       }
     >
-      <div className="border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-4 border-3 border-dashed px-3.5 py-2.5 text-[12.5px] leading-[1.8] [&_b]:mr-1 [&_b]:border-2 [&_b]:px-1.5">
+      <div className="bg-secondary-container text-on-secondary-container mt-4 rounded-lg px-4 py-3 text-[12.5px] leading-[1.8] [&_b]:font-semibold">
         Run three gates before reviewing: <b>① Spam filter</b> gibberish, stray
         test input, inappropriate content → reject; <b>② Timeliness</b>{" "}
         time-sensitive questions (promo deadlines) expire as soon as they are
@@ -301,11 +303,11 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                 layout
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18 }}
-                className="border-ink bg-cream shadow-hard border-4"
+                transition={enterTransition}
+                className="bg-card shadow-e1 overflow-hidden rounded-lg"
               >
                 <div
-                  className="hover:bg-paper flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
+                  className="hover:bg-on-surface/4 flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors duration-150"
                   onClick={() => {
                     void toggleDetail(it.id);
                   }}
@@ -313,22 +315,25 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                   <span
                     title="Occurrence count (accumulated by dedupe merging); the higher it is, the sooner this should be filled"
                     className={cn(
-                      "border-2.5 border-ink bg-paper px-2 py-0.5 text-xs font-bold whitespace-nowrap",
-                      it.occurrence_count >= 3 && "bg-coral text-white",
+                      "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
+                      it.occurrence_count >= 3
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container-high text-on-surface-variant",
                     )}
                   >
                     ×{it.occurrence_count}
                   </span>
-                  <div className="min-w-60 flex-1 text-[14.5px] font-bold">
+                  <div className="min-w-60 flex-1 text-[14.5px] font-medium">
                     {it.normalized_question}
                   </div>
-                  <div className="text-muted hidden max-w-80 truncate text-xs lg:block">
+                  <div className="text-on-surface-variant hidden max-w-80 truncate text-xs lg:block">
                     {it.ai_suggested_answer ?? "(no suggested answer)"}
                   </div>
                   <span
                     className={cn(
-                      "border-2.5 border-ink px-2 py-0.5 text-xs font-bold whitespace-nowrap",
-                      ST_CLS[it.review_status] ?? "bg-paper",
+                      "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
+                      ST_CLS[it.review_status] ??
+                        "bg-surface-container-high text-on-surface-variant",
                     )}
                   >
                     {ST_LABEL[it.review_status] ?? it.review_status}
@@ -369,12 +374,12 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="border-ink overflow-hidden border-t-3"
+                      transition={{ duration: 0.2, ease: EASE_STANDARD }}
+                      className="border-outline-variant overflow-hidden border-t"
                     >
-                      <div className="bg-paper px-4 py-3.5">
+                      <div className="bg-surface-container-low px-4 py-3.5">
                         {loadingId === it.id && !detail ? (
-                          <div className="text-muted text-xs">
+                          <div className="text-on-surface-variant text-xs">
                             Loading details…
                           </div>
                         ) : detailErr[it.id] ? (
@@ -383,7 +388,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                           </div>
                         ) : detail ? (
                           <>
-                            <div className="text-muted mb-2.5 text-xs">
+                            <div className="text-on-surface-variant mb-2.5 text-xs">
                               Judge from the snapshots: is the Knowledge Base
                               truly missing this, or does it have the answer but
                               fail to recall it? Merged original questions:{" "}
@@ -393,18 +398,19 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                               detail.raws.map((r, i) => (
                                 <div
                                   key={i}
-                                  className="border-ink bg-cream mb-3 border-3 p-2.5 last:mb-0"
+                                  className="bg-card shadow-e1 mb-3 rounded-md p-2.5 last:mb-0"
                                 >
                                   <div className="mb-1.5 flex flex-wrap items-center gap-2">
                                     <span
                                       className={cn(
-                                        "border-ink border-2 px-1.5 py-px text-[11.5px] font-bold",
-                                        SRC_CLS[r.source] ?? "bg-paper",
+                                        "text-label-small rounded-full px-2.5 py-0.5",
+                                        SRC_CLS[r.source] ??
+                                          "bg-surface-container-high text-on-surface-variant",
                                       )}
                                     >
                                       {SRC_LABEL[r.source] ?? r.source}
                                     </span>
-                                    <span className="text-muted text-[11.5px]">
+                                    <span className="text-on-surface-variant text-[11.5px]">
                                       {(r.created_at ?? "")
                                         .replace("T", " ")
                                         .slice(0, 16)}
@@ -417,7 +423,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                                 </div>
                               ))
                             ) : (
-                              <div className="border-muted text-muted border-2 border-dashed px-2.5 py-1.5 text-xs">
+                              <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
                                 No merged originals yet (backfilled after the
                                 flywheel batch runs)
                               </div>
@@ -438,11 +444,11 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
       <AnimatePresence>
         {approving ? (
           <motion.div
-            className="bg-ink/45 fixed inset-0 z-50 flex items-center justify-center p-5"
+            className="bg-scrim/50 fixed inset-0 z-50 flex items-center justify-center p-5 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: 0.2, ease: EASE_STANDARD }}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setApproving(null);
@@ -453,21 +459,21 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
               role="dialog"
               aria-modal="true"
               aria-label="Approve & write back to Knowledge Base"
-              className="border-ink bg-cream shadow-hard-lg w-[min(560px,92vw)] border-4 p-4.5"
+              className="bg-surface-container-high shadow-e5 w-[min(560px,92vw)] rounded-xl p-6"
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
-              transition={{ duration: 0.16 }}
+              transition={softSpring}
             >
-              <h3 className="text-[15px] font-bold">
+              <h3 className="text-title-medium text-on-surface">
                 Approve & write back to Knowledge Base
               </h3>
-              <div className="text-ink-soft mt-1 mb-2.5 text-[13px]">
+              <div className="text-on-surface-variant mt-1 mb-2.5 text-[13px]">
                 Normalized question: {approving.normalized_question}
               </div>
               <textarea
                 autoFocus
-                className="border-ink bg-paper focus:bg-paper min-h-32 w-full resize-y border-3 p-2.5 text-[13px] outline-none"
+                className="border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary text-body-medium min-h-32 w-full resize-y rounded-sm border bg-transparent px-3.5 py-2.5 transition-[border-color,box-shadow] duration-200 outline-none focus:ring-1"
                 placeholder="Approved answer (prefilled with the AI suggestion — review it before submitting)"
                 value={answer}
                 onChange={(e) => {

@@ -5,24 +5,30 @@ import { Link } from "react-router";
 import { AdminNav } from "./admin-nav";
 
 import { cn } from "~/lib/cn";
+import { enterTransition } from "~/lib/motion";
 
 /* ---------- Buttons ---------- */
 
-type BtnVariant = "default" | "go" | "no" | "ok";
+type BtnVariant = "default" | "go" | "no" | "ok" | "tonal" | "text";
 type BtnSize = "md" | "sm";
 
 const BTN_BASE =
-  "press inline-flex cursor-pointer items-center justify-center gap-1.5 border-3 border-ink font-bold " +
-  "disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:active:transform-none";
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap select-none " +
+  "transition-[background-color,color,box-shadow,transform] duration-200 ease-standard active:scale-[0.97] " +
+  "disabled:pointer-events-none disabled:opacity-38";
 const BTN_SIZE: Record<BtnSize, string> = {
-  md: "press px-3.5 py-1.5 text-[13px] shadow-hard-sm",
-  sm: "press-sm px-2.5 py-1 text-xs shadow-hard-xs",
+  md: "h-10 px-5 text-label-large",
+  sm: "h-8 px-3.5 text-label-medium",
 };
 const BTN_VARIANT: Record<BtnVariant, string> = {
-  default: "bg-paper text-ink hover:bg-fur-hover",
-  go: "bg-fur text-ink hover:brightness-105",
-  no: "bg-error text-white hover:brightness-105",
-  ok: "bg-online text-ink hover:brightness-105",
+  default:
+    "border border-outline text-primary hover:bg-primary/8 active:bg-primary/12",
+  go: "bg-primary text-on-primary shadow-e1 hover:bg-primary-hover hover:shadow-e2 active:bg-primary-pressed",
+  no: "bg-error text-on-error shadow-e1 hover:bg-error-hover hover:shadow-e2 active:bg-error-pressed",
+  ok: "bg-success text-on-success shadow-e1 hover:bg-success-hover hover:shadow-e2",
+  tonal:
+    "bg-secondary-container text-on-secondary-container hover:bg-secondary-container-hover",
+  text: "px-3.5 text-primary hover:bg-primary/8 active:bg-primary/12",
 };
 
 export function Btn({
@@ -87,15 +93,15 @@ export type PillTone =
   | "plain";
 
 const PILL_TONE: Record<PillTone, string> = {
-  pass: "bg-online text-ink",
-  fail: "bg-error text-white",
-  missing: "border-muted bg-paper text-muted",
-  running: "bg-fur text-ink",
-  info: "bg-sky text-ink",
-  "sev-strict": "bg-coral text-white",
-  "sev-medium": "bg-fur text-ink",
-  "sev-lenient": "border-muted bg-paper text-muted",
-  plain: "bg-paper text-ink",
+  pass: "bg-success-container text-on-success-container",
+  fail: "bg-error-container text-on-error-container",
+  missing: "bg-surface-container-high text-on-surface-variant",
+  running: "bg-primary-container text-on-primary-container",
+  info: "bg-secondary-container text-on-secondary-container",
+  "sev-strict": "bg-error-container text-on-error-container",
+  "sev-medium": "bg-warning-container text-on-warning-container",
+  "sev-lenient": "bg-surface-container-high text-on-surface-variant",
+  plain: "bg-surface-container-high text-on-surface-variant",
 };
 
 export function Pill({
@@ -110,7 +116,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "border-2.5 border-ink inline-block px-2 py-px text-[11.5px] font-bold whitespace-nowrap",
+        "text-label-small inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 whitespace-nowrap",
         PILL_TONE[tone],
         className,
       )}
@@ -139,23 +145,23 @@ export function Panel({
 }) {
   return (
     <motion.section
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={enterTransition}
       className={cn(
-        "border-ink bg-cream shadow-hard mt-4 border-4 p-3.5 sm:px-4.5 sm:py-4",
-        tight && "pb-3.5",
+        "bg-card shadow-e1 mt-4 rounded-lg p-4 sm:px-5 sm:py-4.5",
+        tight && "pb-4",
         className,
       )}
     >
       {title ? (
-        <h2 className="flex flex-wrap items-center gap-2.5 text-sm font-bold">
+        <h2 className="text-title-small text-on-surface flex flex-wrap items-center gap-2.5">
           {title}
           {pill}
         </h2>
       ) : null}
       {lede ? (
-        <p className="text-ink-soft mt-1 mb-3 text-[12.5px] leading-7">
+        <p className="text-body-small text-on-surface-variant mt-1 mb-3 leading-relaxed">
           {lede}
         </p>
       ) : null}
@@ -174,22 +180,27 @@ export function TopBar({
   children?: ReactNode;
 }) {
   return (
-    <div className="border-ink bg-cream shadow-hard-lg flex flex-wrap items-center gap-x-3.5 gap-y-2 border-4 px-4 py-3.5">
-      <h1 className="text-base font-bold tracking-wide sm:text-lg">{title}</h1>
-      {sub ? <span className="text-muted text-xs">{sub}</span> : null}
+    <div className="bg-card shadow-e1 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg px-4 py-4 sm:px-5">
+      <h1 className="text-title-large text-on-surface sm:text-headline-small font-medium tracking-normal sm:font-medium">
+        {title}
+      </h1>
+      {sub ? (
+        <span className="text-body-small text-on-surface-variant">{sub}</span>
+      ) : null}
       <span className="flex-1" />
       {children}
     </div>
   );
 }
 
-/** Shared shell for admin pages: top bar + nav + content (with entrance animation) */
+/** Shared shell for admin pages: top bar + nav + content (with entrance animation).
+    Content spans the full viewport width; pass maxW to constrain and center it. */
 export function PageShell({
   title,
   sub,
   active,
   actions,
-  maxW = "max-w-[1180px]",
+  maxW,
   children,
 }: {
   title: ReactNode;
@@ -200,7 +211,12 @@ export function PageShell({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("mx-auto px-3 pt-5 pb-16 sm:px-4", maxW)}>
+    <div
+      className={cn(
+        "w-full px-3 pt-5 pb-16 sm:px-5 lg:px-8",
+        maxW && cn("mx-auto", maxW),
+      )}
+    >
       <TopBar title={title} sub={sub}>
         {actions}
       </TopBar>
@@ -224,13 +240,15 @@ export function Stat({
   small?: boolean;
 }) {
   return (
-    <div className="border-ink bg-paper shadow-hard-sm min-w-[104px] border-3 px-3.5 py-2 text-[12.5px]">
-      <span>{label}</span>
+    <div className="bg-card shadow-e1 min-w-[112px] rounded-lg px-4 py-2.5">
+      <span className="text-label-medium text-on-surface-variant block">
+        {label}
+      </span>
       <b
         className={cn(
-          "block text-xl leading-snug",
-          small && "text-[15px] leading-8",
-          tone === "pass" && "text-online-deep",
+          "text-headline-small mt-0.5 block leading-8 font-medium tabular-nums",
+          small && "text-title-medium leading-7",
+          tone === "pass" && "text-success",
           tone === "fail" && "text-error",
         )}
       >
@@ -258,7 +276,7 @@ export function Tip({
   return (
     <div
       className={cn(
-        "border-ink bg-paper [&_b]:border-ink [&_b]:bg-fur mt-3 border-3 border-dashed px-3 py-2 text-[12.5px] leading-[1.8] [&_b]:border-2 [&_b]:px-1 [&_b]:font-bold",
+        "bg-secondary-container text-on-secondary-container text-body-small mt-3 rounded-lg px-4 py-3 leading-relaxed [&_b]:font-semibold",
         className,
       )}
     >
@@ -278,7 +296,7 @@ export function MissingBox({
   return (
     <div
       className={cn(
-        "border-muted bg-paper text-muted border-3 border-dashed p-3.5 text-center text-[12.5px]",
+        "border-outline-variant text-on-surface-variant text-body-small rounded-lg border border-dashed px-4 py-8 text-center",
         className,
       )}
     >
@@ -298,7 +316,7 @@ export function TableScroll({
   className?: string;
 }) {
   return (
-    <div className={cn("scroll-cat overflow-x-auto", className)}>
+    <div className={cn("scroll-slim overflow-x-auto", className)}>
       {children}
     </div>
   );
@@ -313,7 +331,10 @@ export function Tbl({
 }) {
   return (
     <table
-      className={cn("bg-paper w-full border-collapse text-[12.5px]", className)}
+      className={cn(
+        "text-body-small w-full border-collapse [&_tbody_tr:last-child_td]:border-b-0",
+        className,
+      )}
     >
       {children}
     </table>
@@ -330,7 +351,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "border-ink bg-fur border-2 px-2 py-1.5 text-left text-xs font-bold whitespace-nowrap",
+        "border-outline-variant text-on-surface-variant text-label-medium border-b px-3 py-2.5 text-left whitespace-nowrap",
         className,
       )}
     >
@@ -354,7 +375,7 @@ export function Td({
     <td
       colSpan={colSpan}
       className={cn(
-        "border-ink border-2 px-2 py-1.5 text-left align-middle",
+        "border-outline-variant text-on-surface border-b px-3 py-2.5 text-left align-middle",
         num && "num",
         className,
       )}
@@ -373,7 +394,17 @@ export function Tr({
   bad?: boolean;
   className?: string;
 }) {
-  return <tr className={cn(bad && "bg-error-bg", className)}>{children}</tr>;
+  return (
+    <tr
+      className={cn(
+        "hover:bg-on-surface/4 transition-colors duration-150",
+        bad && "bg-error-container/50 hover:bg-error-container/70",
+        className,
+      )}
+    >
+      {children}
+    </tr>
+  );
 }
 
 /* ---------- Numeric cell: 3 decimals + bar ---------- */
@@ -388,22 +419,25 @@ export function ScoreCell({
   v?: number | null;
   redLine?: number | null;
 }) {
-  const width = Math.max(2, Math.round((v ?? 0) * 100));
+  const width = Math.max(3, Math.round((v ?? 0) * 100));
   const hasLine = redLine !== null && redLine !== undefined;
   const tone = !hasLine
-    ? "bg-fur"
+    ? "bg-primary"
     : (v ?? 0) >= redLine
-      ? "bg-online"
+      ? "bg-success"
       : "bg-error";
   return (
     <Td num>
-      <div className="flex items-center justify-end gap-1.5">
+      <div className="flex items-center justify-end gap-2">
         <span className="tabular-nums">
           {v === null || v === undefined ? "—" : v.toFixed(3)}
         </span>
-        <span className="border-ink bg-cream h-2 w-[54px] shrink-0 border-2">
+        <span className="bg-surface-container-highest h-1.5 w-14 shrink-0 overflow-hidden rounded-full">
           <span
-            className={cn("block h-full", tone)}
+            className={cn(
+              "ease-decel block h-full rounded-full transition-[width] duration-500",
+              tone,
+            )}
             style={{ width: `${width}%` }}
           />
         </span>
@@ -422,15 +456,17 @@ export function KvBox({
   value: ReactNode;
 }) {
   return (
-    <div className="border-ink bg-paper min-w-[84px] border-2 px-2.5 py-1 text-[11.5px]">
-      <b className="block text-[17px] leading-snug">{value}</b>
+    <div className="bg-surface-container-high text-on-surface-variant text-label-small min-w-[88px] rounded-md px-3 py-2">
+      <b className="text-title-medium text-on-surface block font-medium tabular-nums">
+        {value}
+      </b>
       {label}
     </div>
   );
 }
 
 export function KvRow({ children }: { children: ReactNode }) {
-  return <div className="mt-2.5 flex flex-wrap gap-2">{children}</div>;
+  return <div className="mt-3 flex flex-wrap gap-2">{children}</div>;
 }
 
 /* ---------- Section heading ---------- */
@@ -445,10 +481,12 @@ export function SectionHead({
   className?: string;
 }) {
   return (
-    <div className={cn("mt-4 mb-0.5 text-[13px] font-bold", className)}>
+    <div
+      className={cn("text-title-small text-on-surface mt-5 mb-1.5", className)}
+    >
       {children}
       {unit ? (
-        <span className="text-muted ml-1.5 text-[11.5px] font-normal">
+        <span className="text-on-surface-variant text-label-small ml-1.5 font-normal">
           {unit}
         </span>
       ) : null}

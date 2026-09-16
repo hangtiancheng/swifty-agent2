@@ -168,10 +168,10 @@ const STAGING_ORDER: StagingKey[] = [
 ];
 
 const FIELD =
-  "border-3 border-ink bg-paper px-2.5 py-1.5 text-[13px] outline-none focus:bg-cream";
+  "rounded-sm border border-outline bg-transparent px-3.5 py-2.5 text-body-medium text-on-surface outline-none transition-[border-color,box-shadow] duration-200 focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant";
 
 const ANSWER_CELL =
-  "scroll-cat max-h-32 overflow-auto text-xs leading-7 whitespace-pre-wrap break-words";
+  "scroll-slim max-h-32 overflow-auto text-xs leading-7 whitespace-pre-wrap break-words";
 
 export default function KbPage({ loaderData }: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
@@ -431,7 +431,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       >
         <div className="grid gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <label className="text-[12.5px] font-bold" htmlFor="ctype">
+            <label className="text-[12.5px] font-medium" htmlFor="ctype">
               Content type
             </label>
             <select
@@ -448,7 +448,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 </option>
               ))}
             </select>
-            <span className="text-ink-soft text-[11.5px]">{ctDesc}</span>
+            <span className="text-on-surface-variant text-[11.5px]">
+              {ctDesc}
+            </span>
             <span className="flex-1" />
             <Btn
               size="sm"
@@ -497,7 +499,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             <label className="flex cursor-pointer items-center gap-1.5 text-[13px]">
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-(--coral)"
+                className="accent-primary h-4 w-4"
                 checked={vecAfter}
                 onChange={(e) => {
                   setVecAfter(e.target.checked);
@@ -695,9 +697,11 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             ].map(({ label, v }) => (
               <div
                 key={label}
-                className="border-ink bg-paper min-w-21 border-2 px-2.5 py-1 text-[11.5px]"
+                className="bg-surface-container-high text-on-surface-variant min-w-21 rounded-md px-2.5 py-1 text-[11.5px]"
               >
-                <b className="block text-[17px] leading-snug">{v}</b>
+                <b className="text-on-surface block text-[17px] leading-snug font-medium tabular-nums">
+                  {v}
+                </b>
                 {label}
               </div>
             ))}
@@ -734,11 +738,11 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               }
               return (
                 <div key={st}>
-                  <h3 className="mt-3.5 mb-1.5 text-[13px] font-bold">
+                  <h3 className="mt-3.5 mb-1.5 text-[13px] font-medium">
                     {STAGING_LABEL[st]} ({rows.length} rows)
                   </h3>
                   {st === "kept" ? (
-                    <p className="text-ink-soft mb-2 text-[12.5px] leading-6">
+                    <p className="text-on-surface-variant mb-2 text-[12.5px] leading-6">
                       These were summarized by the model from historical
                       conversations and quality varies. Review each row before
                       approving: anything that only applies to a single order,
@@ -834,9 +838,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
           ].map(({ label, v }) => (
             <div
               key={label}
-              className="border-ink bg-paper min-w-21 border-2 px-2.5 py-1 text-[11.5px]"
+              className="bg-surface-container-high text-on-surface-variant min-w-21 rounded-md px-2.5 py-1 text-[11.5px]"
             >
-              <b className="block text-[17px] leading-snug">
+              <b className="text-on-surface block text-[17px] leading-snug font-medium tabular-nums">
                 {v === null || v === undefined ? "—" : String(v)}
               </b>
               {label}
@@ -853,7 +857,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
           >
             {vectorizing ? "Vectorizing…" : "Vectorize pending chunks"}
           </Btn>
-          <span className="text-muted text-[11.5px]">
+          <span className="text-on-surface-variant text-[11.5px]">
             {d.milvus.online
               ? "Runs in-process — the same function as make kb-vectorize"
               : "Milvus offline: " + (d.milvus.detail ?? "")}
@@ -889,7 +893,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               }
             }}
           />
-          <label className="text-[12.5px] font-bold" htmlFor="strategy">
+          <label className="text-[12.5px] font-medium" htmlFor="strategy">
             Strategy
           </label>
           <select
@@ -905,7 +909,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             <option value="hybrid">Hybrid retrieval</option>
             <option value="hybrid_rerank">Hybrid + rerank</option>
           </select>
-          <label className="text-[12.5px] font-bold" htmlFor="topk">
+          <label className="text-[12.5px] font-medium" htmlFor="topk">
             Top-K
           </label>
           <input
@@ -963,13 +967,15 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                   <div
                     key={i}
                     className={cn(
-                      "border-ink bg-paper border-3 px-3 py-2 text-[12.5px]",
-                      i === 0 && "bg-cream shadow-hard-sm",
+                      "bg-card rounded-lg border px-3 py-2 text-[12.5px]",
+                      i === 0
+                        ? "border-primary shadow-e2"
+                        : "border-outline-variant",
                     )}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Pill tone={i === 0 ? "pass" : "info"}>#{i + 1}</Pill>
-                      <span className="font-bold">{h.question}</span>
+                      <span className="font-semibold">{h.question}</span>
                       <span className="flex-1" />
                       {h.score !== null && h.score !== undefined ? (
                         <Pill tone="info">
@@ -986,7 +992,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                     <div className="mt-1.5 leading-7 whitespace-pre-wrap">
                       {h.answer}
                     </div>
-                    <div className="text-muted mt-1.5 text-[11.5px]">
+                    <div className="text-on-surface-variant mt-1.5 text-[11.5px]">
                       {[
                         h.section_path ?? "—",
                         h.content_type ?? "—",

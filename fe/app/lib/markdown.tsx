@@ -18,7 +18,7 @@ const INLINE_RE =
   /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*\n]+\*)|(~~[^~]+~~)|(\[([^\]]+)\]\((https?:\/\/[^)\s]+)\))|(\[(\d+)\])/g;
 
 const CITE_CLS =
-  "cursor-pointer select-none border-b-2 border-coral px-px align-super text-[11px] font-bold leading-none text-coral hover:bg-coral hover:text-white";
+  "bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary cursor-pointer rounded-full px-1.5 text-[10px] leading-4 font-medium align-super transition-colors duration-150 select-none";
 
 function renderInline(
   s: string,
@@ -37,13 +37,16 @@ function renderInline(
     const key = kp + "i" + String(k++);
     if (m[1] !== undefined) {
       out.push(
-        <code key={key} className="bg-code-bg rounded px-1 py-px text-[13px]">
+        <code
+          key={key}
+          className="bg-surface-container-high text-on-surface-variant rounded-xs px-1.5 py-0.5 font-mono text-[12.5px]"
+        >
           {m[1].slice(1, -1)}
         </code>,
       );
     } else if (m[2] !== undefined) {
       out.push(
-        <strong key={key} className="font-bold">
+        <strong key={key} className="font-semibold">
           {m[2].slice(2, -2)}
         </strong>,
       );
@@ -58,7 +61,7 @@ function renderInline(
           href={m[7]}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-coral underline"
+          className="text-primary decoration-primary/40 hover:decoration-primary underline underline-offset-2 transition-colors duration-150"
         >
           {m[6]}
         </a>,
@@ -141,9 +144,11 @@ export function renderMarkdown(
       out.push(
         <pre
           key={key()}
-          className="scroll-cat bg-code-bg my-2 overflow-x-auto rounded-md px-2.5 py-2"
+          className="scroll-slim bg-surface-container-high my-3 overflow-x-auto rounded-md p-3.5"
         >
-          <code className="text-[13px]">{buf.join("\n")}</code>
+          <code className="text-on-surface font-mono text-[12.5px] leading-relaxed">
+            {buf.join("\n")}
+          </code>
         </pre>,
       );
       continue;
@@ -151,7 +156,7 @@ export function renderMarkdown(
     const hm = /^(#{1,6})\s+(.*)$/.exec(line);
     if (hm) {
       // Heading
-      const cls = "mt-2.5 mb-1.5 text-[15px] font-bold";
+      const cls = "text-on-surface mt-3.5 mb-1.5 text-[15px] font-semibold";
       const inline = renderInline(hm[2] ?? "", opts, key());
       const level = hm[1]?.length ?? 1;
       if (level === 1) {
@@ -197,10 +202,7 @@ export function renderMarkdown(
     if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
       // Horizontal rule
       out.push(
-        <hr
-          key={key()}
-          className="border-muted my-2.5 border-t-2 border-dashed"
-        />,
+        <hr key={key()} className="border-outline-variant my-3 border-t" />,
       );
       i++;
       continue;
@@ -219,31 +221,40 @@ export function renderMarkdown(
         i++;
       }
       const thCls =
-        "border border-muted bg-code-bg px-2 py-1 text-left font-bold";
-      const tdCls = "border border-muted px-2 py-1 text-left";
+        "border-outline-variant bg-surface-container-low text-on-surface-variant border-b px-2.5 py-1.5 text-left text-label-medium";
+      const tdCls =
+        "border-outline-variant text-on-surface border-b px-2.5 py-1.5 text-left";
       out.push(
-        <table key={key()} className="my-2 border-collapse text-[13px]">
-          <thead>
-            <tr>
-              {headers.map((c, j) => (
-                <th key={j} className={thCls}>
-                  {renderInline(c, opts, key())}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, ri) => (
-              <tr key={ri}>
-                {r.map((c, ci) => (
-                  <td key={ci} className={tdCls}>
+        <div
+          key={key()}
+          className="scroll-slim border-outline-variant my-3 overflow-x-auto rounded-md border"
+        >
+          <table className="w-full border-collapse text-[13px]">
+            <thead>
+              <tr>
+                {headers.map((c, j) => (
+                  <th key={j} className={thCls}>
                     {renderInline(c, opts, key())}
-                  </td>
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>,
+            </thead>
+            <tbody>
+              {rows.map((r, ri) => (
+                <tr
+                  key={ri}
+                  className="hover:bg-on-surface/4 last:[&_td]:border-b-0"
+                >
+                  {r.map((c, ci) => (
+                    <td key={ci} className={tdCls}>
+                      {renderInline(c, opts, key())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
       );
       continue;
     }
@@ -301,7 +312,7 @@ export function renderMarkdown(
       out.push(
         <blockquote
           key={key()}
-          className="border-muted text-muted my-1.5 border-l-3 py-0.5 pl-2.5"
+          className="border-primary/60 text-on-surface-variant my-2.5 border-l-2 py-0.5 pl-3"
         >
           {buf.map((b, j) => (
             <span key={j}>

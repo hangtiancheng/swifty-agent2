@@ -5,6 +5,8 @@
 - Swifty Agent2 is a pure English project
 - Ensure good type annotation for python code
 - @package.json
+- Project Brand Name: MeowMeow Select
+- Project Agent Persona: Meow
 
 ## Milvus migration (Python Milvus => Node -> gRPC -> Milvus Lite)
 
@@ -20,4 +22,3 @@ Milvus. This stack migrated the dense path instead of avoiding it:
 - BM25 stays in-process (CJK bigrams over `knowledge_chunks` text); `hybrid` fuses dense +
   BM25 with reciprocal-rank fusion in Node. Collection dim is inferred from the first
   upserted embedding (model-agnostic, never hardcoded).
-- Do not reintroduce "no Milvus" assumptions in comments or docs; the bridge is real.

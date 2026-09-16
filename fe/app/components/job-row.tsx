@@ -208,13 +208,17 @@ export function JobRow({
         {specs.map((s) => (
           <JobButton key={s.name} spec={s} onLog={setLog} onFinish={onFinish} />
         ))}
-        {note ? <span className="text-muted text-[11.5px]">{note}</span> : null}
+        {note ? (
+          <span className="text-on-surface-variant text-label-small">
+            {note}
+          </span>
+        ) : null}
       </div>
       {log ? (
         <pre
           className={cn(
-            "scroll-cat border-ink bg-ink mt-2.5 max-h-70 overflow-auto border-3 p-2.5",
-            "text-xs leading-relaxed break-all whitespace-pre-wrap text-[#f3ead9]",
+            "scroll-slim bg-terminal text-terminal-ink mt-3 max-h-70 overflow-auto rounded-lg p-3.5",
+            "font-mono text-xs leading-relaxed break-all whitespace-pre-wrap",
           )}
         >
           {log}

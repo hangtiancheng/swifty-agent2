@@ -1,18 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "ecosystem-primer": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/ecosystem-primer/SKILL.md",
-      "computedHash": "cdcbe9115ec444518fc963fa1a5425aacad984f2b03c5e56980e4f9ad3888bc1"
-    },
-    "eval-engineering": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/eval-engineering/SKILL.md",
-      "computedHash": "c0c88a41e1e1bb9bccc01dac78efa6e34538cbad3f6a60a1226fef8a611ebac3"
-    },
     "hf-cli": {
       "source": "huggingface/skills",
       "sourceType": "github",
@@ -25,53 +13,11 @@
       "skillPath": "skills/hono/SKILL.md",
       "computedHash": "2b2d642a6698cf1767d7a65f8beb4aceb078033d5afc5838c08da6d683fc333d"
     },
-    "huggingface-community-evals": {
-      "source": "huggingface/skills",
-      "sourceType": "github",
-      "skillPath": "skills/huggingface-community-evals/SKILL.md",
-      "computedHash": "32eec43c4c176086132aefee5377b47e98095727289f128492da697dccbc1598"
-    },
-    "huggingface-datasets": {
-      "source": "huggingface/skills",
-      "sourceType": "github",
-      "skillPath": "skills/huggingface-datasets/SKILL.md",
-      "computedHash": "d28d1ee4a61133ab6c1e12c74094681c2026c7e656784bd09831f91618fd0120"
-    },
     "langchain-dependencies": {
       "source": "langchain-ai/langchain-skills",
       "sourceType": "github",
       "skillPath": "config/skills/langchain-dependencies/SKILL.md",
       "computedHash": "d11337493fa4828c12d2d1793fbdf3bb0d5ae67763a03e98b0f1aa3d0ff6825b"
-    },
-    "langchain-fundamentals": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/langchain-fundamentals/SKILL.md",
-      "computedHash": "5a1ded1b185ed95aab2b795f6134ce1ea9c19dddc5d5c8f291b31c0db4f0e379"
-    },
-    "langchain-middleware": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/langchain-middleware/SKILL.md",
-      "computedHash": "f8b6897ba1f027d56ff9fffa72d4d27d8e048232fe1e1c13e219df98969d55b0"
-    },
-    "langchain-rag": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/langchain-rag/SKILL.md",
-      "computedHash": "d836f8a425104fe4e925135cb06a1217c2ded6576ee426e11e3f657e6c371da4"
-    },
-    "langchain-typescript-quickstart": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/langchain-typescript-quickstart/SKILL.md",
-      "computedHash": "66dc2533c29a6097dda563f42102da0c4b1cef7ae455a97df2924dbd42865348"
-    },
-    "langgraph-cli": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/langgraph-cli/SKILL.md",
-      "computedHash": "dec48033a9a80c8d8826d0d4303dfc339a0a9145f3266035663104357b2d9c8f"
     },
     "langgraph-fundamentals": {
       "source": "langchain-ai/langchain-skills",
@@ -91,23 +37,17 @@
       "skillPath": "config/skills/langgraph-persistence/SKILL.md",
       "computedHash": "0e14611b0310a7a30e9977ba99b00a11b7ea63ebdd7b0c490d03040349ead0ed"
     },
-    "langgraph-typescript-quickstart": {
-      "source": "langchain-ai/langchain-skills",
+    "milvus": {
+      "source": "zilliztech/milvus-skill",
       "sourceType": "github",
-      "skillPath": "config/skills/langgraph-typescript-quickstart/SKILL.md",
-      "computedHash": "ae3745d29e53b8d8f74057a82b8404bf97039ed71eb598f7c8c97a1a74fb2681"
+      "skillPath": "SKILL.md",
+      "computedHash": "b8ed5af6d44077ac70a57f090541ceb24d2ab0b21646e4e25b4a4c4db3f4b850"
     },
     "openai-docs": {
       "source": "openai/skills",
       "sourceType": "github",
       "skillPath": "skills/.curated/openai-docs/SKILL.md",
       "computedHash": "0436b5a4e330b85cc5468c772b49f185daa6cd7a8d2b5ff9f6c97df10c5ab373"
-    },
-    "opentelemetry": {
-      "source": "grafana/skills",
-      "sourceType": "github",
-      "skillPath": "skills/grafana-core/opentelemetry/SKILL.md",
-      "computedHash": "abdf5df50836781e22422495d92d5a8cf66906e72bccf1aebaa211058a292401"
     },
     "prisma-cli": {
       "source": "prisma/skills",
@@ -121,53 +61,11 @@
       "skillPath": "prisma-client-api/SKILL.md",
       "computedHash": "cbbabff961c8e16b2d59f8c1ffb4e7e20be52154e778ab95121e0211d6d09969"
     },
-    "prisma-compute": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-compute/SKILL.md",
-      "computedHash": "c84ca5f84cc5cfca9f8e2dada066b1833143d6f325f70c12a16746c3c4eee2ed"
-    },
     "prisma-database-setup": {
       "source": "prisma/skills",
       "sourceType": "github",
       "skillPath": "prisma-database-setup/SKILL.md",
       "computedHash": "6a991a2530a6da7131e3fc71c353e8278702d0146b8b6e1d2fdfc2d3d0a21bd2"
-    },
-    "prisma-driver-adapter-implementation": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-driver-adapter-implementation/SKILL.md",
-      "computedHash": "cc487f1bf36f616ddb3a9478b3527d288dd706d77a9e5dbee9af52dca1eee8e4"
-    },
-    "prisma-mongodb-upgrade": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-mongodb-upgrade/SKILL.md",
-      "computedHash": "b94149ad5f1ec269dfd717b321538de6d39943b2ae6721a0d82302057f57ae18"
-    },
-    "prisma-postgres": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-postgres/SKILL.md",
-      "computedHash": "0422727e18019add9208b86ce862964025acc011ff31fba1d59a01b836bd6272"
-    },
-    "prisma-postgres-setup": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-postgres-setup/SKILL.md",
-      "computedHash": "5dbcf5a488d7cb7136340b86dcf781d6d92cf793f92c105ef644ac31ccac4d3b"
-    },
-    "prisma-upgrade-v7": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-upgrade-v7/SKILL.md",
-      "computedHash": "0e07dc2831f86cf27627df914db43d862b0fc75d72c1f9070434aab7940bad7c"
-    },
-    "transformers-js": {
-      "source": "huggingface/skills",
-      "sourceType": "github",
-      "skillPath": "skills/transformers-js/SKILL.md",
-      "computedHash": "f61c531d0cc9ee4cb714b5a651f4a7a939ce127f70333d44af179cbbb1663de1"
     }
   }
 }

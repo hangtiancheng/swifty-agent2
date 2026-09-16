@@ -32,6 +32,7 @@ import {
 import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
+import { EASE_DECEL } from "~/lib/motion";
 import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
@@ -40,10 +41,10 @@ import type { JobSpec } from "~/lib/types";
    /api/jobs runner (job name eval-rag) and revalidates once it finishes. */
 
 const STRAT: BarSeries[] = [
-  { key: "vector", label: "Vector", color: "var(--sky)" },
-  { key: "bm25", label: "BM25", color: "var(--online)" },
-  { key: "hybrid", label: "Hybrid", color: "#ff8095" },
-  { key: "hybrid_rerank", label: "Hybrid + Rerank", color: "var(--fur)" },
+  { key: "vector", label: "Vector", color: "var(--chart-1)" },
+  { key: "bm25", label: "BM25", color: "var(--chart-4)" },
+  { key: "hybrid", label: "Hybrid", color: "var(--chart-8)" },
+  { key: "hybrid_rerank", label: "Hybrid + Rerank", color: "var(--chart-5)" },
 ];
 
 const BUCKETS: BarGroup[] = [
@@ -271,13 +272,15 @@ function KpiBox({ d }: { d: Overview }) {
       {items.map((k) => (
         <div
           key={k.label}
-          className="border-ink bg-paper shadow-hard-sm border-3 px-3 pt-2.5 pb-3"
+          className="bg-card shadow-e1 rounded-lg px-3.5 pt-3 pb-3.5"
         >
-          <div className="text-muted text-[11.5px]">{k.label}</div>
-          <div className="text-2xl leading-snug font-bold tabular-nums">
+          <div className="text-on-surface-variant text-[11.5px]">{k.label}</div>
+          <div className="text-2xl leading-snug font-medium tabular-nums">
             {k.val}
           </div>
-          <div className="text-ink-soft text-[11.5px] leading-6">{k.sub}</div>
+          <div className="text-on-surface-variant text-[11.5px] leading-6">
+            {k.sub}
+          </div>
         </div>
       ))}
     </div>
@@ -327,15 +330,17 @@ function RetrievalPanel({ d }: { d: Overview }) {
           {metric}
         </SectionHead>
         <span className="flex-1" />
-        <div className="border-ink bg-paper flex border-3">
+        <div className="bg-surface-container-high flex items-center gap-1 rounded-full p-1">
           {METRICS.map((m) => (
             <button
               key={m}
               type="button"
               aria-pressed={metric === m}
               className={cn(
-                "border-ink hover:bg-fur-hover cursor-pointer border-r-3 px-3 py-1 text-xs font-bold last:border-r-0",
-                metric === m && "bg-fur",
+                "text-label-medium cursor-pointer rounded-full px-3.5 py-1 whitespace-nowrap transition-all duration-200 active:scale-[0.97]",
+                metric === m
+                  ? "bg-card text-on-surface shadow-e1"
+                  : "text-on-surface-variant hover:bg-on-surface/8",
               )}
               onClick={() => {
                 setMetric(m);
@@ -352,13 +357,10 @@ function RetrievalPanel({ d }: { d: Overview }) {
             key={s.key}
             className={cn(
               "inline-flex items-center gap-1.5",
-              s.key === d.best.strategy && "font-bold",
+              s.key === d.best.strategy && "font-medium",
             )}
           >
-            <i
-              className="border-ink h-3 w-3 border-2"
-              style={{ background: s.color }}
-            />
+            <i className="h-3 w-3 rounded-xs" style={{ background: s.color }} />
             {s.label}
             {s.key === d.best.strategy ? " (best)" : ""}
           </span>
@@ -384,51 +386,56 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
   const cases = R.cases ?? [];
   if (!cases.length) {
     return (
-      <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
-        ✓ All <b className="font-bold">{R.total}</b> evaluated out-of-KB
-        questions were <b className="font-bold">correctly refused</b> — no
+      <div className="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
+        ✓ All <b className="font-semibold">{R.total}</b> evaluated out-of-KB
+        questions were <b className="font-semibold">correctly refused</b> — no
         should-refuse leaks.
       </div>
     );
   }
   return (
-    <details className="group border-ink bg-paper mt-3 border-3">
-      <summary className="bg-cream flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
+    <details className="group bg-card border-outline-variant shadow-e1 mt-3 rounded-lg border">
+      <summary className="text-on-surface flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2.5 text-[12.5px] font-medium [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
         Should-refuse leaks
         <Pill tone="sev-medium">{cases.length} cases</Pill>
-        <span className="text-muted font-normal">
+        <span className="text-on-surface-variant font-normal">
           Open to see which questions slipped through, and what evidence fooled
           the gates
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
-        <p className="text-ink-soft my-2 text-xs leading-7">
+        <p className="text-on-surface-variant my-2 text-xs leading-7">
           These out-of-KB questions should have been refused, but both evidence
           gates waved them through. Check which section got mistaken for an
           answer, then tighten the threshold or add an explicit "not supported"
           knowledge entry.
         </p>
         {cases.map((c) => (
-          <div key={c.id} className="border-ink bg-cream mt-2.5 border-2 p-2.5">
+          <div
+            key={c.id}
+            className="bg-surface-container-low mt-2.5 rounded-lg p-2.5"
+          >
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="border-ink bg-fur border-2 px-1 text-[11px]">
+              <span className="bg-primary-container text-on-primary-container rounded-md px-1.5 py-0.5 text-[11px]">
                 {c.id}
               </span>
-              <span className="text-[13px] font-bold">{c.query}</span>
-              <span className="text-muted text-[11px]">Out-of-KB bucket</span>
+              <span className="text-[13px] font-medium">{c.query}</span>
+              <span className="text-on-surface-variant text-[11px]">
+                Out-of-KB bucket
+              </span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="text-muted block text-[10.5px]">
+              <span className="text-on-surface-variant block text-[10.5px]">
                 Section mistaken for the answer
               </span>
               {c.section_path ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="text-muted block text-[10.5px]">
+              <span className="text-on-surface-variant block text-[10.5px]">
                 The evidence (verbatim)
               </span>
-              <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
+              <div className="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
                 {c.evidence ?? ""}
               </div>
             </div>
@@ -511,23 +518,23 @@ function GenerationPanel({ d }: { d: Overview }) {
                 <div key={b.key}>
                   <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
                     <div>
-                      <b className="font-bold">{b.label}</b>
-                      <span className="text-muted ml-1.5 text-[11px]">
+                      <b className="font-medium">{b.label}</b>
+                      <span className="text-on-surface-variant ml-1.5 text-[11px]">
                         {b.key} · {f.answered} evaluated
                       </span>
                     </div>
-                    <div className="font-bold tabular-nums">
+                    <div className="font-medium tabular-nums">
                       {has ? v.toFixed(2) : "—"}
                     </div>
                   </div>
-                  <div className="border-ink bg-cream mt-1 h-3.5 border-2">
+                  <div className="bg-surface-container-highest mt-1 h-2 overflow-hidden rounded-full">
                     <span
                       className={cn(
-                        "block h-full",
+                        "ease-decel block h-full rounded-full transition-[width] duration-500",
                         v >= 0.9
-                          ? "bg-online"
+                          ? "bg-success"
                           : v >= 0.7
-                            ? "bg-fur"
+                            ? "bg-warning"
                             : "bg-error",
                         !has && "opacity-25",
                       )}
@@ -553,7 +560,7 @@ function GenerationPanel({ d }: { d: Overview }) {
       </div>
       <RefusalCases R={G.refusal} />
       {G.skipped ? (
-        <div className="border-ink bg-paper text-ink-soft mt-3 border-3 p-2.5 text-xs leading-7">
+        <div className="bg-surface-container-low text-on-surface-variant mt-3 rounded-lg p-3 text-xs leading-7">
           Note: {G.skipped} judge calls timed out or failed this round and were
           skipped (upstream instability); rates are computed from the available
           samples.
@@ -573,54 +580,57 @@ function GenerationPanel({ d }: { d: Overview }) {
 function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
   if (!cases.length) {
     return (
-      <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
+      <div className="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
         ✓ No generated answer from this round's production pipeline was{" "}
-        <b className="font-bold">judged "fabricated"</b> — every factual claim
-        is backed by the retrieved evidence.
+        <b className="font-semibold">judged "fabricated"</b> — every factual
+        claim is backed by the retrieved evidence.
       </div>
     );
   }
   // Bucket names follow BUCKETS above — don't hand-copy a second list
   const BMAP = Object.fromEntries(BUCKETS.map((b) => [b.key, b.label]));
   return (
-    <details className="group border-ink bg-paper mt-3 border-3">
-      <summary className="bg-cream flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
+    <details className="group bg-card border-outline-variant shadow-e1 mt-3 rounded-lg border">
+      <summary className="text-on-surface flex cursor-pointer flex-wrap items-center gap-2 px-3 py-2.5 text-[12.5px] font-medium [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
         Fabricated cases
         <Pill tone="sev-medium">{cases.length} cases</Pill>
-        <span className="text-muted font-normal">
+        <span className="text-on-surface-variant font-normal">
           Open for the question / generated answer / judge rationale
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
-        <p className="text-ink-soft my-2 text-xs leading-7">
+        <p className="text-on-surface-variant my-2 text-xs leading-7">
           These generated answers from the production pipeline were judged to
           contain claims the retrieved evidence doesn't support. Look at which
           sentence was fabricated, then patch the Knowledge Base or adjust the
           judging criteria.
         </p>
         {cases.map((c) => (
-          <div key={c.id} className="border-ink bg-cream mt-2.5 border-2 p-2.5">
+          <div
+            key={c.id}
+            className="bg-surface-container-low mt-2.5 rounded-lg p-2.5"
+          >
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="border-ink bg-fur border-2 px-1 text-[11px]">
+              <span className="bg-primary-container text-on-primary-container rounded-md px-1.5 py-0.5 text-[11px]">
                 {c.id}
               </span>
-              <span className="text-[13px] font-bold">{c.query}</span>
-              <span className="text-muted text-[11px]">
+              <span className="text-[13px] font-medium">{c.query}</span>
+              <span className="text-on-surface-variant text-[11px]">
                 {(BMAP[c.bucket] ?? c.bucket) + " bucket"}
               </span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="text-muted block text-[10.5px]">
+              <span className="text-on-surface-variant block text-[10.5px]">
                 Judge rationale
               </span>
               {c.reason ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="text-muted block text-[10.5px]">
+              <span className="text-on-surface-variant block text-[10.5px]">
                 Generated answer (verbatim)
               </span>
-              <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
+              <div className="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
                 {c.answer ?? ""}
               </div>
             </div>
@@ -659,11 +669,15 @@ function TablePanel({ d }: { d: Overview }) {
             {STRAT.map((s) => (
               <Tr
                 key={s.key}
-                className={s.key === d.best.strategy ? "bg-picked" : undefined}
+                className={
+                  s.key === d.best.strategy
+                    ? "bg-primary-container/45"
+                    : undefined
+                }
               >
                 <Td className="whitespace-nowrap">
                   <i
-                    className="border-ink mr-1.5 inline-block h-2.5 w-2.5 border-2 align-baseline"
+                    className="mr-1.5 inline-block h-2.5 w-2.5 rounded-xs align-baseline"
                     style={{ background: s.color }}
                   />
                   {s.label}
@@ -679,12 +693,14 @@ function TablePanel({ d }: { d: Overview }) {
                     {(mrr(s.key, b) ?? 0).toFixed(2)}
                   </Td>
                 ))}
-                <Td num className="border-l-3">
+                <Td num className="border-outline-variant border-l">
                   {(cov(s.key, "overall") ?? 0).toFixed(2)}
                 </Td>
                 <Td
                   num
-                  className={d.generation_done ? undefined : "text-muted"}
+                  className={
+                    d.generation_done ? undefined : "text-on-surface-variant"
+                  }
                 >
                   {d.generation_done
                     ? (ac(s.key, "overall") ?? 0).toFixed(2)
@@ -718,9 +734,9 @@ function TablePanel({ d }: { d: Overview }) {
 /* Ledger status values are the backend enum (contract): they key the row classes and get
    their English labels for display via STATUS_LABEL. */
 const ST_CLS: Record<string, string> = {
-  unresolved: "bg-error-bg",
-  resolved: "bg-online-bg",
-  dismissed: "bg-paper text-muted",
+  unresolved: "bg-error-container text-on-error-container",
+  resolved: "bg-success-container text-on-success-container",
+  dismissed: "bg-surface-container-high text-on-surface-variant",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -742,15 +758,17 @@ function HallucBox({ h }: { h: Hallucination }) {
   const lg = h.ledger;
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      <div className="border-ink bg-cream shadow-hard-sm border-3 p-2.5">
-        <div className="text-muted text-[11.5px]">
+      <div className="bg-card border-outline-variant shadow-e1 rounded-lg border p-3.5">
+        <div className="text-on-surface-variant text-[11.5px]">
           Confirmed hallucination rate this round (counted after human review)
         </div>
-        <div className="text-2xl leading-snug font-bold tabular-nums">
+        <div className="text-2xl leading-snug font-medium tabular-nums">
           {pct(h.confirmed_rate)}
-          <small className="text-muted ml-0.5 text-[13px] font-normal">%</small>
+          <small className="text-on-surface-variant ml-0.5 text-[13px] font-normal">
+            %
+          </small>
         </div>
-        <div className="text-ink-soft text-[11.5px] leading-6 [&_b]:font-bold">
+        <div className="text-on-surface-variant text-[11.5px] leading-6 [&_b]:font-semibold">
           <b>{h.confirmed}</b> / {h.evaluated ?? "—"} evaluated questions (
           {split(h.cases_confirmed)}
           ). The fabricated part only counts cases marked "Resolved" — confirmed
@@ -767,15 +785,17 @@ function HallucBox({ h }: { h: Hallucination }) {
           question is answering without evidence.
         </div>
       </div>
-      <div className="border-ink bg-paper border-3 p-2.5">
-        <div className="text-muted text-[11.5px]">
+      <div className="bg-card border-outline-variant shadow-e1 rounded-lg border p-3.5">
+        <div className="text-on-surface-variant text-[11.5px]">
           Judge-flagged rate this round (a lead volume, not a verdict)
         </div>
-        <div className="text-2xl leading-snug font-bold tabular-nums">
+        <div className="text-2xl leading-snug font-medium tabular-nums">
           {pct(h.judged_rate)}
-          <small className="text-muted ml-0.5 text-[13px] font-normal">%</small>
+          <small className="text-on-surface-variant ml-0.5 text-[13px] font-normal">
+            %
+          </small>
         </div>
-        <div className="text-ink-soft text-[11.5px] leading-6 [&_b]:font-bold">
+        <div className="text-on-surface-variant text-[11.5px] leading-6 [&_b]:font-semibold">
           <b>{h.judged}</b> / {h.evaluated ?? "—"} questions (
           {split(h.cases_judged)}). Of the fabricated ones, <b>{h.dismissed}</b>{" "}
           were reviewed as over-strict judge calls (marked "Dismissed").
@@ -839,30 +859,30 @@ function LedgerCaseCard({
     .sort((a, b) => a - b);
 
   const actBtn =
-    "press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px] shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none";
+    "inline-flex h-8 cursor-pointer items-center justify-center rounded-full border border-outline px-3.5 text-label-medium text-primary transition-all duration-200 hover:bg-primary/8 active:bg-primary/12 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-38";
 
   return (
-    <div className="border-ink bg-cream mt-2.5 border-2 p-2.5">
+    <div className="bg-surface-container-low mt-2.5 rounded-lg p-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="border-ink bg-fur border-2 px-1 text-[11px]">
+        <span className="bg-primary-container text-on-primary-container rounded-md px-1.5 py-0.5 text-[11px]">
           {c.eval_id}
         </span>
-        <span className="flex-1 text-[13px] font-bold">{c.query}</span>
+        <span className="flex-1 text-[13px] font-medium">{c.query}</span>
         {c.reopened ? (
-          <span className="border-ink bg-fur border-2 px-1.5 text-[11px] font-bold">
+          <span className="bg-primary-container text-on-primary-container rounded-full px-2 py-0.5 text-[11px] font-medium">
             Recurred
           </span>
         ) : null}
         <span
           className={cn(
-            "border-ink bg-paper border-2 px-1.5 text-[11px] whitespace-nowrap",
+            "bg-surface-container-high text-on-surface-variant rounded-full px-2 py-0.5 text-[11px] whitespace-nowrap",
             ST_CLS[c.status] ?? "",
           )}
         >
           {STATUS_LABEL[c.status] ?? c.status}
         </span>
       </div>
-      <div className="text-muted mt-1 text-[11px]">
+      <div className="text-on-surface-variant mt-1 text-[11px]">
         {(BUCKETS.find((x) => x.key === c.bucket)?.label ?? c.bucket) +
           " · " +
           (STRAT.find((x) => x.key === c.strategy)?.label ?? c.strategy) +
@@ -873,13 +893,15 @@ function LedgerCaseCard({
           (c.judge_model ? " · judge " + c.judge_model : "")}
       </div>
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="text-muted block text-[10.5px]">Judge rationale</span>
+        <span className="text-on-surface-variant block text-[10.5px]">
+          Judge rationale
+        </span>
         {c.reason ?? "—"}
       </div>
       {/* Resolution note: marking resolved/dismissed requires an explanation (the two fields most worth revisiting, kept together) */}
       {c.resolution ? (
         <div className="mt-1.5 text-[12.5px] leading-7">
-          <span className="text-muted block text-[10.5px]">
+          <span className="text-on-surface-variant block text-[10.5px]">
             {c.status === "resolved"
               ? "How it was resolved"
               : "Why no fix is needed"}
@@ -888,16 +910,16 @@ function LedgerCaseCard({
         </div>
       ) : null}
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="text-muted block text-[10.5px]">
+        <span className="text-on-surface-variant block text-[10.5px]">
           Generated answer (verbatim)
         </span>
-        <div className="border-ink bg-paper mt-0.5 border-2 p-2 whitespace-pre-wrap">
+        <div className="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
           {c.answer ?? ""}
         </div>
       </div>
 
-      <details className="border-ink bg-paper mt-2 border-2">
-        <summary className="bg-cream text-ink-soft cursor-pointer px-2.5 py-1.5 text-[11.5px] [&::-webkit-details-marker]:hidden">
+      <details className="bg-card mt-2 overflow-hidden rounded-md">
+        <summary className="text-on-surface-variant cursor-pointer px-2.5 py-2 text-[11.5px] [&::-webkit-details-marker]:hidden">
           {n
             ? "Evidence (verbatim): " +
               String(n) +
@@ -916,28 +938,30 @@ function LedgerCaseCard({
             <div
               key={x.n}
               className={cn(
-                "border-ink border-t-2 px-2.5 py-2 text-[12.5px] leading-7",
-                isUsed && "bg-paper",
+                "border-outline-variant border-t px-2.5 py-2 text-[12.5px] leading-7",
+                isUsed && "bg-surface-container-low",
               )}
             >
               <div>
                 <span
                   className={cn(
-                    "border-ink mr-1.5 border-2 px-1 font-bold",
-                    isUsed ? "bg-fur" : "bg-paper text-muted",
+                    "mr-1.5 rounded-md px-1.5 py-0.5 font-medium",
+                    isUsed
+                      ? "bg-primary-container text-on-primary-container"
+                      : "bg-surface-container-high text-on-surface-variant",
                   )}
                 >
                   [{x.n}]
                 </span>
                 {x.question ?? ""}
                 {isUsed ? (
-                  <span className="border-ink bg-fur ml-1.5 border-2 px-1 text-[10.5px]">
+                  <span className="bg-primary-container text-on-primary-container ml-1.5 rounded-full px-1.5 py-0.5 text-[10.5px]">
                     Cited in answer
                   </span>
                 ) : null}
               </div>
               <div className="mt-1 whitespace-pre-wrap">{x.answer ?? ""}</div>
-              <div className="text-muted mt-0.5 text-[10.5px]">
+              <div className="text-on-surface-variant mt-0.5 text-[10.5px]">
                 {(x.section_path ?? "") +
                   (x.chunk_id ? " · chunk id " + String(x.chunk_id) : "")}
               </div>
@@ -990,7 +1014,7 @@ function LedgerCaseCard({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.16 }}
+            transition={{ duration: 0.2, ease: EASE_DECEL }}
             className="overflow-hidden"
           >
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -998,7 +1022,7 @@ function LedgerCaseCard({
                 type="text"
                 maxLength={300}
                 autoFocus
-                className="border-ink bg-paper min-w-65 flex-1 border-2 px-2 py-1 text-[12.5px] outline-none"
+                className="bg-card border-outline-variant focus:border-primary min-w-65 flex-1 rounded-sm border px-3 py-1.5 text-[12.5px] transition-colors outline-none"
                 placeholder={
                   noteFor === "resolved"
                     ? 'How was it resolved? e.g. added "Lite waste bin holds ~5 days" to the Knowledge Base'
@@ -1016,14 +1040,14 @@ function LedgerCaseCard({
               />
               <button
                 type="button"
-                className="press-sm border-ink bg-fur shadow-hard-xs cursor-pointer border-2 px-2.5 py-1 text-[11.5px]"
+                className="bg-primary text-label-medium text-on-primary shadow-e1 hover:bg-primary-hover hover:shadow-e2 active:bg-primary-pressed inline-flex h-8 cursor-pointer items-center justify-center rounded-full px-3.5 transition-all duration-200 active:scale-[0.97]"
                 onClick={submitNote}
               >
                 Mark as "{STATUS_LABEL[noteFor] ?? noteFor}"
               </button>
               <button
                 type="button"
-                className="border-ink bg-paper cursor-pointer border-2 px-2.5 py-1 text-[11.5px]"
+                className="text-label-medium text-on-surface-variant hover:bg-on-surface/8 inline-flex h-8 cursor-pointer items-center justify-center rounded-full px-3.5 transition-all duration-200 active:scale-[0.97]"
                 onClick={() => {
                   setNoteFor(null);
                 }}
@@ -1077,7 +1101,7 @@ function LedgerPanel() {
       lede="The section above only covers the current round — re-running the report overwrites it. The ledger keeps flagged cases across rounds, keyed by question: when the same question is flagged again, its entry updates and the count increments; a case that resurfaces after being handled reverts to “Unresolved” and is marked “Recurred” — the previous fix didn't hold. Every entry keeps the evidence behind the [n] markers in the answer at the time, so you can open it and see exactly what the model was fed."
     >
       {err ? (
-        <div className="border-ink bg-error-bg border-3 p-2.5 text-[12.5px]">
+        <div className="bg-error-container text-on-error-container rounded-lg p-3 text-[12.5px]">
           Failed to load ledger data: {err} (the FaithCase table needs its
           Prisma migration applied first)
         </div>
@@ -1104,8 +1128,10 @@ function LedgerPanel() {
                 key={label}
                 type="button"
                 className={cn(
-                  "border-ink bg-paper hover:bg-fur-hover cursor-pointer border-2 px-2.5 py-1 text-[11.5px]",
-                  status === st && "bg-fur font-bold",
+                  "cursor-pointer rounded-full border px-3 py-1 text-[11.5px] transition-all duration-200 active:scale-[0.97]",
+                  status === st
+                    ? "border-primary-container bg-primary-container text-on-primary-container font-medium"
+                    : "border-outline-variant bg-card text-on-surface-variant hover:bg-on-surface/8",
                 )}
                 onClick={() => {
                   setStatus(st);
@@ -1127,17 +1153,17 @@ function LedgerPanel() {
               />
             ))
           ) : (
-            <div className="border-ink bg-online-bg mt-3 border-3 p-2.5 text-[12.5px]">
+            <div className="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
               {all
                 ? "No cases in this status yet."
                 : "The ledger is still empty — run make eval-rag and the fabricated cases it flags are written here automatically."}
             </div>
           )}
-          <div className="text-ink-soft mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px]">
+          <div className="text-on-surface-variant mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px]">
             <button
               type="button"
               disabled={data.page <= 1}
-              className="press-sm border-ink bg-paper shadow-hard-xs hover:bg-fur cursor-pointer border-2 px-2.5 py-1 disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
+              className="border-outline text-label-medium text-primary hover:bg-primary/8 active:bg-primary/12 inline-flex h-8 cursor-pointer items-center justify-center rounded-full border px-3.5 transition-all duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-38"
               onClick={() => {
                 setPage((p) => p - 1);
               }}
@@ -1147,7 +1173,7 @@ function LedgerPanel() {
             <button
               type="button"
               disabled={data.page >= data.pages}
-              className="press-sm border-ink bg-paper shadow-hard-xs hover:bg-fur cursor-pointer border-2 px-2.5 py-1 disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
+              className="border-outline text-label-medium text-primary hover:bg-primary/8 active:bg-primary/12 inline-flex h-8 cursor-pointer items-center justify-center rounded-full border px-3.5 transition-all duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-38"
               onClick={() => {
                 setPage((p) => p + 1);
               }}
@@ -1287,9 +1313,14 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       >
         <div className="grid gap-3 md:grid-cols-2">
           {NOTES.map(([t, body]) => (
-            <div key={t} className="border-ink bg-paper border-3 p-3">
-              <h3 className="mb-1 text-[12.5px] font-bold">{t}</h3>
-              <p className="text-ink-soft text-xs leading-7">{body}</p>
+            <div
+              key={t}
+              className="bg-card border-outline-variant shadow-e1 rounded-lg border p-3.5"
+            >
+              <h3 className="mb-1 text-[12.5px] font-medium">{t}</h3>
+              <p className="text-on-surface-variant text-xs leading-7">
+                {body}
+              </p>
             </div>
           ))}
         </div>

@@ -28,6 +28,7 @@ import {
 import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
+import { EASE_DECEL } from "~/lib/motion";
 import type { JobSpec } from "~/lib/types";
 
 /* Classifier eval detail: per-class P/R/F1, tolerance red lines, confusion matrix, threshold. */
@@ -272,15 +273,17 @@ export default function AcceptanceEvalPage({
               ].map(({ key, way, nums }) => (
                 <div
                   key={key}
-                  className="border-ink bg-paper min-w-65 flex-1 border-3 p-3"
+                  className="bg-card border-outline-variant shadow-e1 min-w-65 flex-1 rounded-lg border p-3"
                 >
-                  <h3 className="text-[13px] font-bold">{key}</h3>
-                  <div className="text-muted text-[11px]">{way}</div>
+                  <h3 className="text-title-small text-on-surface">{key}</h3>
+                  <div className="text-on-surface-variant text-[11px]">
+                    {way}
+                  </div>
                   <div className="mt-2 flex gap-3.5 text-[13px]">
                     {nums
                       ? (["p", "r", "f1"] as const).map((k) => (
                           <div key={k}>
-                            <b className="block text-[17px] tabular-nums">
+                            <b className="block text-[17px] font-medium tabular-nums">
                               {nums[k].toFixed(3)}
                             </b>
                             {k.toUpperCase()}
@@ -411,31 +414,31 @@ export default function AcceptanceEvalPage({
                   >
                     <span
                       className={cn(
-                        "w-14 text-right font-bold tabular-nums",
-                        inuse && "text-coral",
+                        "w-14 text-right font-medium tabular-nums",
+                        inuse && "text-primary",
                       )}
                     >
                       {s.threshold.toFixed(2)}
                       {inuse ? " ◀" : ""}
                     </span>
-                    <span className="border-ink bg-paper h-4.5 flex-1 border-2">
+                    <span className="bg-surface-container-highest h-4.5 flex-1 overflow-hidden rounded-full">
                       <motion.span
                         className={cn(
-                          "block h-full",
-                          win ? "bg-online" : "bg-fur",
+                          "block h-full rounded-full",
+                          win ? "bg-success" : "bg-primary-container",
                         )}
                         initial={{ width: 0 }}
                         animate={{
                           // Scores cluster in the third decimal; stretch across min~max so differences are visible
                           width: `${hi > lo ? 8 + (92 * (s.micro_f1 - lo)) / (hi - lo) : 100}%`,
                         }}
-                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        transition={{ duration: 0.4, ease: EASE_DECEL }}
                       />
                     </span>
                     <span className="w-18 tabular-nums">
                       {s.micro_f1.toFixed(4)}
                     </span>
-                    <span className="text-muted w-40 text-[11px]">
+                    <span className="text-on-surface-variant w-40 text-[11px]">
                       {(win ? "winner" : "") +
                         (inuse
                           ? win
@@ -491,11 +494,15 @@ export default function AcceptanceEvalPage({
             </Tip>
             <div className="mt-3 grid [grid-template-columns:repeat(auto-fill,minmax(158px,1fr))] gap-2.5">
               {(ev.classes ?? []).map((c) => (
-                <div key={c.name} className="border-ink bg-paper border-3">
+                <div
+                  key={c.name}
+                  className="bg-card border-outline-variant shadow-e1 overflow-hidden rounded-lg border"
+                >
                   <div
                     className={cn(
-                      "border-ink flex items-center gap-1.5 border-b-2 px-2 py-1 text-[12.5px] font-bold",
-                      (c.fp > 0 || c.fn > 0) && "bg-error-bg",
+                      "border-outline-variant flex items-center gap-1.5 border-b px-2 py-1 text-[12.5px] font-medium",
+                      (c.fp > 0 || c.fn > 0) &&
+                        "bg-error-container text-on-error-container",
                     )}
                   >
                     {c.name}
@@ -510,14 +517,14 @@ export default function AcceptanceEvalPage({
                         {
                           k: "tn",
                           label: "TN correctly skipped",
-                          cls: "text-muted",
+                          cls: "text-on-surface-variant",
                         },
                         { k: "fp", label: "FP false alarm", cls: "text-error" },
                         { k: "fn", label: "FN missed", cls: "text-error" },
                         {
                           k: "tp",
                           label: "TP correctly labeled",
-                          cls: "text-online-deep",
+                          cls: "text-success",
                         },
                       ] satisfies {
                         k: keyof ClassMetric;
@@ -527,10 +534,13 @@ export default function AcceptanceEvalPage({
                     ).map(({ k, label, cls }) => (
                       <div
                         key={k}
-                        className="border-ink border-r-2 border-b-2 px-2 py-1.5 text-[11.5px] whitespace-nowrap [&:nth-child(2n)]:border-r-0 [&:nth-child(n+3)]:border-b-0"
+                        className="border-outline-variant border-r border-b px-2 py-1.5 text-[11.5px] whitespace-nowrap [&:nth-child(2n)]:border-r-0 [&:nth-child(n+3)]:border-b-0"
                       >
                         <b
-                          className={cn("block text-[15px] tabular-nums", cls)}
+                          className={cn(
+                            "block text-[15px] font-medium tabular-nums",
+                            cls,
+                          )}
                         >
                           {String(c[k])}
                         </b>
@@ -565,7 +575,7 @@ export default function AcceptanceEvalPage({
         <div className="flex flex-wrap gap-2">
           <input
             type="text"
-            className="border-ink bg-paper focus:bg-cream min-w-60 flex-1 border-3 px-2.5 py-1.5 text-[13px] outline-none"
+            className="border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary text-body-medium min-w-60 flex-1 rounded-sm border bg-transparent px-3.5 py-2.5 transition-[border-color,box-shadow] duration-200 outline-none focus:ring-1"
             placeholder="Type a user question, e.g. Bought too big, want to return"
             value={tryText}
             onChange={(e) => {
@@ -609,8 +619,8 @@ export default function AcceptanceEvalPage({
         </div>
         {tryResult ? (
           <div>
-            <div className="border-ink bg-paper mt-3 border-2 px-2.5 py-2 text-[13px] leading-7">
-              <b className="font-bold">
+            <div className="bg-surface-container-low mt-3 rounded-lg px-2.5 py-2 text-[13px] leading-7">
+              <b className="font-medium">
                 Matched labels: {tryResult.labels.join(" + ") || "(none)"}
               </b>
               <div>
@@ -632,16 +642,16 @@ export default function AcceptanceEvalPage({
                   <span
                     className={cn(
                       "w-24 shrink-0 text-right",
-                      s.hit && "font-bold",
+                      s.hit && "font-medium",
                     )}
                   >
                     {s.label}
                   </span>
-                  <span className="border-ink bg-paper relative h-4 flex-1 border-2">
+                  <span className="bg-surface-container-highest relative h-4 flex-1 rounded-full">
                     <span
                       className={cn(
-                        "block h-full",
-                        s.hit ? "bg-online" : "bg-track",
+                        "block h-full rounded-full",
+                        s.hit ? "bg-success" : "bg-on-surface/25",
                       )}
                       style={{
                         width: `${Math.max(1, Math.round(s.score * 100))}%`,
@@ -649,7 +659,7 @@ export default function AcceptanceEvalPage({
                     />
                     {tryResult.threshold !== null ? (
                       <span
-                        className="bg-coral absolute -top-0.75 -bottom-0.75 w-0.75"
+                        className="bg-primary absolute -top-0.75 -bottom-0.75 w-0.75 rounded-full"
                         style={{
                           left: (tryResult.threshold * 100).toFixed(1) + "%",
                         }}

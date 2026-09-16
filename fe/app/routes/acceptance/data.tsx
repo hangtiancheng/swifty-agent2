@@ -23,6 +23,7 @@ import {
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtBytes, fmtTime } from "~/lib/format";
+import { EASE_DECEL } from "~/lib/motion";
 import type { JobSpec } from "~/lib/types";
 
 /* Acceptance Data: corpus lineage · the three exam papers · training and ONNX artifact inventory. */
@@ -218,39 +219,43 @@ export default function AcceptanceDataPage({
               key={s.file}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.2 }}
+              transition={{ delay: i * 0.06, duration: 0.2, ease: EASE_DECEL }}
               className="flex flex-1 items-stretch gap-1.5"
             >
               <div
                 className={cn(
-                  "border-ink bg-paper min-w-36 flex-1 border-3 px-3 py-2",
-                  !s.present && "text-muted",
+                  "bg-surface-container-high min-w-36 flex-1 rounded-md px-3 py-2",
+                  !s.present && "text-on-surface-variant",
                 )}
               >
-                <div className="text-muted text-[11.5px]">{s.stage}</div>
-                <b className="block text-2xl leading-tight tabular-nums">
+                <div className="text-on-surface-variant text-[11.5px]">
+                  {s.stage}
+                </div>
+                <b className="text-headline-small block font-medium tabular-nums">
                   {s.present ? String(s.lines ?? "—") : "Missing"}
                 </b>
                 <div className="mt-0.5 text-[11.5px] leading-5">{s.desc}</div>
-                <div className="text-muted mt-1 text-[11px] break-all">
+                <div className="text-on-surface-variant mt-1 text-[11px] break-all">
                   {s.path}
                 </div>
               </div>
-              <div className="self-center text-xl font-bold">→</div>
+              <div className="text-on-surface-variant self-center text-xl font-medium">
+                →
+              </div>
             </motion.div>
           ))}
-          <div className="border-ink bg-cream min-w-36 flex-1 border-3 px-3 py-2">
-            <div className="text-muted text-[11.5px]">
+          <div className="bg-surface-container-high min-w-36 flex-1 rounded-md px-3 py-2">
+            <div className="text-on-surface-variant text-[11.5px]">
               Stratified split 80/10/10
             </div>
-            <b className="block text-2xl leading-tight tabular-nums">
+            <b className="text-headline-small block font-medium tabular-nums">
               {SPLIT_KEYS.map((k) => String(sp[k].size)).join(" / ")}
             </b>
             <div className="mt-0.5 text-[11.5px] leading-5">
               Train / validation / test; the training set also gets augmentation
               and targeted additions
             </div>
-            <div className="text-muted mt-1 text-[11px] break-all">
+            <div className="text-on-surface-variant mt-1 text-[11px] break-all">
               data/train/dataset/*.jsonl
             </div>
           </div>
@@ -326,14 +331,14 @@ export default function AcceptanceDataPage({
                     return (
                       <Td key={k} className="p-0">
                         <div className="flex items-center gap-1.5 px-2 py-0.5">
-                          <span className="border-ink bg-cream h-2.25 min-w-10 flex-1 border-2">
+                          <span className="bg-surface-container-highest h-2.25 min-w-10 flex-1 overflow-hidden rounded-full">
                             <motion.span
-                              className="bg-fur block h-full"
+                              className="bg-primary block h-full rounded-full"
                               initial={{ width: 0 }}
                               animate={{
                                 width: `${Math.round((cnt / maxOf) * 100)}%`,
                               }}
-                              transition={{ duration: 0.4, ease: "easeOut" }}
+                              transition={{ duration: 0.4, ease: EASE_DECEL }}
                             />
                           </span>
                           <span className="w-10 text-right tabular-nums">

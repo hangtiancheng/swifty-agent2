@@ -35,8 +35,8 @@ export interface BarSeries {
   color: string;
 }
 
-const AXIS_TICK = { fill: "var(--muted)", fontSize: 11 };
-const VALUE_TICK = { fill: "var(--ink)", fontSize: 10 };
+const AXIS_TICK = { fill: "var(--on-surface-variant)", fontSize: 11 };
+const VALUE_TICK = { fill: "var(--on-surface-variant)", fontSize: 10 };
 const Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
 const fmt2 = (v: number) => v.toFixed(2);
 
@@ -62,7 +62,7 @@ export function GroupedBarChart({
   });
 
   return (
-    <div className="scroll-cat overflow-x-auto">
+    <div className="scroll-slim overflow-x-auto">
       <div
         className="min-w-[560px]"
         role="img"
@@ -72,10 +72,10 @@ export function GroupedBarChart({
           <BarChart
             data={data}
             margin={{ top: 20, right: 14, left: -8, bottom: 4 }}
-            barGap={3}
+            barGap={4}
           >
             <CartesianGrid
-              stroke="var(--grid-line)"
+              stroke="var(--outline-variant)"
               strokeDasharray="3 3"
               vertical={false}
             />
@@ -84,7 +84,7 @@ export function GroupedBarChart({
               interval={0}
               tick={AXIS_TICK}
               tickLine={false}
-              axisLine={{ stroke: "var(--ink)", strokeWidth: 2 }}
+              axisLine={{ stroke: "var(--outline-variant)", strokeWidth: 1 }}
             />
             <YAxis
               domain={[0, 1]}
@@ -100,9 +100,9 @@ export function GroupedBarChart({
                 key={s.key}
                 dataKey={s.key}
                 fill={s.color}
-                stroke="var(--ink)"
-                strokeWidth={1.5}
-                isAnimationActive={false}
+                radius={[5, 5, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={600}
                 maxBarSize={34}
               >
                 <LabelList
@@ -134,7 +134,7 @@ export function ScanLineChart({
   inUse?: number | null;
 }) {
   return (
-    <div className="scroll-cat overflow-x-auto">
+    <div className="scroll-slim overflow-x-auto">
       <div
         className="min-w-[560px]"
         role="img"
@@ -145,7 +145,10 @@ export function ScanLineChart({
             data={scan}
             margin={{ top: 16, right: 14, left: -6, bottom: 8 }}
           >
-            <CartesianGrid stroke="var(--grid-line)" strokeDasharray="3 3" />
+            <CartesianGrid
+              stroke="var(--outline-variant)"
+              strokeDasharray="3 3"
+            />
             <XAxis
               dataKey="t"
               type="number"
@@ -154,14 +157,14 @@ export function ScanLineChart({
               tickFormatter={fmt2}
               tick={AXIS_TICK}
               tickLine={false}
-              axisLine={{ stroke: "var(--ink)", strokeWidth: 2 }}
+              axisLine={{ stroke: "var(--outline-variant)", strokeWidth: 1 }}
               label={{
                 value: "Threshold t",
                 position: "insideBottom",
                 offset: -4,
-                fill: "var(--ink)",
+                fill: "var(--on-surface-variant)",
                 fontSize: 12,
-                fontWeight: 700,
+                fontWeight: 500,
               }}
             />
             <YAxis
@@ -176,10 +179,12 @@ export function ScanLineChart({
             <Line
               type="monotone"
               dataKey="pass_rate"
-              stroke="var(--online)"
+              stroke="var(--success)"
               strokeWidth={2.5}
               dot={false}
-              isAnimationActive={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={true}
+              animationDuration={700}
             />
             <Line
               type="monotone"
@@ -187,23 +192,29 @@ export function ScanLineChart({
               stroke="var(--error)"
               strokeWidth={2.5}
               dot={false}
-              isAnimationActive={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={true}
+              animationDuration={700}
             />
             {inUse !== null && inUse !== undefined && inUse !== pick ? (
-              <ReferenceLine x={inUse} stroke="var(--violet)" strokeWidth={2} />
+              <ReferenceLine
+                x={inUse}
+                stroke="var(--tertiary)"
+                strokeWidth={2}
+              />
             ) : null}
             {pick !== null && pick !== undefined ? (
               <ReferenceLine
                 x={pick}
-                stroke="var(--ink)"
+                stroke="var(--primary)"
                 strokeWidth={2}
                 strokeDasharray="5 4"
                 label={{
                   value: "Selected " + fmt2(pick),
                   position: "top",
-                  fill: "var(--ink)",
+                  fill: "var(--primary)",
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 500,
                 }}
               />
             ) : null}
@@ -224,35 +235,42 @@ export function RingGauge({
 }) {
   const clamped = Math.max(0, Math.min(1, rate));
   return (
-    <div className="border-ink bg-paper shadow-hard-sm flex flex-col items-center justify-center border-3 p-3.5 text-center">
-      <div className="relative h-[118px] w-[118px]">
+    <div className="bg-surface-container-low flex flex-col items-center justify-center rounded-lg p-4 text-center">
+      <div className="relative h-[124px] w-[124px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={[
-                { name: "rate", value: clamped, fill: "var(--online)" },
-                { name: "rest", value: 1 - clamped, fill: "var(--cream)" },
+                { name: "rate", value: clamped, fill: "var(--success)" },
+                {
+                  name: "rest",
+                  value: 1 - clamped,
+                  fill: "var(--surface-container-highest)",
+                },
               ]}
               dataKey="value"
-              innerRadius={40}
-              outerRadius={52}
+              innerRadius={44}
+              outerRadius={56}
               startAngle={90}
               endAngle={-270}
-              stroke="var(--ink)"
-              strokeWidth={1}
-              isAnimationActive={false}
+              cornerRadius={6}
+              strokeWidth={0}
+              isAnimationActive={true}
+              animationDuration={700}
             />
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums">
+          <span className="text-headline-medium text-on-surface font-medium tabular-nums">
             {Math.round(clamped * 100)}
-            <small className="text-muted text-[10.5px]">%</small>
+            <small className="text-on-surface-variant text-[11px]">%</small>
           </span>
-          <span className="text-muted text-[10.5px]">Refusal rate</span>
+          <span className="text-on-surface-variant text-label-small">
+            Refusal rate
+          </span>
         </div>
       </div>
-      <div className="text-ink-soft [&_b]:text-ink mt-2.5 text-xs leading-6 [&_b]:font-bold">
+      <div className="text-body-small text-on-surface-variant [&_b]:text-on-surface mt-2.5 leading-6 [&_b]:font-semibold">
         {caption}
       </div>
     </div>

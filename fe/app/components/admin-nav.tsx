@@ -1,9 +1,11 @@
+import { Cat, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 import { Link, useLocation } from "react-router";
 
 import { ThemeToggle } from "./theme-toggle";
 
 import { cn } from "~/lib/cn";
+import { enterTransition, springTransition } from "~/lib/motion";
 
 /* Admin navigation shell: a single nav bar shared by every admin page (from the
    original admin.js). Entries keep each module's own path; the nav only gathers
@@ -50,14 +52,15 @@ export function AdminNav({ active }: { active: string }) {
 
   return (
     <motion.nav
-      initial={{ opacity: 0, y: -6 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="mt-3"
+      transition={enterTransition}
+      className="mt-4"
       aria-label="Admin navigation"
     >
-      <div className="scroll-cat border-ink bg-paper shadow-hard-sm flex items-stretch overflow-x-auto border-3">
-        <span className="bg-ink text-cream flex shrink-0 items-center px-3 py-1.5 text-xs font-bold tracking-wider whitespace-nowrap">
+      <div className="scroll-slim bg-card shadow-e1 flex items-center gap-1 overflow-x-auto rounded-lg p-1.5">
+        <span className="bg-primary-container text-on-primary-container text-label-large mx-1 flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-2">
+          <Cat className="h-4.5 w-4.5" aria-hidden />
           Admin
         </span>
         {NAV.map((m) => {
@@ -67,35 +70,36 @@ export function AdminNav({ active }: { active: string }) {
               key={m.href}
               to={m.href}
               className={cn(
-                "border-ink text-ink hover:bg-fur-hover relative flex shrink-0 items-center gap-1.5 border-r-3 px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline",
-                on && "bg-fur hover:bg-fur",
+                "text-label-large relative flex shrink-0 items-center rounded-full px-4 py-2 whitespace-nowrap no-underline transition-colors duration-200",
+                on
+                  ? "text-on-secondary-container"
+                  : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
               )}
               aria-current={on ? "page" : undefined}
             >
-              {m.label}
               {on ? (
                 <motion.span
-                  layoutId="admin-nav-dot"
-                  className="bg-ink absolute inset-x-2 bottom-0 h-0.5"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  layoutId="admin-nav-pill"
+                  className="bg-secondary-container absolute inset-0 rounded-full"
+                  transition={springTransition}
                 />
               ) : null}
+              <span className="relative">{m.label}</span>
             </Link>
           );
         })}
-        <span className="border-ink min-w-2 flex-1 border-r-3 max-sm:hidden" />
+        <span className="flex-1" />
         <Link
           to="/"
-          className="text-ink hover:bg-fur-hover flex shrink-0 items-center px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline"
+          className="text-label-large text-primary hover:bg-primary/8 flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 whitespace-nowrap no-underline transition-colors duration-200"
         >
-          Chat →
+          <MessageSquare className="h-4.5 w-4.5" aria-hidden />
+          Chat
         </Link>
-        <span className="border-ink flex shrink-0 items-center border-l-3 px-2">
-          <ThemeToggle className="h-7 w-7 border-2 shadow-none" />
-        </span>
+        <ThemeToggle className="mr-1 ml-0.5 shrink-0" />
       </div>
       {mod?.children ? (
-        <div className="scroll-cat border-ink bg-cream shadow-hard-sm flex overflow-x-auto border-3 border-t-0">
+        <div className="scroll-slim mt-2 flex gap-1 overflow-x-auto px-1">
           {mod.children.map(([href, label]) => {
             const on = href === path;
             return (
@@ -103,12 +107,21 @@ export function AdminNav({ active }: { active: string }) {
                 key={href}
                 to={href}
                 className={cn(
-                  "border-ink text-ink hover:bg-fur-hover shrink-0 border-r-3 px-3 py-1 text-xs font-bold whitespace-nowrap no-underline last:border-r-0",
-                  on && "bg-fur hover:bg-fur",
+                  "text-label-medium relative shrink-0 rounded-full px-3.5 py-1.5 whitespace-nowrap no-underline transition-colors duration-200",
+                  on
+                    ? "text-primary"
+                    : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
                 )}
                 aria-current={on ? "page" : undefined}
               >
                 {label}
+                {on ? (
+                  <motion.span
+                    layoutId="admin-subnav-line"
+                    className="bg-primary absolute inset-x-3 -bottom-0.5 h-0.75 rounded-full"
+                    transition={springTransition}
+                  />
+                ) : null}
               </Link>
             );
           })}

@@ -12,22 +12,22 @@ dev: mcp-up ## Start MCP servers and the API
 dev-down: mcp-down ## Stop background development services
 
 kb-build:
-	node scripts/kb-build.ts
+	pnpm exec tsx scripts/kb-build.ts
 
 kb-vectorize:
-	node scripts/kb-vectorize.ts
+	pnpm exec tsx scripts/kb-vectorize.ts
 
 kb-mine:
-	node scripts/kb-mine.ts
+	pnpm exec tsx scripts/kb-mine.ts
 
 kb-reset:
-	node scripts/kb-reset.ts
+	pnpm exec tsx scripts/kb-reset.ts
 
 kb-preview:
-	node scripts/kb-preview.ts
+	pnpm exec tsx scripts/kb-preview.ts
 
 kb-repatch:
-	node scripts/kb-repatch.ts
+	pnpm exec tsx scripts/kb-repatch.ts
 
 # Milvus dense bridge (src/milvus/server.py): dense-only gRPC bridge over Milvus Lite.
 # Start it, then set MILVUS_RPC_URL=127.0.0.1:50051 in .env to make dense retrieval use it.
@@ -45,39 +45,39 @@ milvus-proto:
 	@echo "Regenerated src/milvus/kb_store_pb2.py and kb_store_pb2_grpc.py"
 
 seed-conv:
-	node scripts/seed-conv.ts
+	pnpm exec tsx scripts/seed-conv.ts
 
 flywheel:
-	node scripts/flywheel.ts
+	pnpm exec tsx scripts/flywheel.ts
 
 eval-rag:
-	node scripts/eval-rag.ts $(if $(SKIP_GEN),--skip-gen,)
+	pnpm exec tsx scripts/eval-rag.ts $(if $(SKIP_GEN),--skip-gen,)
 
 eval-flywheel:
-	node scripts/eval-flywheel.ts --triggered-by $(or $(TRIGGER),manual)
+	pnpm exec tsx scripts/eval-flywheel.ts --triggered-by $(or $(TRIGGER),manual)
 
 eval-retrieval:
-	node scripts/eval-retrieval.ts
+	pnpm exec tsx scripts/eval-retrieval.ts
 
 eval-judge:
-	node scripts/eval-judge.ts
+	pnpm exec tsx scripts/eval-judge.ts
 
 calibrate calibrate-confidence:
-	node scripts/calibrate-confidence.ts
+	pnpm exec tsx scripts/calibrate-confidence.ts
 
 cost-report:
-	node scripts/cost-report.ts --days $(or $(DAYS),7)
+	pnpm exec tsx scripts/cost-report.ts --days $(or $(DAYS),7)
 
 mcp-logistics:
-	node src/mcp-servers/logistics.ts
+	pnpm exec tsx src/mcp-servers/logistics.ts
 
 mcp-aftersales:
-	node src/mcp-servers/aftersales.ts
+	pnpm exec tsx src/mcp-servers/aftersales.ts
 
 mcp-up: ## Start both MCP servers
 	@mkdir -p log data
-	@nohup node src/mcp-servers/logistics.ts > log/mcp-logistics.log 2>&1 & echo $$! > data/mcp-logistics.pid
-	@nohup node src/mcp-servers/aftersales.ts > log/mcp-aftersales.log 2>&1 & echo $$! > data/mcp-aftersales.pid
+	@nohup node_modules/.bin/tsx src/mcp-servers/logistics.ts > log/mcp-logistics.log 2>&1 & echo $$! > data/mcp-logistics.pid
+	@nohup node_modules/.bin/tsx src/mcp-servers/aftersales.ts > log/mcp-aftersales.log 2>&1 & echo $$! > data/mcp-aftersales.pid
 	@sleep 1 && echo "MCP servers started: logistics=:8101 aftersales=:8102"
 
 mcp-down: ## Stop both MCP servers
@@ -87,13 +87,13 @@ mcp-down: ## Stop both MCP servers
 # train topic classifier: corpus -> dataset -> train/eval/export (Python, torch) -> threshold scan
 # -> serve (:8110) -> bypass batch classification.
 train-golden:
-	node scripts/train/validate-golden.ts
+	pnpm exec tsx scripts/train/validate-golden.ts
 
 train-corpus:
-	node scripts/train/build-corpus.ts
+	pnpm exec tsx scripts/train/build-corpus.ts
 
 train-dataset:
-	node scripts/train/build-dataset.ts
+	pnpm exec tsx scripts/train/build-dataset.ts
 
 train-train:
 	uv run python scripts/train/py/train.py
@@ -108,11 +108,11 @@ train-typecheck:
 	uv run --with mypy mypy scripts/train/py
 
 train-threshold-scan:
-	node scripts/train/scan-threshold-replay.ts
+	pnpm exec tsx scripts/train/scan-threshold-replay.ts
 
 classifier-up:
 	@mkdir -p log data
-	@nohup node scripts/train/serve.ts > log/classifier.log 2>&1 & echo $$! > data/classifier.pid
+	@nohup node_modules/.bin/tsx scripts/train/serve.ts > log/classifier.log 2>&1 & echo $$! > data/classifier.pid
 	@sleep 2 && curl -sf http://127.0.0.1:8110/healthz >/dev/null && echo "Classifier service started: :8110 (pid in data/classifier.pid)" || echo "Start failed; see log/classifier.log"
 
 classifier-down:
@@ -120,4 +120,4 @@ classifier-down:
 	@echo "Classifier service stopped"
 
 classify-pool:
-	node scripts/train/classify-pool.ts $(if $(FORCE),--force,)
+	pnpm exec tsx scripts/train/classify-pool.ts $(if $(FORCE),--force,)

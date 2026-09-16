@@ -24,6 +24,7 @@ import {
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
+import { enterTransition } from "~/lib/motion";
 import type { JobSpec } from "~/lib/types";
 
 /* Error Analysis: which class erred · false alarm or missed · whether the gold labels are at fault. */
@@ -112,7 +113,7 @@ const SEV_LABEL: Record<string, string> = {
   lenient: "Lenient",
 };
 
-/** Label legend: standard-missed → red, prediction-extra → orange, matched → green. */
+/** Label legend: standard-missed → red, prediction-extra → amber, matched → green. */
 function LabelRow({
   kind,
   labels,
@@ -124,24 +125,29 @@ function LabelRow({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
-      <span className="text-muted">{kind}</span>
+      <span className="text-on-surface-variant">{kind}</span>
       {labels.length ? (
         labels.map((l) => (
           <span
             key={l}
             className={cn(
-              "border-ink bg-cream border-2 px-1.5 py-px text-xs",
+              "rounded-full px-2 py-0.5 text-xs",
               marks[l] === "missed" &&
-                "border-error text-error-deep dark:bg-error-bg bg-[#ffd4dc]",
-              marks[l] === "extra" && "bg-fur",
-              !marks[l] && "bg-online",
+                "bg-error-container text-on-error-container",
+              marks[l] === "extra" &&
+                "bg-warning-container text-on-warning-container",
+              !marks[l] && "bg-success-container text-on-success-container",
+              marks[l] &&
+                marks[l] !== "missed" &&
+                marks[l] !== "extra" &&
+                "bg-surface-container-high text-on-surface",
             )}
           >
             {l}
           </span>
         ))
       ) : (
-        <span className="border-ink bg-paper border-2 px-1.5 py-px text-xs">
+        <span className="bg-surface-container-high text-on-surface-variant rounded-full px-2 py-0.5 text-xs">
           (none)
         </span>
       )}
@@ -242,16 +248,16 @@ export default function AcceptanceErrorsPage({
                   key={kind}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.2 }}
-                  className="border-ink bg-paper min-w-50 flex-1 border-3 px-3 py-2"
+                  transition={{ ...enterTransition, delay: i * 0.05 }}
+                  className="bg-card border-outline-variant shadow-e1 min-w-50 flex-1 rounded-lg border px-3 py-2"
                 >
                   <div>
                     <Pill tone={KIND_PILL[kind] ?? "info"}>
                       {KIND_LABEL[kind] ?? kind}
                     </Pill>{" "}
-                    <span className="text-xl font-bold">{n} cases</span>
+                    <span className="text-xl font-medium">{n} cases</span>
                   </div>
-                  <div className="text-ink-soft mt-1 text-[11.5px] leading-6">
+                  <div className="text-on-surface-variant mt-1 text-[11.5px] leading-6">
                     Fix: {d.recipes[kind] ?? "—"}
                   </div>
                 </motion.div>
@@ -286,7 +292,7 @@ export default function AcceptanceErrorsPage({
                       {d.pairs.map((p, i) => (
                         <Tr key={i} bad={p.count > 1}>
                           <Td>
-                            <span className="border-error text-error-deep dark:bg-error-bg border-2 bg-[#ffd4dc] px-1.5 py-px text-xs">
+                            <span className="bg-error-container text-on-error-container rounded-full px-2 py-0.5 text-xs">
                               {p.missed}
                             </span>
                           </Td>
@@ -298,7 +304,7 @@ export default function AcceptanceErrorsPage({
                             ) : null}
                           </Td>
                           <Td>
-                            <span className="border-ink bg-fur border-2 px-1.5 py-px text-xs">
+                            <span className="bg-warning-container text-on-warning-container rounded-full px-2 py-0.5 text-xs">
                               {p.grabbed}
                             </span>
                           </Td>
@@ -341,20 +347,20 @@ export default function AcceptanceErrorsPage({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
+                    ...enterTransition,
                     delay: Math.min(i * 0.04, 0.25),
-                    duration: 0.2,
                   }}
-                  className="border-ink bg-paper mt-2.5 border-3 px-3 py-2.5 first:mt-0"
+                  className="bg-card border-outline-variant shadow-e1 mt-2.5 rounded-lg border px-3 py-2.5 first:mt-0"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
                     <Pill tone={KIND_PILL[e.kind] ?? "info"}>
                       {KIND_LABEL[e.kind] ?? e.kind}
                     </Pill>
-                    <span className="text-muted">
+                    <span className="text-on-surface-variant">
                       counts as {e.matrix_entries} matrix entries
                     </span>
                   </div>
-                  <div className="mt-1.5 text-[13.5px] leading-7 font-bold">
+                  <div className="mt-1.5 text-[13.5px] leading-7 font-medium">
                     “{e.text}”
                   </div>
                   <div className="mt-2 flex flex-col gap-1.5">
@@ -369,7 +375,7 @@ export default function AcceptanceErrorsPage({
                       marks={marksPred}
                     />
                   </div>
-                  <div className="text-ink-soft mt-2 text-xs leading-6">
+                  <div className="text-on-surface-variant mt-2 text-xs leading-6">
                     {[
                       ...(e.missed.length
                         ? ["Missed: " + e.missed.join(", ")]
