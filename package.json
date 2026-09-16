@@ -14,7 +14,7 @@
     "start": "node src/index.ts",
     "lint": "eslint --cache --quiet ./",
     "lint:fix": "eslint --cache --fix --quiet ./",
-    "format": "prettier -w ./ --experimental-cli",
+    "format": "prettier -w ./ --experimental-cli && uv run ruff format .",
     "lint:all": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",

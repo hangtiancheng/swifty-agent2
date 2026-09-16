@@ -245,7 +245,10 @@ export async function markChunkVectorized(
 
 // Milvus-bridge variant: the dense vector lives in Milvus, so only the vector id and status
 // are recorded here and the embedding column is left null (see src/kb/milvus-rpc.ts).
-export async function markChunkVectorizedExternal(chunkId: number, vectorId: string): Promise<void> {
+export async function markChunkVectorizedExternal(
+  chunkId: number,
+  vectorId: string,
+): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
     data: { vectorId, vectorizeStatus: "done" },

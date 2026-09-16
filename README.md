@@ -5,17 +5,6 @@ migrated backend of the Python project in `~/Downloads/python` (the static pages
 It is not wire-compatible with the Python service; capabilities are aligned, response shapes are
 kept close.
 
-- chat => chat
-- tool => tool
-- db => db
-- rag => rag
-- workflow => workflow
-- intent => intent
-- context => context
-- mcp => mcp
-- observability => observability
-- train => train
-
 ## Stack
 
 Hono + zod (HTTP), LangChain / LangGraph + SQLite checkpointer (agent graph), Prisma +

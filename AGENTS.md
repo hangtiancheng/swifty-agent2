@@ -3,17 +3,7 @@
 - MUST Ignore ALL eslint warnings
 - NEVER add MIT license header manually
 - Swifty Agent2 is a pure English project
-
-- chat => chat
-- tool => tool
-- db => db
-- rag => rag
-- workflow => workflow
-- intent => intent
-- context => context
-- mcp => mcp
-- observability => observability
-- train => train
+- Ensure good type annotation for python code
 
 ## Milvus migration (Python Milvus => Node -> gRPC -> Milvus Lite)
 
@@ -30,4 +20,3 @@ Milvus. This stack migrated the dense path instead of avoiding it:
   BM25 with reciprocal-rank fusion in Node. Collection dim is inferred from the first
   upserted embedding (model-agnostic, never hardcoded).
 - Do not reintroduce "no Milvus" assumptions in comments or docs; the bridge is real.
-

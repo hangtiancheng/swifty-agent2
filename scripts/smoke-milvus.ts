@@ -91,14 +91,40 @@ async function main(): Promise<void> {
       }
     }
     if (!ready) {
-      throw new Error(`bridge did not become ready on :${port}; log:\n${serverLog}`);
+      throw new Error(
+        `bridge did not become ready on :${port}; log:\n${serverLog}`,
+      );
     }
     console.log(`bridge ready on 127.0.0.1:${port} (collection=smoke)`);
 
     const rows: MilvusRow[] = [
-      { id: 1, dense: [0.1, 0.2, 0.3, 0.4], question: "shipping fee?", answer: "free over 99", section_path: "logistics/fee", content_type: "faq", category: "logistics" },
-      { id: 2, dense: [0.9, 0.8, 0.7, 0.6], question: "return policy?", answer: "7 days", section_path: "refund/policy", content_type: "faq", category: "refund" },
-      { id: 3, dense: [0.11, 0.2, 0.3, 0.4], question: "delivery time?", answer: "2-3 days", section_path: "logistics/time", content_type: "faq", category: "logistics" },
+      {
+        id: 1,
+        dense: [0.1, 0.2, 0.3, 0.4],
+        question: "shipping fee?",
+        answer: "free over 99",
+        section_path: "logistics/fee",
+        content_type: "faq",
+        category: "logistics",
+      },
+      {
+        id: 2,
+        dense: [0.9, 0.8, 0.7, 0.6],
+        question: "return policy?",
+        answer: "7 days",
+        section_path: "refund/policy",
+        content_type: "faq",
+        category: "refund",
+      },
+      {
+        id: 3,
+        dense: [0.11, 0.2, 0.3, 0.4],
+        question: "delivery time?",
+        answer: "2-3 days",
+        section_path: "logistics/time",
+        content_type: "faq",
+        category: "logistics",
+      },
     ];
     const upserted = await milvus.upsert(rows);
     console.log("upserted:", upserted);
@@ -115,7 +141,10 @@ async function main(): Promise<void> {
 
     // The query vector equals row 1, so COSINE should rank id=1 first at ~1.0.
     const hits = await milvus.search([0.1, 0.2, 0.3, 0.4], 3, null);
-    console.log("search:", JSON.stringify(hits.map((h) => [h.id, Number(h.score.toFixed(4))])));
+    console.log(
+      "search:",
+      JSON.stringify(hits.map((h) => [h.id, Number(h.score.toFixed(4))])),
+    );
     if (hits.length === 0) {
       throw new Error("search returned no hits");
     }
@@ -124,12 +153,17 @@ async function main(): Promise<void> {
       throw new Error(`expected id 1 ranked first, got ${top.id}`);
     }
     if (top.score < 0.99) {
-      throw new Error(`expected ~1.0 cosine for an exact match, got ${top.score}`);
+      throw new Error(
+        `expected ~1.0 cosine for an exact match, got ${top.score}`,
+      );
     }
 
     // A category filter must exclude the other categories.
     const filtered = await milvus.search([0.1, 0.2, 0.3, 0.4], 3, "refund");
-    console.log("filtered(refund):", JSON.stringify(filtered.map((h) => [h.id, h.category])));
+    console.log(
+      "filtered(refund):",
+      JSON.stringify(filtered.map((h) => [h.id, h.category])),
+    );
     if (filtered.some((h) => h.category !== "refund")) {
       throw new Error("category filter leaked rows from other categories");
     }
@@ -141,7 +175,9 @@ async function main(): Promise<void> {
       throw new Error(`expected 0 after drop, got ${afterDrop}`);
     }
 
-    console.log("GO: Milvus dense bridge (gRPC + Milvus Lite) upsert/search/count/drop all live");
+    console.log(
+      "GO: Milvus dense bridge (gRPC + Milvus Lite) upsert/search/count/drop all live",
+    );
   } finally {
     server.kill("SIGTERM");
     await sleep(300);

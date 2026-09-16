@@ -124,12 +124,20 @@ function unary<S extends z.ZodType>(
       { deadline },
       (error, value) => {
         if (error) {
-          reject(new Error(`milvus rpc ${method} failed: ${error.details || error.message}`));
+          reject(
+            new Error(
+              `milvus rpc ${method} failed: ${error.details || error.message}`,
+            ),
+          );
           return;
         }
         const parsed = schema.safeParse(value);
         if (!parsed.success) {
-          reject(new Error(`milvus rpc ${method}: invalid response: ${parsed.error.message}`));
+          reject(
+            new Error(
+              `milvus rpc ${method}: invalid response: ${parsed.error.message}`,
+            ),
+          );
           return;
         }
         resolve(parsed.data);
@@ -149,7 +157,11 @@ export async function search(
   topK: number,
   category: string | null,
 ): Promise<MilvusHit[]> {
-  const res = await unary("Search", { vector, top_k: topK, category: category ?? "" }, searchResponseSchema);
+  const res = await unary(
+    "Search",
+    { vector, top_k: topK, category: category ?? "" },
+    searchResponseSchema,
+  );
   return res.hits;
 }
 
