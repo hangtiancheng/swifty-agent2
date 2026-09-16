@@ -4,10 +4,11 @@
 // dashboard never depends on a live model and every page load shows the same sentence.
 import type { ChatOpenAI } from "@langchain/openai";
 
-import { childLogger } from "../logger.ts";
 
 import { getChatModel } from "./llm.ts";
 import { contentToString } from "./memory.ts";
+
+import { childLogger } from "@/logger.ts";
 
 const log = childLogger("read-notes");
 
@@ -19,45 +20,45 @@ const NUM_RE = /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?(?![A-Za-z_])/g;
 
 const KINDS: Record<string, [string, string]> = {
   rag_mrr: [
-    "四种检索策略(纯向量 / 纯 BM25 / 混合 / 混合+重排)在四类问题桶(政策类 / 型号类 / 口语类 / 跨文档类)以及总体上的 MRR,越高说明正确证据排得越靠前。",
-    "读者要判断哪一路检索该上线,以及每一路的短板在哪个桶。",
+    "MRR of the four retrieval strategies (vector only / BM25 only / hybrid / hybrid + rerank) across the four question buckets (Policy / Model numbers / Colloquial / Cross-document) and overall; higher means the correct evidence ranks closer to the top.",
+    "The reader must decide which retrieval route to ship, and which bucket is each route's weak spot.",
   ],
   rag_recall: [
-    "同样四策略 × 五桶的 Recall@5,看这题需要的证据在前五条里凑齐了几成;跨文档类一问要两三块不同小节的知识。",
-    "读者要判断哪一路会漏证据,漏在哪个桶。",
+    "Recall@5 for the same four strategies × five buckets: how much of the evidence a question needs shows up in the top five; a cross-document question needs chunks from two or three different sections.",
+    "The reader must decide which route leaks evidence, and in which bucket.",
   ],
   rag_coverage: [
-    "证据覆盖度:召回回来的十条证据里,标准答案的要点有几个在。",
-    "读者要判断召回的证据够不够答题,不只是「有没有召回到」。",
+    "Evidence coverage: of the ten retrieved evidence chunks, how many of the standard answer's key points are present.",
+    "The reader must judge whether the retrieved evidence suffices to answer, not merely whether anything was retrieved.",
   ],
   rag_answer_coverage: [
-    "端到端答案覆盖度:同一套生成提示词,只换检索策略,最终答案覆盖了标准要点的比例。",
-    "读者要看检索差会不会一路传导到答案缺要点。",
+    "End-to-end answer coverage: same generation prompt, only the retrieval strategy changes — the share of standard key points the final answer covers.",
+    "The reader must see whether weak retrieval propagates all the way to missing points in the answer.",
   ],
   cost_by_intent: [
-    "按意图分堆的 token 账:每条意图的请求数、总 token、单均 token、占总量的比例。单均高说明一次用户提问背后有多次模型调用(多步工具链),与问题数量无关。",
-    "读者要决定先给哪条意图瘦 prompt 或换小模型。",
+    "Token bill piled by intent: per-intent request count, total tokens, average tokens per request, and share of the total. A high average means one user question triggers multiple model calls (a multi-step tool chain), independent of the question count.",
+    "The reader must decide which intent to slim the prompt for first, or move to a smaller model.",
   ],
   eval_trend: [
-    "评估流水线最近两轮的四个指标(Recall@5、MRR、Faithfulness、拒答率),以及本轮相对上一轮的涨跌。",
-    "读者要判断飞轮写回知识库之后有没有把质量拉下来,该不该去翻最近通过的审核。",
+    "The last two rounds of the evaluation pipeline on four metrics (Recall@5, MRR, Faithfulness, refusal rate), plus this round's change versus the previous one.",
+    "The reader must judge whether the flywheel's write-back to the knowledge base dragged quality down, and whether to revisit the recently approved reviews.",
   ],
   confidence_calibration: [
-    "证据置信度阈值扫描:每个候选阈值下,库里有答案的题通过率与库外该拒的题放行率,以及选定的那条线。可答被误拦的那些会走兜底进问题池,是数据飞轮的燃料。",
-    "读者要理解这条线为什么定在这儿,以及往左右挪要付什么代价。",
+    "Evidence-confidence threshold scan: at each candidate threshold, the pass rate of answerable in-KB questions and the leak rate of out-of-KB questions that should be refused, plus the chosen line. Answerable questions wrongly blocked fall back into the question pool — fuel for the data flywheel.",
+    "The reader must understand why the line sits here, and what moving it left or right costs.",
   ],
 };
 
 const RULES =
-  "你在给一个技术看板写「读图」小注,读者是正在学这套系统的开发者。要求:\n" +
-  "1. 只能引用我给你的数据里出现的数字,一个都不许自己算、不许估、不许编;\n" +
-  `2. 全文不超过 ${MAX_CHARS} 字,一到两句话,最后落在「所以该看哪儿 / 该做什么」上;\n` +
-  "3. 中文口语,像同事指着屏幕说话。不用分号,不用破折号,整段最多一个句号;\n" +
-  "4. 不要复述图上所有数字,挑最说明问题的一两个;\n" +
-  "5. 策略名、题型名一律用我给的中文标签(比如「口语类」),不要出现 C_colloquial 这种英文字段名;\n" +
-  "6. 句中停顿用半角逗号「,」,不要用全角「，」,句末用「。」;\n" +
-  "7. 四位以上的数写千分位(7,942),跟页面表格里的写法一致;\n" +
-  "8. 直接输出这句话本身,不要加引号、标题、markdown 或任何解释。";
+  "You are writing a short \"read note\" for a technical dashboard; the reader is a developer learning this system. Requirements:\n" +
+  "1. Only cite numbers that appear in the data I give you; never compute, estimate, or invent a single one;\n" +
+  `2. At most ${MAX_CHARS} characters in total, one or two sentences, ending on "so what to look at / what to do";\n` +
+  "3. Casual English, like a colleague pointing at the screen. No semicolons, no dashes, at most one period in the whole note;\n" +
+  "4. Do not recite every number on the chart; pick the one or two that tell the story;\n" +
+  '5. Always use the labels I give for strategy names and question types (e.g. "Colloquial"); never expose raw field names like C_colloquial;\n' +
+  "6. Use a comma for pauses within the sentence and end with a single period;\n" +
+  "7. Write numbers of four digits or more with thousands separators (7,942), matching the page tables;\n" +
+  "8. Output the sentence itself only; no quotes, titles, markdown, or explanations.";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -122,14 +123,10 @@ export function verify(text: string, payload: unknown): boolean {
 }
 
 export function tidy(text: string): string {
-  let out = text.split(/\s+/).join(" ").trim().replace(/^[「」"'"]+|[「」"'"]+$/g, "");
-  out = out.replaceAll("，", ",").replaceAll("；", ",").replaceAll(";", ",");
-  out = out.replace(/,\s+/g, ",");
-  out = out.replace(/(?<=[\u4e00-\u9fff])(?=[\dA-Za-z])/g, " ");
-  out = out.replace(/(?<=[\dA-Za-z%])(?=[\u4e00-\u9fff])/g, " ");
-  out = out.replace(/(?<=[A-Za-z]{3})(?=\d)/g, " ");
-  out = out.replace(/[!！?？.、,·…\s]+$/g, "");
-  return out.endsWith("。") ? out : `${out}。`;
+  let out = text.split(/\s+/).join(" ").trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, "");
+  out = out.replaceAll(";", ",");
+  out = out.replace(/[!?.,…\s]+$/g, "");
+  return out.endsWith(".") ? out : `${out}.`;
 }
 
 export async function generate(kind: string, payload: unknown, model: ChatOpenAI | null = null): Promise<string | null> {
@@ -139,7 +136,7 @@ export async function generate(kind: string, payload: unknown, model: ChatOpenAI
   }
   const [what, decision] = spec;
   const chat = model ?? getChatModel();
-  const prompt = `${RULES}\n\n这张图画的是:${what}\n读者要做的判断:${decision}\n\n数据(JSON):\n${JSON.stringify(payload)}`;
+  const prompt = `${RULES}\n\nWhat this chart shows: ${what}\nThe judgment the reader must make: ${decision}\n\nData (JSON):\n${JSON.stringify(payload)}`;
   let text: string;
   let timer: NodeJS.Timeout | undefined;
   try {

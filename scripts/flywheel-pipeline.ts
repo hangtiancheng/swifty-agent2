@@ -1,9 +1,9 @@
 // Flywheel batch: pool -> normalize/dedup -> review queue.
-import { processPending } from "../src/core/flywheel.ts";
-import { closeDb } from "../src/db/client.ts";
+import { processPending } from "@/core/flywheel.ts";
+import { closeDb } from "@/db/client.ts";
 
 const stats = await processPending(200);
 console.log(
-  `本轮处理 ${stats.processed} 条:新建缺口 ${stats.created},归并 ${stats.merged},跳过待重试 ${stats.skipped}`,
+  `Processed ${stats.processed} items this round: ${stats.created} new gaps created, ${stats.merged} merged, ${stats.skipped} skipped for retry`,
 );
 await closeDb();

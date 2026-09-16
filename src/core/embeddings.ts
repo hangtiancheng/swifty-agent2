@@ -1,7 +1,7 @@
 // Direct connection to the embeddings upstream (OpenAI-compatible).
 import OpenAI from "openai";
 
-import { settings } from "../config.ts";
+import { settings } from "@/config.ts";
 
 let client: OpenAI | null = null;
 

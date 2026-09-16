@@ -35,11 +35,14 @@ export default defineConfig(
   globalIgnores([
     "app",
     "dist",
+    // Prisma client output; file names are dictated by `prisma generate`.
+    "generated",
     "node_modules",
     "out",
     "eslint.config.js",
     "tsup.config.ts",
-    "vitest.config.ts",
+    // fe React Router output;
+    "fe/.react-router"
   ]),
   {
     files: ["**/*.{ts,tsx}"],
@@ -60,6 +63,7 @@ export default defineConfig(
     },
     plugins: {
       unicorn,
+      // @ts-expect-error
       "react-hooks": reactHooks,
       import: importPlugin,
     },

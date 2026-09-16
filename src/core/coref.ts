@@ -8,7 +8,7 @@ export async function resolve(query: string, history = ""): Promise<string> {
     const model = getChatModel();
     const result = await COREF_REWRITE_PROMPT.pipe(model).invoke({
       query,
-      history: history || "(无)",
+      history: history || "(none)",
     });
     const text = contentToString(result.content).trim();
     return text || query;

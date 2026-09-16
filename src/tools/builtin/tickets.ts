@@ -1,22 +1,22 @@
 // create_ticket: the only write tool; requires the confirmation flow in agent_tools.
 import { z } from "zod";
 
-import { settings } from "../../config.ts";
-import * as repository from "../../db/repository.ts";
-import { defineTool, register } from "../registry.ts";
+import { settings } from "@/config.ts";
+import * as repository from "@/db/repository.ts";
+import { defineTool, register } from "@/tools/registry.ts";
 
 const createTicketSchema = z.object({
   description: z.string(),
-  ticket_type: z.enum(["售后", "投诉", "咨询"]),
+  ticket_type: z.enum(["after_sales", "complaint", "inquiry"]),
 });
 
 register(
   defineTool({
     name: "create_ticket",
     description:
-      "创建人工工单。仅当用户明确要求建工单/要求人工跟进时才调用;调用前必须确认 description" +
-      "(问题描述)已从用户处问清,信息不足时先向用户追问,严禁编造或用占位文本。" +
-      "ticket_type 从 售后/投诉/咨询 中选;工单关联的会话号由系统注入,你不要传。",
+      "Create a human-agent ticket. Call it only when the user explicitly asks for a ticket or for human follow-up; before calling, you must have obtained the description " +
+      "(problem description) from the user — ask first when information is missing, and never fabricate it or use placeholder text. " +
+      "ticket_type must be one of after_sales/complaint/inquiry; the conversation id linked to the ticket is injected by the system, so do not pass it.",
     schema: createTicketSchema,
     injectConversation: true,
     handler: async (args) => {
@@ -26,7 +26,7 @@ register(
       }
       const conversationId = typeof args.conversation_id === "number" ? args.conversation_id : 0;
       const ticketNo = await repository.createTicket(conversationId, description, ticket_type);
-      return { ticket_no: ticketNo, status: "已转人工" };
+      return { ticket_no: ticketNo, status: "transferred" };
     },
   }),
 );

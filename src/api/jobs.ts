@@ -2,13 +2,13 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import * as jobs from "../core/jobs.ts";
+import * as jobs from "@/core/jobs.ts";
 
 export const jobsRouter = new Hono();
 
 function known(name: string): void {
   if (!(name in jobs.JOBS)) {
-    throw new HTTPException(404, { message: `未注册的作业:${name}` });
+    throw new HTTPException(404, { message: `Unregistered job: ${name}` });
   }
 }
 
@@ -20,8 +20,8 @@ jobsRouter.post("/api/jobs/:name", (c) => {
   try {
     jobs.start(name);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "作业启动失败";
-    throw new HTTPException(message.includes("正在运行中") ? 409 : 500, { message });
+    const message = error instanceof Error ? error.message : "Failed to start the job";
+    throw new HTTPException(message.includes("is already running") ? 409 : 500, { message });
   }
   return c.json(jobs.status(name, true));
 });
@@ -38,7 +38,7 @@ jobsRouter.post("/api/jobs/:name/stop", async (c) => {
   try {
     await jobs.stop(name);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "作业停止失败";
+    const message = error instanceof Error ? error.message : "Failed to stop the job";
     throw new HTTPException(409, { message });
   }
   return c.json(jobs.status(name, true));

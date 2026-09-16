@@ -6,12 +6,15 @@ import { interrupt } from "@langchain/langgraph";
 import type { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import { computeEvidenceConfidence, snapshotFromHits } from "../core/confidence.ts";
-import * as coref from "../core/coref.ts";
-import * as intentMod from "../core/intent.ts";
-import { getChatModel } from "../core/llm.ts";
-import * as memory from "../core/memory.ts";
+import { INTENT_TO_ROUTE } from "./routing.ts";
+import type { Citation, GraphState, GraphUpdate, OrderData, SuggestedAction } from "./state.ts";
+
+import { settings } from "@/config.ts";
+import { computeEvidenceConfidence, snapshotFromHits } from "@/core/confidence.ts";
+import * as coref from "@/core/coref.ts";
+import * as intentMod from "@/core/intent.ts";
+import { getChatModel } from "@/core/llm.ts";
+import * as memory from "@/core/memory.ts";
 import {
   AGENT_SYSTEM,
   COMPLAINT_REPLY_TEXT,
@@ -19,18 +22,15 @@ import {
   REFUND_JUDGE_HINT,
   SCRIPT_REPLY_CHITCHAT,
   SCRIPT_REPLY_OTHER,
-} from "../core/prompts.ts";
-import * as queryUnderstanding from "../core/query-understanding.ts";
-import * as retrieval from "../core/retrieval.ts";
-import * as selfcheck from "../core/selfcheck.ts";
-import * as repository from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
-import * as business from "../tools/business.ts";
-import * as engine from "../tools/engine.ts";
-import * as registry from "../tools/registry.ts";
-
-import { INTENT_TO_ROUTE } from "./routing.ts";
-import type { Citation, GraphState, GraphUpdate, OrderData, SuggestedAction } from "./state.ts";
+} from "@/core/prompts.ts";
+import * as queryUnderstanding from "@/core/query-understanding.ts";
+import * as retrieval from "@/core/retrieval.ts";
+import * as selfcheck from "@/core/selfcheck.ts";
+import * as repository from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
+import * as business from "@/tools/business.ts";
+import * as engine from "@/tools/engine.ts";
+import * as registry from "@/tools/registry.ts";
 
 const log = childLogger("graph.nodes");
 
@@ -56,9 +56,9 @@ function historyText(state: GraphState, maxTurns = 6): string {
   );
   const prior = msgs.slice(0, -1);
   const lines = prior.slice(-maxTurns).map((m) => {
-    const role = isHumanMessage(m) ? "用户" : "客服";
+    const role = isHumanMessage(m) ? "User" : "Agent";
     const text = memory.contentToString(m.content);
-    return text ? `${role}:${text}` : "";
+    return text ? `${role}: ${text}` : "";
   });
   const body = lines.filter((l) => l).join("\n");
   const head = memory.summaryLine(state.summary ?? "");
@@ -127,7 +127,7 @@ export async function retrievePolicy(state: GraphState): Promise<GraphUpdate> {
 
 export function scriptReply(state: GraphState): GraphUpdate {
   // Deterministic exit for chitchat / other intents: pick the script by intent.
-  const text = state.intent === "其他" ? SCRIPT_REPLY_OTHER : SCRIPT_REPLY_CHITCHAT;
+  const text = state.intent === "other" ? SCRIPT_REPLY_OTHER : SCRIPT_REPLY_CHITCHAT;
   const trace: Record<string, unknown> = { route: "fallback_script" };
   return { answer: text, trace };
 }
@@ -135,7 +135,7 @@ export function scriptReply(state: GraphState): GraphUpdate {
 export function complaintReply(state: GraphState): GraphUpdate {
   const actions: SuggestedAction[] = [
     { type: "transfer_human" },
-    { type: "create_ticket", draft: { description: userText(state), ticket_type: "投诉" } },
+    { type: "create_ticket", draft: { description: userText(state), ticket_type: "complaint" } },
   ];
   const trace: Record<string, unknown> = { route: "complaint" };
   return { answer: COMPLAINT_REPLY, suggestedActions: actions, trace };
@@ -168,7 +168,7 @@ export async function resolveReference(state: GraphState): Promise<GraphUpdate> 
   const query = userText(state);
   const history = historyText(state);
   // Observable per turn: the summary line plus the sliding window.
-  log.info({ conv: state.conversationId, history: history || "(无历史)" }, "history_ctx");
+  log.info({ conv: state.conversationId, history: history || "(no history)" }, "history_ctx");
   const resolved = await coref.resolve(query, history);
   const trace: Record<string, unknown> = { coref: resolved !== query ? "rewrite" : "passthrough" };
   return { resolvedQuery: resolved, trace };
@@ -234,9 +234,9 @@ export function confidenceCheck(state: GraphState): GraphUpdate {
 }
 
 const KNOWLEDGE_EVIDENCE_HINT =
-  "\n\n## 已检索到的知识证据(请据此作答,每个关键结论后标注来源编号如[1];" +
-  "证据已给,不要再调用 query_faq;仍可按需调用订单/物流等工具)\n" +
-  "型号编号逐字复制证据里的写法,证据里没有的型号不要写;带条件的结论要连条件一起说。\n";
+  "\n\n## Retrieved knowledge evidence (answer based on it; cite the source number such as [1] after each key conclusion;" +
+  " the evidence is already provided, so do not call query_faq again; you may still call order/logistics tools as needed)\n" +
+  "Copy model numbers verbatim as written in the evidence; do not write any model number absent from the evidence; state conditional conclusions together with their conditions.\n";
 
 function turnContext(state: GraphState): string {
   // Per-turn material: summary + retrieved evidence + refund order data.
@@ -290,9 +290,9 @@ function logModelContext(state: GraphState, msgs: BaseMessage[]): void {
     {
       conv: state.conversationId,
       step: state.steps ?? 0,
-      summary: state.summary || "(无)",
+      summary: state.summary || "(none)",
       window: window.length,
-      turn_material: ctxBlock ? `${memory.contentToString(ctxBlock.content).length}字` : "无",
+      turn_material: ctxBlock ? `${memory.contentToString(ctxBlock.content).length} chars` : "none",
       tokens: memory.countTokens(msgs),
     },
     `model_ctx\n${lines.join("\n")}`,
@@ -362,7 +362,7 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
     decision = interrupt<{ type: string; preview: Record<string, string> }, unknown>({
       type: "confirm_ticket",
       preview: {
-        ticket_type: typeof args.ticket_type === "string" ? args.ticket_type : "咨询",
+        ticket_type: typeof args.ticket_type === "string" ? args.ticket_type : "inquiry",
         description: typeof args.description === "string" ? args.description : "",
       },
     });
@@ -381,8 +381,8 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
         toolMsgs.push(
           new ToolMessage({
             content:
-              "没有找到这位用户的这笔订单,本次不发起退款。请如实告知没查到," +
-              "并让用户从下面列出的订单里选一笔,不要再调用任何工具。",
+              "No such order was found for this user; do not initiate a refund this time. Tell the user honestly that nothing was found, " +
+              "ask them to pick one of the orders listed below, and do not call any more tools.",
             tool_call_id: tc.id ?? "",
             name: "submit_refund",
             status: "error",
@@ -396,7 +396,7 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
       });
       toolMsgs.push(
         new ToolMessage({
-          content: "已把『提交退款工单』选项交给用户确认。请用一句话说明这一单可以退款并停止,不要再调用任何工具。",
+          content: "The 'submit refund ticket' option has been handed to the user for confirmation. State in one sentence that this order can be refunded, then stop; do not call any more tools.",
           tool_call_id: tc.id ?? "",
           name: "submit_refund",
         }),
@@ -410,13 +410,13 @@ export async function agentTools(state: GraphState): Promise<GraphUpdate> {
             : await engine.executeToolCall(tc, cid, specs, {
                 confirmed: false,
                 userId: uid,
-                denyNote: "用户在工单预览卡片上点了取消,本次不建单。请勿再发起,除非用户再次明确要求。",
+                denyNote: "The user clicked cancel on the ticket preview card; no ticket will be created this time. Do not initiate again unless the user explicitly asks.",
               });
         toolMsgs.push(run.toolMessage);
       } else {
         toolMsgs.push(
           new ToolMessage({
-            content: "一次只处理一个建工单请求,本次调用已忽略。",
+            content: "Only one ticket-creation request is handled at a time; this call was ignored.",
             tool_call_id: tc.id ?? "",
             name: "create_ticket",
             status: "error",

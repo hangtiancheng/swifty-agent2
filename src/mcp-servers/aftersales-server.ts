@@ -33,8 +33,8 @@ const server = new McpServer({ name: "aftersales", version: "0.1.0" });
 server.registerTool(
   "query_warranty",
   {
-    description: "查询某订单商品是否在保修期内(在保状态、到期日)。用于用户问保修/在保时。",
-    inputSchema: z.object({ order_id: z.string().describe("订单号,例如 1001") }),
+    description: "Query whether an order's product is still under warranty (warranty status and expiry date). Use it when the user asks about warranty coverage.",
+    inputSchema: z.object({ order_id: z.string().describe("Order number, e.g. 1001") }),
   },
   async ({ order_id }) => {
     if (delaySeconds > 0) {
@@ -58,8 +58,8 @@ server.registerTool(
 server.registerTool(
   "query_return_status",
   {
-    description: "查询某订单的退货进度(审核中/退货中/已退款/无退货记录)。用于用户问退货到哪一步了。",
-    inputSchema: z.object({ order_id: z.string().describe("订单号,例如 1001") }),
+    description: "Query an order's return progress (under review / return in progress / refunded / no return record). Use it when the user asks which step a return has reached.",
+    inputSchema: z.object({ order_id: z.string().describe("Order number, e.g. 1001") }),
   },
   async ({ order_id }) => {
     if (delaySeconds > 0) {

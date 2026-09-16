@@ -1,10 +1,11 @@
 // Hybrid retrieval pipeline: clause split -> dense/BM25 -> rerank -> head/tail arrangement.
-import { settings } from "../config.ts";
-import type { KnowledgeHit } from "../kb/store.ts";
-import * as store from "../kb/store.ts";
-
 import { embedQuery } from "./embeddings.ts";
 import { rerank } from "./rerank.ts";
+
+import { settings } from "@/config.ts";
+import type { KnowledgeHit } from "@/kb/store.ts";
+import * as store from "@/kb/store.ts";
+
 
 const CLAUSE_RE = /[,，;；?？。]/;
 const MIN_CLAUSE = 4;

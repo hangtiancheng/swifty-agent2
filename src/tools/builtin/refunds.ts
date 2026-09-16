@@ -1,23 +1,23 @@
 // submit_refund: marks an order as refundable; the actual submission happens in the UI form.
 import { z } from "zod";
 
-import { ownsOrder } from "../business.ts";
-import { defineTool, register } from "../registry.ts";
+import { ownsOrder } from "@/tools/business.ts";
+import { defineTool, register } from "@/tools/registry.ts";
 
-const NOT_OWNED = { error: "没有找到您的这笔订单", code: "order_not_owned" };
+const NOT_OWNED = { error: "No such order was found for you", code: "order_not_owned" };
 
 const submitRefundSchema = z.object({
-  order_id: z.string().describe("要退款的订单号"),
-  reason: z.string().nullable().optional().describe("退款原因(可选,最终以前端固定类目下拉为准)"),
+  order_id: z.string().describe("Order number to refund"),
+  reason: z.string().nullable().optional().describe("Refund reason (optional; the front-end fixed-category dropdown is authoritative)"),
 });
 
 register(
   defineTool({
     name: "submit_refund",
     description:
-      "判定这一单可以退款后,调用本工具发起退款申请。实际提交由前端退款表单确认后落库," +
-      "本工具只表示『这一单可以退,已把提交入口交给用户』。" +
-      "发起人身份由系统注入,你不要传 user_id。",
+      "After determining that this order can be refunded, call this tool to initiate the refund request. The actual submission is persisted only after the user confirms the front-end refund form; " +
+      "this tool merely means 'this order is refundable and the submission entry has been handed to the user'. " +
+      "The caller's identity is injected by the system; do not pass user_id.",
     schema: submitRefundSchema,
     injectUserId: true,
     handler: (args) => {
@@ -27,7 +27,7 @@ register(
       if (!ownsOrder(userId, order_id)) {
         return NOT_OWNED;
       }
-      return { status: "待用户确认", order_id };
+      return { status: "awaiting user confirmation", order_id };
     },
   }),
 );

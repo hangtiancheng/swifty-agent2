@@ -1,7 +1,7 @@
 // Rerank upstream client (Jina / Cohere shaped /rerank endpoint, not OpenAI protocol).
 import { z } from "zod";
 
-import { settings } from "../config.ts";
+import { settings } from "@/config.ts";
 
 const VERSION_SEG = /\/v\d+$/;
 const RETRY_STATUS = new Set([429, 500, 502, 503, 504]);

@@ -2,17 +2,21 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { closeDb } from "../src/db/client.ts";
-import * as repository from "../src/db/repository.ts";
-import * as documents from "../src/kb/documents.ts";
-import * as dualwrite from "../src/kb/dualwrite.ts";
-import { KB_DIR, SOURCE_TYPES } from "../src/kb/sources.ts";
+import { closeDb } from "@/db/client.ts";
+import * as repository from "@/db/repository.ts";
+import * as documents from "@/kb/documents.ts";
+import * as dualwrite from "@/kb/dualwrite.ts";
+import { KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
 
 async function main(): Promise<void> {
   // Non-idempotent inserts: skip when document chunks already exist; rebuild via kb-reset.
-  const existing = await repository.countChunksByContentTypes(Object.values(SOURCE_TYPES));
+  const existing = await repository.countChunksByContentTypes(
+    Object.values(SOURCE_TYPES),
+  );
   if (existing > 0) {
-    console.log(`⚠️ 已存在 ${existing} 条文档块,跳过以防重复插入。重建请先跑 kb-reset`);
+    console.log(
+      `⚠️ ${existing} document chunks already exist; skipping to avoid duplicate inserts. Run kb-reset first to rebuild`,
+    );
     return;
   }
   let total = 0;
@@ -21,9 +25,9 @@ async function main(): Promise<void> {
     const chunks = await documents.buildChunks(md, ctype);
     const ids = await dualwrite.writePending(chunks);
     total += ids.length;
-    console.log(`  ${fname}: ${ids.length} 块`);
+    console.log(`  ${fname}: ${ids.length} chunks`);
   }
-  console.log(`✅ 建库(pending):共 ${total} 块。下一步:vectorize-kb`);
+  console.log(`✅ KB built (pending): ${total} chunks in total. Next step: vectorize-kb`);
 }
 
 await main();

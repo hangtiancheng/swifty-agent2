@@ -6,11 +6,12 @@ import {
 } from "@modelcontextprotocol/client";
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import { childLogger } from "../logger.ts";
-
 import { defineRawTool } from "./registry.ts";
 import type { ResultFormatter, ToolSpec } from "./registry.ts";
+
+import { settings } from "@/config.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("tools.mcp");
 
@@ -55,10 +56,10 @@ const fmtLogistics: ResultFormatter = (d) => {
     tracking_no: v.data.tracking_no,
     status: translate(
       {
-        PICKED_UP: "已揽件",
-        IN_TRANSIT: "运输中",
-        DELIVERING: "派送中",
-        DELIVERED: "已签收",
+        PICKED_UP: "Picked up",
+        IN_TRANSIT: "In transit",
+        DELIVERING: "Out for delivery",
+        DELIVERED: "Delivered",
       },
       v.data.status_code,
     ),
@@ -75,7 +76,7 @@ const fmtWarranty: ResultFormatter = (d) => {
   return {
     order_id: v.data.order_id,
     warranty: translate(
-      { IN_WARRANTY: "在保", EXPIRED: "已过保" },
+      { IN_WARRANTY: "Under warranty", EXPIRED: "Warranty expired" },
       v.data.warranty_code,
     ),
     warranty_until: v.data.warranty_until,
@@ -91,10 +92,10 @@ const fmtReturn: ResultFormatter = (d) => {
     order_id: v.data.order_id,
     return_status: translate(
       {
-        AUDITING: "审核中",
-        RETURNING: "退货中",
-        REFUNDED: "已退款",
-        NONE: "无退货记录",
+        AUDITING: "Under review",
+        RETURNING: "Return in progress",
+        REFUNDED: "Refunded",
+        NONE: "No return record",
       },
       v.data.return_code,
     ),

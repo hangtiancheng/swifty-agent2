@@ -2,19 +2,20 @@
 // One batch produces one new segment; existing segments are never re-summarized.
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import * as repository from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
 
 import * as budget from "./budget.ts";
 import { structured } from "./llm.ts";
 import * as memory from "./memory.ts";
 import { SUMMARY_PROMPT } from "./prompts.ts";
 
+import { settings } from "@/config.ts";
+import * as repository from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
+
 const log = childLogger("summarizer");
 
 const summarySchema = z.object({
-  summary: z.string().describe("早期对话滚动摘要,只含事实与诉求"),
+  summary: z.string().describe("Rolling summary of early conversation; facts and requests only"),
 });
 
 const running = new Map<number, Promise<void>>();
@@ -24,7 +25,7 @@ export async function summarizeDialog(oldSummary: string, dialog: string): Promi
   // similar facts are compressed exactly once.
   const model = structured(summarySchema, { slot: "summary" });
   const result = await SUMMARY_PROMPT.pipe(model).invoke({
-    old_summary: oldSummary || "(无)",
+    old_summary: oldSummary || "(none)",
     dialog,
   });
   return (result.summary || "").trim();
@@ -46,7 +47,7 @@ export async function runSummary(conversationId: number): Promise<void> {
   const seg = msgs.filter((m) => m.id > oldUpto && m.id <= boundary);
   const dialog = seg
     .filter((m) => m.content)
-    .map((m) => `${m.role === "user" ? "用户" : "客服"}:${m.content}`)
+    .map((m) => `${m.role === "user" ? "User" : "Agent"}: ${m.content}`)
     .join("\n");
   log.info(
     { conv: conversationId, messages: seg.length, from: oldUpto, to: boundary },

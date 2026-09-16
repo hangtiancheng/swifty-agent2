@@ -2,15 +2,15 @@
 import { z } from "zod";
 
 export const chatRequestSchema = z.object({
-  user_id: z.string().min(1, "user_id 不能为空"),
-  message: z.string().min(1, "message 不能为空"),
+  user_id: z.string().min(1, "user_id must not be empty"),
+  message: z.string().min(1, "message must not be empty"),
   conversation_id: z.number().int().positive().nullable().default(null),
 });
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 export const agentRequestSchema = z.object({
-  user_id: z.string().min(1, "user_id 不能为空"),
-  message: z.string().min(1, "message 不能为空"),
+  user_id: z.string().min(1, "user_id must not be empty"),
+  message: z.string().min(1, "message must not be empty"),
   conversation_id: z.number().int().positive().nullable().default(null),
 });
 export type AgentRequest = z.infer<typeof agentRequestSchema>;
@@ -18,13 +18,13 @@ export type AgentRequest = z.infer<typeof agentRequestSchema>;
 export const createTicketRequestSchema = z.object({
   conversation_id: z.number().int().positive(),
   description: z.string().min(1),
-  ticket_type: z.enum(["售后", "投诉", "咨询"]),
+  ticket_type: z.enum(["after_sales", "complaint", "inquiry"]),
 });
 
 export const createRefundRequestSchema = z.object({
   conversation_id: z.number().int().positive(),
   order_id: z.string().min(1),
-  reason: z.enum(["七天无理由", "质量问题", "发错货", "不想要了", "其他"]),
+  reason: z.enum(["no_reason_7_day", "quality_issue", "wrong_item", "no_longer_wanted", "other"]),
 });
 
 export const resumeRequestSchema = z.object({
@@ -35,15 +35,15 @@ export const resumeRequestSchema = z.object({
 export type ResumeRequest = z.infer<typeof resumeRequestSchema>;
 
 export const extractRequestSchema = z.object({
-  text: z.string().min(1, "text 不能为空"),
+  text: z.string().min(1, "text must not be empty"),
 });
 
-const PLACEHOLDER_ORDER_IDS = new Set(["", "null", "none", "n/a", "无"]);
+const PLACEHOLDER_ORDER_IDS = new Set(["", "null", "none", "n/a"]);
 
 export const afterSalesTicketSchema = z.object({
-  order_id: z.string().nullable().describe("订单号,原文未出现则为 null,禁止编造"),
-  request_type: z.enum(["退款", "换货", "维修", "投诉", "其他"]).describe("用户诉求类型"),
-  expected_solution: z.string().describe("用户期望的处理方案,一句话概括"),
+  order_id: z.string().nullable().describe("Order number; null when it does not appear in the text; never fabricate it"),
+  request_type: z.enum(["refund", "exchange", "repair", "complaint", "other"]).describe("Type of the user's request"),
+  expected_solution: z.string().describe("The resolution the user expects, summarized in one sentence"),
 });
 export type AfterSalesTicket = z.infer<typeof afterSalesTicketSchema>;
 
@@ -67,8 +67,8 @@ export const approveRequestSchema = z.object({
 });
 
 export const faithCaseStatusRequestSchema = z.object({
-  status: z.enum(["未解决", "已解决", "无需解决"]).describe("处置状态"),
-  resolution: z.string().max(300).nullable().default(null).describe("处置说明"),
+  status: z.enum(["unresolved", "resolved", "dismissed"]).describe("Handling status"),
+  resolution: z.string().max(300).nullable().default(null).describe("Handling notes"),
 });
 
 export const previewRequestSchema = z.object({
@@ -84,7 +84,7 @@ export const ingestRequestSchema = z.object({
 });
 
 export const stagingReviewRequestSchema = z.object({
-  ids: z.array(z.number().int().positive()).min(1, "至少要选一行"),
+  ids: z.array(z.number().int().positive()).min(1, "Select at least one row"),
 });
 
 export const searchRequestSchema = z.object({

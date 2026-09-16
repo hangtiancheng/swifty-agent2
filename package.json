@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
-    "lint": "eslint --cache ./",
-    "lint:fix": "eslint --cache --fix ./",
+    "lint": "eslint --cache --quiet ./",
+    "lint:fix": "eslint --cache --fix --quiet ./",
+    "lint:all": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -28,7 +29,11 @@
     "calibrate": "node scripts/calibrate-confidence.ts",
     "cost:report": "node scripts/cost-by-intent.ts",
     "mcp:logistics": "node src/mcp-servers/logistics-server.ts",
-    "mcp:aftersales": "node src/mcp-servers/aftersales-server.ts"
+    "mcp:aftersales": "node src/mcp-servers/aftersales-server.ts",
+    "git:commit": "git add -A && git commit -m \"feat: Introduce new features\"",
+    "git:commit:skip": "git add -A && git commit -m \"feat: Introduce new features [skip ci]\"",
+    "git:push": "pnpm git:commit && git push origin main",
+    "git:push:skip": "pnpm git:commit:skip && git push origin main"
   },
   "keywords": [],
   "author": "",

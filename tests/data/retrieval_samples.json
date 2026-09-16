@@ -1,7 +1,7 @@
 [
-  {"query": "邮费是多少", "expect_answer_contains": "包邮"},
-  {"query": "快递费怎么收", "expect_answer_contains": "运费"},
-  {"query": "多久能发货", "expect_answer_contains": "48"},
-  {"query": "东西不想要了能退吗", "expect_answer_contains": "7"},
-  {"query": "怎么开发票", "expect_answer_contains": "开票"}
+  {"query": "How much is the postage", "expect_answer_contains": "ship free"},
+  {"query": "How is the courier fee charged", "expect_answer_contains": "shipping fee"},
+  {"query": "How long until it ships", "expect_answer_contains": "48"},
+  {"query": "Can I return it if I no longer want it", "expect_answer_contains": "7"},
+  {"query": "How do I get an invoice", "expect_answer_contains": "invoice"}
 ]

@@ -6,13 +6,14 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import { status as jobStatus } from "../core/jobs.ts";
-import { parseJson } from "../db/json.ts";
-import * as repository from "../db/repository.ts";
-
 import { parseJsonBody, parseParamInt, parseQuery } from "./http.ts";
 import { faithCaseStatusRequestSchema } from "./schemas.ts";
+
+import { settings } from "@/config.ts";
+import { status as jobStatus } from "@/core/jobs.ts";
+import { parseJson } from "@/db/json.ts";
+import * as repository from "@/db/repository.ts";
+
 
 export const ragevalRouter = new Hono();
 
@@ -113,15 +114,15 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
   const evaluated = graded + absent || null;
 
   const roundIds = (data.faithfulness_cases ?? []).map((c) => c.id).filter((id): id is string => typeof id === "string");
-  const tally = { 未解决: 0, 已解决: 0, 无需解决: 0 };
+  const tally = { unresolved: 0, resolved: 0, dismissed: 0 };
   for (const id of roundIds) {
     const status = statusMap[id];
-    if (status === "未解决" || status === "已解决" || status === "无需解决") {
+    if (status === "unresolved" || status === "resolved" || status === "dismissed") {
       tally[status] += 1;
     }
   }
   const casesJudged = roundIds.length;
-  const confirmedCases = tally["已解决"];
+  const confirmedCases = tally["resolved"];
   const rate = (n: number): number | null => (evaluated ? Number((n / evaluated).toFixed(4)) : null);
   return {
     evaluated,
@@ -129,14 +130,14 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
     absent: absent || null,
     cases_judged: casesJudged,
     cases_confirmed: confirmedCases,
-    pending: tally["未解决"],
-    dismissed: tally["无需解决"],
+    pending: tally["unresolved"],
+    dismissed: tally["dismissed"],
     refusal_missed: missed,
     judged: casesJudged + missed,
     confirmed: confirmedCases + missed,
     judged_rate: rate(casesJudged + missed),
     confirmed_rate: rate(confirmedCases + missed),
-    ledger: { total: counts["未解决"] + counts["已解决"] + counts["无需解决"], ...counts },
+    ledger: { total: counts["unresolved"] + counts["resolved"] + counts["dismissed"], ...counts },
   };
 }
 
@@ -154,7 +155,7 @@ export function overview(): Record<string, unknown> {
       present: false,
       job,
       make: "make eval-rag",
-      hint: "还没跑过 RAG 评估。按「重跑 RAG 评估」现场跑一轮(四策略 × 四桶,需向量库 + 已建库 + 聊天上游,分钟级)。",
+      hint: "No RAG evaluation run yet. Press \"Re-run RAG evaluation\" to run one round on the spot (four strategies × four buckets; requires the vector store + a built KB + chat upstream; takes minutes).",
     };
   }
   const generation = report.generation ?? null;
@@ -209,7 +210,7 @@ function caseOut(r: FaithCaseRow): Record<string, unknown> {
     resolution: r.resolution,
     status: r.status,
     seen_count: r.seenCount,
-    reopened: r.resolvedAt !== null && r.status === "未解决",
+    reopened: r.resolvedAt !== null && r.status === "unresolved",
     first_seen_at: r.firstSeenAt.toISOString().slice(0, 19),
     last_seen_at: r.lastSeenAt.toISOString().slice(0, 19),
     resolved_at: r.resolvedAt ? r.resolvedAt.toISOString().slice(0, 19) : null,
@@ -225,8 +226,8 @@ const faithQuerySchema = z.object({
 ragevalRouter.get("/api/rag-eval/faith-cases", async (c) => {
   const query = parseQuery(c, faithQuerySchema);
   const status = query.status ?? null;
-  if (status !== null && status !== "未解决" && status !== "已解决" && status !== "无需解决") {
-    throw new HTTPException(400, { message: "status 只能是 未解决/已解决/无需解决" });
+  if (status !== null && status !== "unresolved" && status !== "resolved" && status !== "dismissed") {
+    throw new HTTPException(400, { message: "status must be one of unresolved/resolved/dismissed" });
   }
   const { rows, total, counts } = await repository.listFaithCases(status, query.page, query.size);
   const statusMap = await repository.faithCaseStatusMap();
@@ -245,14 +246,14 @@ ragevalRouter.post("/api/rag-eval/faith-cases/:case_id/status", async (c) => {
   const caseId = parseParamInt(c.req.param("case_id"), "case_id");
   const req = await parseJsonBody(c, faithCaseStatusRequestSchema);
   const note = (req.resolution ?? "").trim();
-  if (req.status !== "未解决" && !note) {
+  if (req.status !== "unresolved" && !note) {
     throw new HTTPException(400, {
-      message: "标「已解决」要写清怎么解决的,标「无需解决」要写清为什么不用改",
+      message: "Marking \"resolved\" requires stating how it was resolved; marking \"dismissed\" requires stating why no change is needed",
     });
   }
   const row = await repository.setFaithCaseStatus(caseId, req.status, note || null);
   if (row === null) {
-    throw new HTTPException(404, { message: "个案不存在" });
+    throw new HTTPException(404, { message: "Case not found" });
   }
   return Response.json(caseOut(row));
 });

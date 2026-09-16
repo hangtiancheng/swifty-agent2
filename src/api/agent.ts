@@ -3,13 +3,14 @@ import { isAIMessage, isToolMessage } from "@langchain/core/messages";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import { resolveAnswer } from "../graph/nodes.ts";
-import * as runtime from "../graph/runtime.ts";
-import type { GraphState } from "../graph/state.ts";
-import { childLogger } from "../logger.ts";
-
 import { parseJsonBody } from "./http.ts";
 import { agentRequestSchema } from "./schemas.ts";
+
+import { resolveAnswer } from "@/graph/nodes.ts";
+import * as runtime from "@/graph/runtime.ts";
+import type { GraphState } from "@/graph/state.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("api.agent");
 export const agentRouter = new Hono();
@@ -54,15 +55,15 @@ agentRouter.post("/api/agent", async (c) => {
     out = await runtime.runTurn(req.user_id, req.message, req.conversation_id);
   } catch (error) {
     if (error instanceof runtime.ConversationNotFound) {
-      throw new HTTPException(404, { message: "会话不存在" });
+      throw new HTTPException(404, { message: "Conversation not found" });
     }
     const name = error instanceof Error ? error.constructor.name : "";
     if (name.startsWith("Prisma")) {
       log.error({ err: error, user_id: req.user_id }, "database error");
-      throw new HTTPException(503, { message: "数据库暂时不可用,请稍后重试" });
+      throw new HTTPException(503, { message: "The database is temporarily unavailable; please try again later" });
     }
     log.error({ err: error, user_id: req.user_id }, "agent turn failed");
-    throw new HTTPException(502, { message: "上游模型暂时不可用,请稍后重试" });
+    throw new HTTPException(502, { message: "The upstream model is temporarily unavailable; please try again later" });
   }
 
   const state = out.state;

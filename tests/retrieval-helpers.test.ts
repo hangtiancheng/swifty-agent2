@@ -1,15 +1,23 @@
 import { describe, expect, it } from "vitest";
 
-import { arrangeHeadTail, splitClauses } from "../src/core/retrieval.ts";
+import { arrangeHeadTail, splitClauses } from "@/core/retrieval.ts";
 
 describe("retrieval helpers", () => {
   it("splits multi-intent questions into clauses", () => {
-    expect(splitClauses("我在新疆下单 80 块钱,运费怎么算,会员的免运费能不能抵")).toHaveLength(3);
-    expect(splitClauses("退货运费谁出")).toEqual(["退货运费谁出"]);
+    expect(
+      splitClauses(
+        "I ordered 80 yuan worth from Xinjiang, how is the shipping fee calculated, can the member free shipping offset it",
+      ),
+    ).toHaveLength(3);
+    expect(splitClauses("Who pays the return shipping fee")).toEqual([
+      "Who pays the return shipping fee",
+    ]);
   });
 
   it("keeps short fragments out of the clause list", () => {
-    expect(splitClauses("运费怎么算,怎么办")).toEqual(["运费怎么算,怎么办"]);
+    expect(splitClauses("How is shipping calculated, why")).toEqual([
+      "How is shipping calculated, why",
+    ]);
   });
 
   it("puts the second best hit at the tail", () => {

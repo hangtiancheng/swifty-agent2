@@ -13,7 +13,7 @@ datasource db {
 model Conversation {
   id                Int      @id @default(autoincrement())
   userId            String
-  status            String   @default("进行中")
+  status            String   @default("active")
   summary           String?
   summaryUptoMsgId  Int?
   layer1FromMsgId   Int?
@@ -63,7 +63,7 @@ model Ticket {
   conversationId Int
   description    String
   ticketType     String
-  status         String   @default("待处理")
+  status         String   @default("pending")
   createdAt      DateTime @default(now())
 
   @@index([conversationId])
@@ -132,7 +132,7 @@ model ReviewQueue {
   normalizedQuestion String
   aiSuggestedAnswer  String?
   occurrenceCount    Int      @default(1)
-  reviewStatus       String   @default("待审")
+  reviewStatus       String   @default("pending_review")
   approvedAnswer     String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -142,7 +142,7 @@ model ReviewQueue {
 
 model EvalRun {
   id          Int      @id @default(autoincrement())
-  triggeredBy String   @default("定时")
+  triggeredBy String   @default("scheduled")
   datasetSize Int
   metrics     String
   createdAt   DateTime @default(now())
@@ -158,7 +158,7 @@ model FaithCase {
   reason        String
   citations     String?
   judgeModel    String?
-  status        String    @default("未解决")
+  status        String    @default("unresolved")
   seenCount     Int       @default(1)
   firstSeenAt   DateTime  @default(now())
   lastSeenAt    DateTime  @default(now())

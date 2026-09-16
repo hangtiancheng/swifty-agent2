@@ -4,18 +4,19 @@
 // Items are processed serially so same-batch synonyms merge into the row created moments ago.
 import { z } from "zod";
 
-import * as repository from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
-
 import { structured } from "./llm.ts";
 import { FLYWHEEL_NORMALIZE_PROMPT } from "./prompts.ts";
+
+import * as repository from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("flywheel");
 
 const normalizeSchema = z.object({
-  normalized_question: z.string().describe("FAQ 式标准问题"),
-  matched_question_id: z.number().int().nullable().default(null).describe("命中候选 id,无同类为 null"),
-  ai_suggested_answer: z.string().default("").describe("示例答案备查"),
+  normalized_question: z.string().describe("FAQ-style standard question"),
+  matched_question_id: z.number().int().nullable().default(null).describe("Matched candidate id; null when no candidate is the same kind"),
+  ai_suggested_answer: z.string().default("").describe("Sample answer for reference"),
 });
 
 export interface ProcessStats {
@@ -34,7 +35,7 @@ export async function processPending(limit = 50): Promise<ProcessStats> {
     const truncated = fetched.length > 200;
     const candidates = fetched.slice(0, 200);
     const candidateText =
-      candidates.map((c) => `- id=${c.id}: ${c.normalized_question}`).join("\n") || "(无候选)";
+      candidates.map((c) => `- id=${c.id}: ${c.normalized_question}`).join("\n") || "(no candidates)";
     let result: z.infer<typeof normalizeSchema>;
     try {
       const model = structured(normalizeSchema);

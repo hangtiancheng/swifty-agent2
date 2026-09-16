@@ -2,20 +2,21 @@
 // These steps only improve recall; failures degrade to the original query instead of failing the turn.
 import { z } from "zod";
 
-import { childLogger } from "../logger.ts";
 
 import { structured } from "./llm.ts";
 import { EXPAND_QUERIES_PROMPT, QUERY_REWRITE_PROMPT } from "./prompts.ts";
 
+import { childLogger } from "@/logger.ts";
+
 const log = childLogger("query-understanding");
 
 const rewriteSchema = z.object({
-  standard: z.string().describe("标准问法"),
-  expanded: z.array(z.string()).default([]).describe("同义/近义扩展词"),
+  standard: z.string().describe("Standard question phrasing"),
+  expanded: z.array(z.string()).default([]).describe("Synonym/near-synonym expansion terms"),
 });
 
 const expandedSchema = z.object({
-  queries: z.array(z.string()).default([]).describe("严格3条检索友好查询"),
+  queries: z.array(z.string()).default([]).describe("Exactly 3 retrieval-friendly queries"),
 });
 
 export interface UnderstandResult {

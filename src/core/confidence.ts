@@ -4,8 +4,8 @@
 //   valid_count     evidence above VALID_SCORE_FLOOR
 //   margin          top1 - top2 (focus of the evidence)
 //   key_clause_hit  any of the top-3 hits contains a key-clause term
-import { KEY_TERMS } from "../kb/documents.ts";
-import type { KnowledgeHit } from "../kb/store.ts";
+import { KEY_TERMS } from "@/kb/documents.ts";
+import type { KnowledgeHit } from "@/kb/store.ts";
 
 export const VALID_SCORE_FLOOR = 0.3;
 export const VALID_COUNT_CAP = 3;
@@ -41,7 +41,11 @@ export function computeEvidenceConfidence(hits: KnowledgeHit[]): EvidenceConfide
   const validCount = scores.filter((s) => s >= VALID_SCORE_FLOOR).length;
   const keyHit = hits
     .slice(0, 3)
-    .some((h) => KEY_TERMS.some((t) => `${h.question}${h.answer}`.includes(t)));
+    // Case-insensitive: the KB uses Title Case headings and sentence-case bodies.
+    .some((h) => {
+      const text = `${h.question}${h.answer}`.toLowerCase();
+      return KEY_TERMS.some((t) => text.includes(t));
+    });
   const score =
     W_TOP1 * clip01(top1) +
     W_VALID * (Math.min(validCount, VALID_COUNT_CAP) / VALID_COUNT_CAP) +

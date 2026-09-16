@@ -7,8 +7,9 @@ const HEADERS: Array<[string, string]> = [
   ["###", "h3"],
   ["####", "h4"],
 ];
-// Chinese has no word boundaries: prefer paragraphs/newlines, then sentence punctuation, then chars.
-const CJK_SEPARATORS = ["\n\n", "\n", "。", "！", "？", "；", "!", "?", ";", "，", " ", ""];
+// Paragraphs/newlines first, then sentence punctuation, then words and chars. CJK
+// terminators are kept so mixed-language material still splits on sentence boundaries.
+const TEXT_SEPARATORS = ["\n\n", "\n", "。", "！", "？", "；", "!", "?", ";", "，", " ", ""];
 
 export interface MarkdownSection {
   pageContent: string;
@@ -52,13 +53,15 @@ export async function recursiveSplit(text: string, chunkSize: number, chunkOverl
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize,
     chunkOverlap,
-    separators: CJK_SEPARATORS,
+    separators: TEXT_SEPARATORS,
     keepSeparator: true,
   });
   return splitter.splitText(text);
 }
 
-const SENT_RE = /[^。！？!?…\n]*[。！？!?…\n]|[^。！？!?…\n]+$/g;
+// "." terminates English sentences; the CJK terminators keep mixed-language material working.
+// Trailing whitespace is folded into the terminator so an English overlap carries no leading space.
+const SENT_RE = /[^.。！？!?…\n]*[.。！？!?…\n]\s*|[^.。！？!?…\n]+$/g;
 
 function splitSentences(text: string): string[] {
   return text.match(SENT_RE) ?? [];

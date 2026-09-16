@@ -37,10 +37,10 @@ export function orderSnapshot(orderId: string): OrderSnapshot {
   const rng = seedFrom(`order:${orderId}`);
   return {
     order_id: orderId,
-    status: pick(rng, ["待付款", "已付款", "已发货", "已签收"]),
+    status: pick(rng, ["awaiting payment", "paid", "shipped", "delivered"]),
     amount: randInt(rng, 50, 2000),
     created_at: `2026-07-${String(randInt(rng, 1, 12)).padStart(2, "0")} 10:00`,
-    product: pick(rng, ["智能猫砂盆", "猫粮 5kg", "猫爬架", "自动饮水机"]),
+    product: pick(rng, ["Smart Litter Box", "Cat food 5kg", "Cat tree", "Automatic water fountain"]),
     tracking_no: `SF${randInt(rng, 10 ** 11, 10 ** 12 - 1)}`,
   };
 }
@@ -92,6 +92,6 @@ export function productSnapshot(productName: string): ProductSnapshot {
     product_name: productName,
     price: randInt(rng, 20, 999),
     stock: randInt(rng, 0, 500),
-    spec: pick(rng, ["标准装", "家庭装", "试用装"]),
+    spec: pick(rng, ["Standard pack", "Family pack", "Trial pack"]),
   };
 }

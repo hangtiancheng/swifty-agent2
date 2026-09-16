@@ -4,8 +4,8 @@ import { LangfuseSpanProcessor } from "@langfuse/otel";
 import { propagateAttributes, startActiveObservation } from "@langfuse/tracing";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 
-import { settings } from "../config.ts";
-import { childLogger } from "../logger.ts";
+import { settings } from "@/config.ts";
+import { childLogger } from "@/logger.ts";
 
 const log = childLogger("observability");
 

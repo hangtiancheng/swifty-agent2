@@ -9,9 +9,10 @@ import {
 } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 
-import { settings } from "../config.ts";
-
 import * as budget from "./budget.ts";
+
+import { settings } from "@/config.ts";
+
 
 export function contentToString(content: BaseMessage["content"]): string {
   if (typeof content === "string") {
@@ -159,7 +160,7 @@ export function nextLayer1From(messages: BaseMessage[], summaryUptoMsgId: number
 }
 
 export function summaryLine(summary: string | null): string {
-  return summary ? `(早前对话摘要:${summary})` : "";
+  return summary ? `(Summary of earlier conversation: ${summary})` : "";
 }
 
 export function summarySystem(summary: string | null): SystemMessage | null {
@@ -168,7 +169,7 @@ export function summarySystem(summary: string | null): SystemMessage | null {
   if (!summary) {
     return null;
   }
-  return new SystemMessage(`## 早前对话摘要(更早轮次已压缩,其中事实可信)\n${summary}`);
+  return new SystemMessage(`## Summary of earlier conversation (earlier turns are compressed; the facts in it are trustworthy)\n${summary}`);
 }
 
 // ---- layer 2: half-compressed rendering ----
@@ -178,7 +179,7 @@ export function compressReply(text: string, keepChars: number | null = null): st
   if (!text || text.length <= n) {
     return text;
   }
-  return `${text.slice(0, n)}…(略)`;
+  return `${text.slice(0, n)}… (truncated)`;
 }
 
 export function compressToolResult(name: string, content: string): string {
@@ -188,7 +189,7 @@ export function compressToolResult(name: string, content: string): string {
   if (charsToTokens(content.length) <= settings.layer2ToolKeepTokens) {
     return content;
   }
-  return `(已调用 ${name || "工具"},结果从略)`;
+  return `(Called ${name || "tool"}; result omitted)`;
 }
 
 export function toLayer2(messages: BaseMessage[]): BaseMessage[] {

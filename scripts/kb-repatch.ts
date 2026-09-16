@@ -3,10 +3,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { closeDb } from "../src/db/client.ts";
-import * as repository from "../src/db/repository.ts";
-import * as documents from "../src/kb/documents.ts";
-import { KB_DIR, SOURCE_TYPES } from "../src/kb/sources.ts";
+import { closeDb } from "@/db/client.ts";
+import * as repository from "@/db/repository.ts";
+import * as documents from "@/kb/documents.ts";
+import { KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
 
 function norm(s: string): string {
   return (s ?? "")
@@ -17,7 +17,9 @@ function norm(s: string): string {
 }
 
 async function main(): Promise<void> {
-  const inDb = await repository.listChunksByContentTypes(Object.values(SOURCE_TYPES));
+  const inDb = await repository.listChunksByContentTypes(
+    Object.values(SOURCE_TYPES),
+  );
   // A section path can map to several chunks (large tables are split); align by path + index.
   const byPath = new Map<string, typeof inDb>();
   for (const row of inDb) {
@@ -38,15 +40,20 @@ async function main(): Promise<void> {
       const rows = byPath.get(chunk.sectionPath) ?? [];
       const row = rows[i];
       if (row === undefined) {
-        console.log(`  + 文件里有、库里没有(本脚本不插,走 kb-build / 录入页):${chunk.sectionPath} 第 ${i + 1} 块`);
+        console.log(
+          `  + present in the file but not in the DB (this script does not insert; use kb-build / the ingest page): ${chunk.sectionPath} chunk ${i + 1}`,
+        );
         added += 1;
         continue;
       }
-      if (norm(row.answer) === norm(chunk.answer) && norm(row.questions) === norm(chunk.questions)) {
+      if (
+        norm(row.answer) === norm(chunk.answer) &&
+        norm(row.questions) === norm(chunk.questions)
+      ) {
         continue;
       }
       await repository.rependChunkText(row.id, chunk.questions, chunk.answer);
-      console.log(`  ~ 正文已更新(id=${row.id}):${chunk.sectionPath}`);
+      console.log(`  ~ body updated (id=${row.id}): ${chunk.sectionPath}`);
       changed += 1;
     }
   }
@@ -54,12 +61,16 @@ async function main(): Promise<void> {
   for (const [sectionPath, rows] of byPath) {
     const start = used.get(sectionPath) ?? 0;
     for (const row of rows.slice(start)) {
-      console.log(`  ! 库里有、文件里没有(不动它,可能是飞轮写回的):id=${row.id} ${sectionPath}`);
+      console.log(
+        `  ! in the DB but not in the file (left untouched; may have been written back by the flywheel): id=${row.id} ${sectionPath}`,
+      );
     }
   }
 
   const pending = await repository.countChunksByStatus("pending");
-  console.log(`\n改动 ${changed} 块 · 新小节 ${added} 个 · 当前 pending ${pending} 块`);
+  console.log(
+    `\n${changed} chunks changed · ${added} new sections · ${pending} chunks currently pending`,
+  );
 }
 
 await main();

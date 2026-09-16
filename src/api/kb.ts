@@ -5,17 +5,6 @@ import path from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import { status as jobStatus } from "../core/jobs.ts";
-import * as retrieval from "../core/retrieval.ts";
-import * as repository from "../db/repository.ts";
-import * as chunking from "../kb/chunking.ts";
-import { dedupeFingerprint } from "../kb/dedup.ts";
-import * as documents from "../kb/documents.ts";
-import * as dualwrite from "../kb/dualwrite.ts";
-import { CONTENT_TYPE_DESC, CONTENT_TYPES, KB_DIR, SOURCE_TYPES } from "../kb/sources.ts";
-import * as store from "../kb/store.ts";
-import { childLogger } from "../logger.ts";
-
 import { parseJsonBody } from "./http.ts";
 import {
   ingestRequestSchema,
@@ -23,6 +12,18 @@ import {
   searchRequestSchema,
   stagingReviewRequestSchema,
 } from "./schemas.ts";
+
+import { status as jobStatus } from "@/core/jobs.ts";
+import * as retrieval from "@/core/retrieval.ts";
+import * as repository from "@/db/repository.ts";
+import * as chunking from "@/kb/chunking.ts";
+import { dedupeFingerprint } from "@/kb/dedup.ts";
+import * as documents from "@/kb/documents.ts";
+import * as dualwrite from "@/kb/dualwrite.ts";
+import { CONTENT_TYPE_DESC, CONTENT_TYPES, KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
+import * as store from "@/kb/store.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("api.kb");
 export const kbRouter = new Hono();
@@ -44,7 +45,7 @@ interface ChunkViewInput {
 function chunkView({ seq, chunk, duplicate }: ChunkViewInput): Record<string, unknown> {
   return {
     seq,
-    section_path: chunk.sectionPath || "(无标题层级)",
+    section_path: chunk.sectionPath || "(no heading hierarchy)",
     category: chunk.category,
     questions: chunk.questions,
     answer: chunk.answer,
@@ -165,27 +166,27 @@ kbRouter.get("/api/kb/overview", async () => {
 function resolvePreview(body: { text: string | null; file: string | null; content_type: string }): [string, string, string] {
   if (body.file) {
     if (!(body.file in SOURCE_TYPES)) {
-      throw new HTTPException(400, { message: `不在建库材料清单里:${body.file}` });
+      throw new HTTPException(400, { message: `Not in the KB material list: ${body.file}` });
     }
     const file = path.join(KB_DIR, body.file);
     if (!fs.existsSync(file)) {
-      throw new HTTPException(404, { message: `材料文件不存在:data/kb/${body.file}` });
+      throw new HTTPException(404, { message: `Material file not found: data/kb/${body.file}` });
     }
     return [fs.readFileSync(file, "utf8"), SOURCE_TYPES[body.file], `data/kb/${body.file}`];
   }
   const text = (body.text ?? "").trim();
   if (!text) {
-    throw new HTTPException(400, { message: "正文是空的,贴一段 Markdown 再预览" });
+    throw new HTTPException(400, { message: "The text is empty; paste some Markdown before previewing" });
   }
   if (text.length > MAX_TEXT_CHARS) {
     throw new HTTPException(400, {
-      message: `正文 ${text.length} 字,超过单次上限 ${MAX_TEXT_CHARS} 字,拆开录`,
+      message: `The text is ${text.length} characters, over the single-ingest limit of ${MAX_TEXT_CHARS}; split it up`,
     });
   }
   if (!Array.isArray(CONTENT_TYPES) || !CONTENT_TYPES.some((t) => t === body.content_type)) {
-    throw new HTTPException(400, { message: `content_type 只能是 ${CONTENT_TYPES.join("/")}` });
+    throw new HTTPException(400, { message: `content_type must be one of ${CONTENT_TYPES.join("/")}` });
   }
-  return [text, body.content_type, "手工录入"];
+  return [text, body.content_type, "manual entry"];
 }
 
 kbRouter.post("/api/kb/preview", async (c) => {
@@ -223,11 +224,11 @@ kbRouter.post("/api/kb/ingest", async (c) => {
   const [text, ctype] = resolvePreview({ text: body.text, file: null, content_type: body.content_type });
   const chunks = await documents.buildChunks(text, ctype);
   if (chunks.length === 0) {
-    throw new HTTPException(400, { message: "这段正文切不出块,检查是不是只有标题没有正文" });
+    throw new HTTPException(400, { message: "This text produced no chunks; check whether it has headings but no body" });
   }
   const seen = await existingFingerprints();
   if (seen === null) {
-    throw new HTTPException(503, { message: "连不上本地库,录入这条路走不通(查重与落库都要它)" });
+    throw new HTTPException(503, { message: "Cannot reach the local DB, so ingestion is impossible (both dedup and persistence need it)" });
   }
 
   const kept: documents.Chunk[] = [];
@@ -250,7 +251,7 @@ kbRouter.post("/api/kb/ingest", async (c) => {
     } catch (error) {
       const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
       throw new HTTPException(502, {
-        message: `已入库 ${ids.length} 块(pending),向量化失败:${detail}。修好嵌入服务后按「向量化待补块」补齐,不必重录`,
+        message: `${ids.length} chunks stored (pending), but vectorization failed: ${detail}. After fixing the embedding service, run "Vectorize pending chunks" to catch up; no need to re-ingest`,
       });
     }
   }
@@ -273,7 +274,7 @@ kbRouter.post("/api/kb/vectorize", async () => {
     return Response.json({ vectorized: n, chunk_stats: await repository.knowledgeStats(), milvus: await milvusState() });
   } catch (error) {
     const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
-    throw new HTTPException(502, { message: `向量化失败:${detail}` });
+    throw new HTTPException(502, { message: `Vectorization failed: ${detail}` });
   }
 });
 
@@ -281,10 +282,10 @@ kbRouter.post("/api/kb/search", async (c) => {
   const body = await parseJsonBody(c, searchRequestSchema);
   const q = body.q.trim();
   if (!q) {
-    throw new HTTPException(400, { message: "问一句话再检索" });
+    throw new HTTPException(400, { message: "Enter a question before searching" });
   }
   if (!STRATEGIES.some((s) => s === body.strategy)) {
-    throw new HTTPException(400, { message: `strategy 只能是 ${STRATEGIES.join("/")}` });
+    throw new HTTPException(400, { message: `strategy must be one of ${STRATEGIES.join("/")}` });
   }
   try {
     const hits = await retrieval.searchKnowledge(q, { strategy: body.strategy, topK: body.top_k });
@@ -305,7 +306,7 @@ kbRouter.post("/api/kb/search", async (c) => {
     });
   } catch (error) {
     const detail = error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error);
-    throw new HTTPException(502, { message: `检索失败(${detail});嵌入上游与向量库都要在` });
+    throw new HTTPException(502, { message: `Retrieval failed (${detail}); both the embedding upstream and the vector store must be up` });
   }
 });
 
@@ -329,10 +330,10 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
   const body = await parseJsonBody(c, stagingReviewRequestSchema);
   const rows = await repository.listStagingByIds(body.ids, "kept");
   if (rows.length === 0) {
-    throw new HTTPException(409, { message: "这些行不在待审状态(可能已被处理过)" });
+    throw new HTTPException(409, { message: "These rows are not in the pending-review state (they may have been processed already)" });
   }
   const chunks: documents.Chunk[] = rows.map((r) => ({
-    category: "历史对话",
+    category: "conversation_history",
     questions: r.question,
     answer: r.answer,
     sectionPath: "mined",
@@ -353,7 +354,7 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
       }
     }
     throw new HTTPException(502, {
-      message: `写回知识库失败(${error instanceof Error ? error.constructor.name : "Error"}),这几条仍是待审,修好嵌入/向量库再点一次`,
+      message: `Write-back to the knowledge base failed (${error instanceof Error ? error.constructor.name : "Error"}); these rows are still pending review — fix the embedding service/vector store and click again`,
     });
   }
   await repository.setStagingStatus(rows.map((r) => r.id), "approved");
@@ -365,7 +366,7 @@ kbRouter.post("/api/kb/staging/reject", async (c) => {
   const body = await parseJsonBody(c, stagingReviewRequestSchema);
   const rows = await repository.listStagingByIds(body.ids, "kept");
   if (rows.length === 0) {
-    throw new HTTPException(409, { message: "这些行不在待审状态(可能已被处理过)" });
+    throw new HTTPException(409, { message: "These rows are not in the pending-review state (they may have been processed already)" });
   }
   await repository.setStagingStatus(rows.map((r) => r.id), "rejected");
   return Response.json({ rejected: rows.length });

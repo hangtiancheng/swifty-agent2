@@ -4,26 +4,27 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 
-import { settings } from "../config.ts";
-import * as memory from "../core/memory.ts";
-import * as runtime from "../graph/runtime.ts";
-import { childLogger } from "../logger.ts";
-
 import { parseJsonBody } from "./http.ts";
 import { chatRequestSchema } from "./schemas.ts";
+
+import { settings } from "@/config.ts";
+import * as memory from "@/core/memory.ts";
+import * as runtime from "@/graph/runtime.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("api.chat");
 export const chatRouter = new Hono();
 
 function errorMessage(error: unknown): string {
   if (error instanceof runtime.ConversationNotFound) {
-    return "会话不存在";
+    return "Conversation not found";
   }
   const name = error instanceof Error ? error.constructor.name : "";
   if (name.startsWith("Prisma")) {
-    return "数据库暂时不可用,请稍后重试";
+    return "The database is temporarily unavailable; please try again later";
   }
-  return "上游模型暂时不可用,请稍后重试";
+  return "The upstream model is temporarily unavailable; please try again later";
 }
 
 chatRouter.post("/api/chat", async (c) => {
@@ -32,8 +33,8 @@ chatRouter.post("/api/chat", async (c) => {
   if (tokens > settings.maxUserInputTokens) {
     throw new HTTPException(400, {
       message:
-        `这条消息太长了(上限约 ${memory.tokensToChars(settings.maxUserInputTokens)} 字),` +
-        "麻烦分几次说,或者只留关键信息",
+        `This message is too long (the limit is about ${memory.tokensToChars(settings.maxUserInputTokens)} characters); ` +
+        "please split it into several messages, or keep only the key information",
     });
   }
 

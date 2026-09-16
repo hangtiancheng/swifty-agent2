@@ -1,21 +1,22 @@
 // Admin home aggregation: one card per module. A failing dependency only spoils its own card.
 import { Hono } from "hono";
 
-import { statusAll } from "../core/jobs.ts";
-import * as repository from "../db/repository.ts";
 
 import * as kb from "./kb.ts";
 import * as observability from "./observability.ts";
 import * as rageval from "./rageval.ts";
 
+import { statusAll } from "@/core/jobs.ts";
+import * as repository from "@/db/repository.ts";
+
 export const adminRouter = new Hono();
 
-const REVIEW_STATES = ["待审", "通过", "驳回"] as const;
+const REVIEW_STATES = ["pending_review", "approved", "rejected"] as const;
 const RAG_LABEL: Record<string, string> = {
-  vector: "纯向量",
-  bm25: "纯 BM25",
-  hybrid: "混合",
-  hybrid_rerank: "混合 + 重排",
+  vector: "Vector only",
+  bm25: "BM25 only",
+  hybrid: "Hybrid",
+  hybrid_rerank: "Hybrid + rerank",
 };
 
 interface Card {
@@ -30,7 +31,7 @@ interface Card {
 }
 
 function card(key: string, title: string, page: string, lede: string): Card {
-  return { key, title, page, lede, status: "error", headline: "读数失败", metrics: [], note: null };
+  return { key, title, page, lede, status: "error", headline: "Failed to read metrics", metrics: [], note: null };
 }
 
 function errText(error: unknown): string {
@@ -56,7 +57,7 @@ function asText(value: unknown): string | null {
 }
 
 async function kbCard(): Promise<Card> {
-  const c = card("kb", "知识库", "/kb", "文档与对话挖出来的知识 → 切块 → 双写本地库与向量");
+  const c = card("kb", "Knowledge base", "/kb", "Knowledge from documents and mined conversations → chunked → dual-written to the local DB and the vector store");
   let stats: repository.KnowledgeStats;
   try {
     stats = await repository.knowledgeStats();
@@ -67,30 +68,30 @@ async function kbCard(): Promise<Card> {
   const milvus = await kb.milvusState();
   const count = asNumber(milvus.count);
   c.metrics = [
-    { label: "知识块", value: stats.total },
-    { label: "待向量化", value: stats.pending },
-    { label: "向量库", value: milvus.online === true ? count : "离线" },
-    { label: "关键条款", value: stats.key_clause },
+    { label: "Chunks", value: stats.total },
+    { label: "Pending vectorization", value: stats.pending },
+    { label: "Vector store", value: milvus.online === true ? count : "offline" },
+    { label: "Key clauses", value: stats.key_clause },
   ];
   if (stats.total === 0) {
     c.status = "missing";
-    c.headline = "库是空的,先录入或跑一次离线建库";
+    c.headline = "The KB is empty; ingest content or run the offline build first";
   } else if (milvus.online !== true) {
     c.status = "attention";
-    c.headline = `库里有 ${stats.total} 块,向量库离线`;
+    c.headline = `${stats.total} chunks in the KB, but the vector store is offline`;
   } else if (stats.pending > 0 || stats.done !== count) {
     c.status = "attention";
-    c.headline = `${stats.pending} 块待向量化,已向量化 ${stats.done} 对向量库 ${count}`;
+    c.headline = `${stats.pending} chunks pending vectorization; ${stats.done} vectorized vs ${count} in the vector store`;
   } else {
     c.status = "ok";
-    c.headline = `${stats.total} 块双写一致,可被语义检索`;
+    c.headline = `${stats.total} chunks consistent across both writes and ready for semantic retrieval`;
   }
-  c.note = "类型分布 " + Object.entries(stats.by_content_type).map(([k, v]) => `${k}=${v}`).join(" ");
+  c.note = "Type distribution " + Object.entries(stats.by_content_type).map(([k, v]) => `${k}=${v}`).join(" ");
   return c;
 }
 
 function ragevalCard(): Card {
-  const c = card("rageval", "RAG 评估", "/rag-eval", "四策略对照:检索排得准不准 → 证据够不够 → 答案全不全");
+  const c = card("rageval", "RAG evaluation", "/rag-eval", "Four-strategy comparison: does retrieval rank well → is the evidence sufficient → is the answer complete");
   let ov: Record<string, unknown>;
   try {
     ov = rageval.overview();
@@ -100,8 +101,8 @@ function ragevalCard(): Card {
   }
   if (ov.present !== true) {
     c.status = "missing";
-    c.headline = "还没跑过评估,进去按一次「重跑 RAG 评估」";
-    c.note = "四策略 × 四桶,分钟级;需向量库 + 已建库 + 聊天上游";
+    c.headline = "No evaluation run yet; open the page and press \"Re-run RAG evaluation\" once";
+    c.note = "Four strategies × four buckets, takes minutes; requires the vector store + a built KB + chat upstream";
     return c;
   }
   const best = asRecord(ov.best);
@@ -111,24 +112,24 @@ function ragevalCard(): Card {
   const rate = asNumber(refusal.rate);
   const mrr = asNumber(best.mrr);
   c.metrics = [
-    { label: "最佳 MRR", value: mrr === null ? "—" : mrr.toFixed(3) },
-    { label: "评估集", value: asText(meta.n_samples) === null ? "—" : `${asText(meta.n_samples)} 题` },
-    { label: "库外拒答", value: rate === null ? "—" : `${Math.round(rate * 100)}%` },
+    { label: "Best MRR", value: mrr === null ? "—" : mrr.toFixed(3) },
+    { label: "Eval set", value: asText(meta.n_samples) === null ? "—" : `${asText(meta.n_samples)} questions` },
+    { label: "Out-of-KB refusal", value: rate === null ? "—" : `${Math.round(rate * 100)}%` },
   ];
   if (ov.generation_done !== true) {
     c.status = "attention";
-    c.headline = "生成段没跑完,只有检索段的数,补跑一次就齐";
+    c.headline = "The generation stage did not finish; only retrieval numbers are present — one more run completes it";
   } else {
     c.status = "ok";
     const strategy = typeof best.strategy === "string" ? best.strategy : "";
-    c.headline = `${RAG_LABEL[strategy] ?? strategy} 领先,总体 MRR ${mrr === null ? "—" : mrr.toFixed(3)}`;
+    c.headline = `${RAG_LABEL[strategy] ?? strategy} leads, overall MRR ${mrr === null ? "—" : mrr.toFixed(3)}`;
   }
-  c.note = `上次跑于 ${asText(meta.generated_at) ?? "—"};页面只读产物,不重算`;
+  c.note = `Last run at ${asText(meta.generated_at) ?? "—"}; the page reads artifacts only and never recomputes`;
   return c;
 }
 
 async function reviewCard(): Promise<Card> {
-  const c = card("review", "飞轮待审队列", "/review", "答不上的问题 → 标准化查重 → 人工审核 → 写回知识库");
+  const c = card("review", "Flywheel review queue", "/review", "Unanswerable questions → normalized & deduplicated → human review → written back to the knowledge base");
   const counts: Record<string, number> = {};
   try {
     for (const st of REVIEW_STATES) {
@@ -142,20 +143,20 @@ async function reviewCard(): Promise<Card> {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) {
     c.status = "missing";
-    c.headline = "队列还没有货,先在聊天页问几个答不上的问题";
-  } else if (counts["待审"] > 0) {
+    c.headline = "The queue is empty; ask a few unanswerable questions on the chat page first";
+  } else if (counts["pending_review"] > 0) {
     c.status = "attention";
-    c.headline = `${counts["待审"]} 条等着审`;
+    c.headline = `${counts["pending_review"]} items awaiting review`;
   } else {
     c.status = "ok";
-    c.headline = `待审清零,累计处理 ${total} 条`;
+    c.headline = `Nothing awaiting review; ${total} items processed in total`;
   }
-  c.note = "审核通过即写回知识库并即时向量化,下一轮就能召回";
+  c.note = "Approved items are written back to the knowledge base and vectorized immediately, recallable from the next round";
   return c;
 }
 
 async function observabilityCard(): Promise<Card> {
-  const c = card("observability", "观测与成本", "/observability", "钱花在哪类问题上 · 指标有没有劣化 · 兜底阈值怎么定的");
+  const c = card("observability", "Observability & cost", "/observability", "Where the money goes by question type · whether metrics are degrading · how the fallback threshold was set");
   let ov: Record<string, unknown>;
   try {
     ov = await observability.overview();
@@ -173,41 +174,41 @@ async function observabilityCard(): Promise<Card> {
   const faithfulness = asNumber(latest.faithfulness);
   const inUse = asNumber(calib.in_use);
   c.metrics = [
-    { label: "最烧钱占比", value: topShare === null ? "—" : `${Math.round(topShare * 100)}%` },
-    { label: "评估轮次", value: runs.length },
-    { label: "忠实度", value: faithfulness === null ? "—" : faithfulness.toFixed(3) },
-    { label: "在用阈值", value: inUse === null ? "—" : inUse.toFixed(2) },
+    { label: "Top-cost share", value: topShare === null ? "—" : `${Math.round(topShare * 100)}%` },
+    { label: "Eval rounds", value: runs.length },
+    { label: "Faithfulness", value: faithfulness === null ? "—" : faithfulness.toFixed(3) },
+    { label: "Threshold in use", value: inUse === null ? "—" : inUse.toFixed(2) },
   ];
   if (trend.status === "error") {
     c.note = typeof trend.note === "string" ? trend.note : null;
     return c;
   }
   const blocks: Array<[string, Record<string, unknown>]> = [
-    ["意图成本账", cost],
-    ["评估趋势", trend],
-    ["阈值校准", calib],
+    ["Cost ledger by intent", cost],
+    ["Eval trend", trend],
+    ["Threshold calibration", calib],
   ];
   const missing = blocks.filter(([, b]) => asRecord(b).status !== "ok").map(([name]) => name);
   if (missing.length === 3) {
     c.status = "missing";
-    c.headline = "三块都还没跑过,进去按一次就有数";
+    c.headline = "None of the three has run yet; open the page and press once to get numbers";
   } else if (missing.length > 0) {
     c.status = "attention";
-    c.headline = `缺 ${missing.join("、")}`;
+    c.headline = `Missing: ${missing.join(", ")}`;
   } else if (calib.in_sync !== true) {
     c.status = "attention";
-    c.headline = `推荐阈值 ${String(asRecord(calib.recommended).threshold)} 与在用 ${String(inUse)} 不一致,该回填`;
+    c.headline = `Recommended threshold ${String(asRecord(calib.recommended).threshold)} differs from ${String(inUse)} in use; backfill it`;
   } else {
     c.status = "ok";
     const intent = top ? asText(top.intent) ?? "" : "";
-    c.headline = (intent ? `${intent}最烧钱,` : "") + "最近一轮忠实度 " + (faithfulness === null ? "—" : faithfulness.toFixed(3));
+    c.headline = (intent ? `${intent} costs the most; ` : "") + "latest-round faithfulness " + (faithfulness === null ? "—" : faithfulness.toFixed(3));
   }
-  c.note = c.note ?? "报表都是离线作业落的产物,页面只读不重算";
+  c.note = c.note ?? "All reports are artifacts written by offline jobs; the page reads them and never recomputes";
   return c;
 }
 
 async function topicsCard(): Promise<Card> {
-  const c = card("topics", "主题分布", "/topics", "低置信度问题 → 分类器旁路归类 → 哪类堆得多,先补哪块知识");
+  const c = card("topics", "Topic distribution", "/topics", "Low-confidence questions → classifier bypass grouping → whichever class piles up tells you which knowledge to add first");
   let dist: repository.TopicDistribution;
   try {
     dist = await repository.topicDistribution();
@@ -218,15 +219,15 @@ async function topicsCard(): Promise<Card> {
   const hit = dist.classes.filter((x) => x.count > 0).length;
   const top = [...dist.classes].filter((x) => x.count > 0).sort((a, b) => b.count - a.count).slice(0, 3);
   c.metrics = [
-    { label: "已归类问题", value: dist.total },
-    { label: "命中类目", value: `${hit}/${dist.classes.length}` },
+    { label: "Classified questions", value: dist.total },
+    { label: "Classes hit", value: `${hit}/${dist.classes.length}` },
   ];
   if (dist.total === 0) {
     c.status = "missing";
-    c.headline = "还没归类过,去分类器验收页跑一次旁路批量归类";
+    c.headline = "Nothing classified yet; run a bypass batch classification on the classifier acceptance page";
   } else {
     c.status = "ok";
-    c.headline = "占前三:" + top.map((x) => `${x.label} ${x.count}`).join("、");
+    c.headline = "Top three: " + top.map((x) => `${x.label} ${x.count}`).join(", ");
   }
   return c;
 }

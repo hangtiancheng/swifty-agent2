@@ -5,8 +5,8 @@ import type { ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import { settings } from "../config.ts";
-import { childLogger } from "../logger.ts";
+import { settings } from "@/config.ts";
+import { childLogger } from "@/logger.ts";
 
 const log = childLogger("jobs");
 
@@ -31,18 +31,18 @@ function spec(name: string, title: string, argv: string[], needs: string, heavy 
 export const JOBS: Record<string, JobSpec> = Object.fromEntries(
   [
     // knowledge base build pipeline
-    spec("kb-preview", "材料清单与切块预览", script("show-kb"), "本地跑,不写库"),
-    spec("kb-build", "离线建库(文档切块 → pending)", script("build-kb"), "需本地库"),
-    spec("kb-mine", "对话挖知识(抽 QA → 去重 → pending)", script("mine-knowledge"), "需本地库 + 聊天上游", true),
-    spec("kb-vectorize", "向量化(嵌入 → 本地向量库 → 回标 done)", script("vectorize-kb"), "需本地库 + 嵌入上游"),
-    spec("kb-repatch", "补丁式重嵌(md 改动 → 原地改正文)", script("kb-repatch"), "需本地库;改完再按「向量化待补块」"),
-    spec("seed-conv", "灌历史会话种子", script("seed-conv"), "需本地库"),
-    spec("kb-reset", "清库重建(清两表 + 清向量)", script("kb-reset"), "需本地库;会清空知识库", true),
+    spec("kb-preview", "Material list & chunk preview", script("show-kb"), "Runs locally; writes nothing to the DB"),
+    spec("kb-build", "Offline KB build (document chunking → pending)", script("build-kb"), "Requires the local DB"),
+    spec("kb-mine", "Conversation knowledge mining (extract QA → dedup → pending)", script("mine-knowledge"), "Requires the local DB + chat upstream", true),
+    spec("kb-vectorize", "Vectorization (embeddings → local vector store → mark done)", script("vectorize-kb"), "Requires the local DB + embedding upstream"),
+    spec("kb-repatch", "Patch-style re-embed (md changes → update text in place)", script("kb-repatch"), "Requires the local DB; afterwards run \"Vectorize pending chunks\""),
+    spec("seed-conv", "Seed historical conversations", script("seed-conv"), "Requires the local DB"),
+    spec("kb-reset", "Wipe & rebuild (clear both tables + clear vectors)", script("kb-reset"), "Requires the local DB; empties the knowledge base", true),
     // RAG evaluation / flywheel / cost reports
-    spec("eval-rag", "RAG 评估(四策略对照)", script("eval-ch04"), "需本地向量库 + 已建库 + 聊天上游,分钟级", true),
-    spec("cost-report", "意图成本账", script("cost-by-intent"), "需 Langfuse 在跑且窗口内有 trace"),
-    spec("eval-flywheel", "评估流水线(落一轮趋势)", script("eval-flywheel"), "需本地库 + 已建库 + 聊天上游,分钟级", true),
-    spec("calibrate-confidence", "置信度阈值校准", script("calibrate-confidence"), "需本地向量库 + 已建库 + 重排上游,分钟级", true),
+    spec("eval-rag", "RAG evaluation (four-strategy comparison)", script("eval-ch04"), "Requires the local vector store + a built KB + chat upstream; takes minutes", true),
+    spec("cost-report", "Cost ledger by intent", script("cost-by-intent"), "Requires Langfuse running with traces inside the window"),
+    spec("eval-flywheel", "Evaluation pipeline (records one trend round)", script("eval-flywheel"), "Requires the local DB + a built KB + chat upstream; takes minutes", true),
+    spec("calibrate-confidence", "Confidence threshold calibration", script("calibrate-confidence"), "Requires the local vector store + a built KB + rerank upstream; takes minutes", true),
   ].map((s) => [s.name, s]),
 );
 
@@ -83,7 +83,7 @@ export function start(name: string): JobRun {
   }
   const run = runOf(name);
   if (run.status === "running") {
-    throw new Error(`${spec0.title}正在运行中(pid ${run.pid}),等它跑完再发起`);
+    throw new Error(`${spec0.title} is already running (pid ${run.pid}); wait for it to finish before starting it again`);
   }
   fs.mkdirSync(LOG_DIR, { recursive: true });
   const file = logPath(name);
@@ -123,7 +123,7 @@ export async function stop(name: string): Promise<void> {
   const run = runOf(name);
   const child = run.proc;
   if (run.status !== "running" || child === null || child.pid === undefined) {
-    throw new Error("该作业当前没有在运行");
+    throw new Error("This job is not currently running");
   }
   run.status = "stopped";
   try {

@@ -1,7 +1,7 @@
 // Structured document chunk builder shared by the offline build job and the ingest API.
 import * as chunking from "./chunking.ts";
 
-const KEY_TERMS = ["退款", "退货", "时效", "运费", "邮费", "费用", "保修", "赔偿", "期限", "包邮"];
+const KEY_TERMS = ["refund", "return", "timeframe", "time limit", "shipping fee", "postage", "fee", "warranty", "compensation", "period", "free shipping"];
 // Re-exported: the confidence signal and review write-back share the same term list.
 export { KEY_TERMS };
 
@@ -15,7 +15,8 @@ export interface Chunk {
 }
 
 export function isKey(title: string, body: string): number {
-  const head = title + body.slice(0, 40);
+  // Case-insensitive: the English KB uses Title Case headings.
+  const head = (title + body.slice(0, 40)).toLowerCase();
   return KEY_TERMS.some((t) => head.includes(t)) ? 1 : 0;
 }
 

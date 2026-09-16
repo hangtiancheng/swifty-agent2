@@ -1,19 +1,30 @@
 // Intent classification: nine classes + confidence, with a conservative fallback.
 import { z } from "zod";
 
-import { childLogger } from "../logger.ts";
 
 import { structured } from "./llm.ts";
 import { INTENT_CLASSIFY_PROMPT } from "./prompts.ts";
 
+import { childLogger } from "@/logger.ts";
+
 const log = childLogger("intent");
 
-export const INTENTS = ["物流", "订单", "商品咨询", "退款退货", "售后", "投诉", "人工", "闲聊", "其他"] as const;
+export const INTENTS = [
+  "logistics",
+  "order",
+  "product_inquiry",
+  "refund_return",
+  "after_sales",
+  "complaint",
+  "human_agent",
+  "chitchat",
+  "other",
+] as const;
 export type Intent = (typeof INTENTS)[number];
 
 const intentSchema = z.object({
-  intent: z.enum(INTENTS).describe("九类意图之一"),
-  confidence: z.number().min(0).max(1).default(0.5).describe("判断把握 0-1"),
+  intent: z.enum(INTENTS).describe("One of the nine intent labels"),
+  confidence: z.number().min(0).max(1).default(0.5).describe("Confidence in the judgment, 0-1"),
 });
 
 export interface IntentResult {
@@ -22,16 +33,16 @@ export interface IntentResult {
 }
 
 export async function classify(query: string, history = ""): Promise<IntentResult> {
-  // Flat fields avoid upstream 502s on nested schemas. Parse failure falls back to 其他.
+  // Flat fields avoid upstream 502s on nested schemas. Parse failure falls back to other.
   const model = structured(intentSchema, { slot: "intent" });
   try {
     const result = await INTENT_CLASSIFY_PROMPT.pipe(model).invoke({
       query,
-      history: history || "(无)",
+      history: history || "(none)",
     });
     return { intent: result.intent, confidence: Number(result.confidence) };
   } catch (error) {
-    log.warn({ err: error, query }, "intent classification failed; falling back to 其他");
-    return { intent: "其他", confidence: 0 };
+    log.warn({ err: error, query }, "intent classification failed; falling back to other");
+    return { intent: "other", confidence: 0 };
   }
 }

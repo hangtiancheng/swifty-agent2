@@ -3,12 +3,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 
-import * as repository from "../db/repository.ts";
-import * as runtime from "../graph/runtime.ts";
-import { childLogger } from "../logger.ts";
-
 import { parseJsonBody } from "./http.ts";
 import { createRefundRequestSchema, createTicketRequestSchema, resumeRequestSchema } from "./schemas.ts";
+
+import * as repository from "@/db/repository.ts";
+import * as runtime from "@/graph/runtime.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("api.actions");
 export const actionsRouter = new Hono();
@@ -17,29 +18,29 @@ actionsRouter.post("/api/actions/create-ticket", async (c) => {
   const req = await parseJsonBody(c, createTicketRequestSchema);
   try {
     const ticketNo = await repository.createTicket(req.conversation_id, req.description, req.ticket_type);
-    return c.json({ ticket_no: ticketNo, status: "已转人工" });
+    return c.json({ ticket_no: ticketNo, status: "transferred" });
   } catch (error) {
     log.error({ err: error, conv: req.conversation_id }, "create ticket failed");
-    throw new HTTPException(503, { message: "工单系统暂时不可用,请稍后重试" });
+    throw new HTTPException(503, { message: "The ticket system is temporarily unavailable; please try again later" });
   }
 });
 
 actionsRouter.post("/api/actions/create-refund", async (c) => {
   const req = await parseJsonBody(c, createRefundRequestSchema);
-  const description = `退款申请 订单号=${req.order_id} 原因=${req.reason}`;
+  const description = `Refund request order_id=${req.order_id} reason=${req.reason}`;
   try {
-    const ticketNo = await repository.createTicket(req.conversation_id, description, "退款");
-    return c.json({ ticket_no: ticketNo, status: "退款申请已提交" });
+    const ticketNo = await repository.createTicket(req.conversation_id, description, "refund");
+    return c.json({ ticket_no: ticketNo, status: "Refund request submitted" });
   } catch (error) {
     log.error({ err: error, conv: req.conversation_id }, "create refund failed");
-    throw new HTTPException(503, { message: "退款系统暂时不可用,请稍后重试" });
+    throw new HTTPException(503, { message: "The refund system is temporarily unavailable; please try again later" });
   }
 });
 
 actionsRouter.post("/api/actions/resume", async (c) => {
   const req = await parseJsonBody(c, resumeRequestSchema);
   if (req.order_id === null && req.confirmed === null) {
-    throw new HTTPException(400, { message: "order_id 与 confirmed 至少传一个" });
+    throw new HTTPException(400, { message: "Provide at least one of order_id and confirmed" });
   }
   const resumeValue: unknown = req.order_id !== null ? req.order_id : { confirmed: Boolean(req.confirmed) };
 
@@ -72,7 +73,7 @@ actionsRouter.post("/api/actions/resume", async (c) => {
       }
     } catch (error) {
       log.error({ err: error, conv: req.conversation_id }, "resume failed");
-      const message = error instanceof runtime.ConversationNotFound ? "会话不存在" : "上游暂时不可用,请稍后重试";
+      const message = error instanceof runtime.ConversationNotFound ? "Conversation not found" : "The upstream is temporarily unavailable; please try again later";
       await stream.writeSSE({ event: "error", data: JSON.stringify({ message }) });
       return;
     }

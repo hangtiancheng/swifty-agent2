@@ -3,7 +3,7 @@
 import type { BaseMessage } from "@langchain/core/messages";
 import { Annotation, messagesStateReducer } from "@langchain/langgraph";
 
-import type { RetrievalSnapshot } from "../core/confidence.ts";
+import type { RetrievalSnapshot } from "@/core/confidence.ts";
 
 export interface SuggestedAction {
   type: string;

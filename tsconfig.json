@@ -11,8 +11,7 @@
     "target": "esnext",
     "types": ["node"],
     // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
+    "lib": ["esnext"],
     // and npm install -D @types/node
 
     // Other Outputs
@@ -42,5 +41,13 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "skipLibCheck": true,
-  }
+
+    "paths": {
+      "@/*": ["./src/*"],
+      "@generated/*": ["./generated/*"],
+      "@scripts/*": ["./scripts/*"],
+      "@tests/*": ["./tests/*"]
+    },
+  },
+  "exclude": ["fe"]
 }

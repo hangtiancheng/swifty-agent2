@@ -6,10 +6,10 @@ import path from "node:path";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import { W_KEY, W_MARGIN, W_TOP1, W_VALID } from "../core/confidence.ts";
-import { status as jobStatus } from "../core/jobs.ts";
-import * as repository from "../db/repository.ts";
+import { settings } from "@/config.ts";
+import { W_KEY, W_MARGIN, W_TOP1, W_VALID } from "@/core/confidence.ts";
+import { status as jobStatus } from "@/core/jobs.ts";
+import * as repository from "@/db/repository.ts";
 
 export const observabilityRouter = new Hono();
 
@@ -44,7 +44,7 @@ function block(job: string, make: string, hint: string): Record<string, unknown>
 }
 
 function costBlock(): Record<string, unknown> {
-  const base = block(COST_JOB, "make cost-report", "还没跑过意图成本账。先在聊天页问几句攒 trace,再按「重跑 意图成本账」。");
+  const base = block(COST_JOB, "make cost-report", "The cost ledger by intent has not run yet. Ask a few questions on the chat page to accumulate traces, then press \"Re-run cost ledger by intent\".");
   const report = readJson(COST);
   if (report === null) {
     return base;
@@ -61,7 +61,7 @@ function costBlock(): Record<string, unknown> {
     total_requests: report.total_requests ?? null,
     top: rows.length > 0 ? rows[0] : null,
     read_note: readNotes.cost_by_intent ?? null,
-    hint: rows.length > 0 ? null : "窗口内没有带 intent tag 的 trace,先在聊天页问几句再重跑。",
+    hint: rows.length > 0 ? null : "No traces with an intent tag inside the window; ask a few questions on the chat page, then re-run.",
   };
 }
 
@@ -74,7 +74,7 @@ function trendNote(latestRunId: number | null): string | null {
 }
 
 async function trendBlock(): Promise<Record<string, unknown>> {
-  const base = block(TREND_JOB, "make eval-flywheel", "还没跑过评估流水线。按一次「重跑 评估流水线」,这一轮就是趋势的第一个点。");
+  const base = block(TREND_JOB, "make eval-flywheel", "The evaluation pipeline has not run yet. Press \"Re-run evaluation pipeline\" once, and this round becomes the first point of the trend.");
   let runs: repository.EvalRunRow[];
   try {
     runs = await repository.listEvalRuns(TREND_LIMIT);
@@ -98,7 +98,7 @@ async function trendBlock(): Promise<Record<string, unknown>> {
 }
 
 function calibrationBlock(): Record<string, unknown> {
-  const base = block(CALIB_JOB, "make calibrate-confidence", "还没校准过。按「重跑 置信度阈值校准」在 ch04 评估集上扫一遍,阈值就不用拍脑袋。");
+  const base = block(CALIB_JOB, "make calibrate-confidence", "No calibration yet. Press \"Re-run confidence threshold calibration\" to scan the ch04 eval set, so the threshold is no longer a guess.");
   const withSettings = {
     ...base,
     in_use: settings.evidenceConfidenceThreshold,

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { numberArraySchema, parseJson, parseWith, stringArraySchema, toJson } from "../src/db/json.ts";
+import {
+  numberArraySchema,
+  parseJson,
+  parseWith,
+  stringArraySchema,
+  toJson,
+} from "@/db/json.ts";
 
 describe("json helpers", () => {
   it("serializes undefined and null to null", () => {

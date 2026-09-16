@@ -1,23 +1,24 @@
 // Routing rules: intent -> exit, evidence gate, ReAct stop condition.
 import { AIMessage } from "@langchain/core/messages";
 
-import { settings } from "../config.ts";
-
 import type { GraphState } from "./state.ts";
+
+import { settings } from "@/config.ts";
+
 
 export type RouteKey = "escalate" | "fallback_script" | "knowledge" | "refund_flow" | "business";
 
 // Nine intents -> five exits; single source shared with build.ts conditional edge keys.
 export const INTENT_TO_ROUTE: Record<string, RouteKey> = {
-  投诉: "escalate",
-  闲聊: "fallback_script",
-  其他: "fallback_script",
-  商品咨询: "knowledge",
-  退款退货: "refund_flow",
-  售后: "refund_flow",
-  人工: "business",
-  物流: "business",
-  订单: "business",
+  complaint: "escalate",
+  chitchat: "fallback_script",
+  other: "fallback_script",
+  product_inquiry: "knowledge",
+  refund_return: "refund_flow",
+  after_sales: "refund_flow",
+  human_agent: "business",
+  logistics: "business",
+  order: "business",
 };
 
 export function routeByIntent(state: GraphState): RouteKey {

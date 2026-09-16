@@ -8,16 +8,17 @@ import { Command, INTERRUPT, isInterrupted } from "@langchain/langgraph";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { z } from "zod";
 
-import { settings } from "../config.ts";
-import * as budget from "../core/budget.ts";
-import * as memory from "../core/memory.ts";
-import { recordTurn } from "../core/observability.ts";
-import { maybeScheduleSummary } from "../core/summarizer.ts";
-import * as repository from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
-
 import { buildGraph } from "./build.ts";
 import type { GraphState, SuggestedAction } from "./state.ts";
+
+import { settings } from "@/config.ts";
+import * as budget from "@/core/budget.ts";
+import * as memory from "@/core/memory.ts";
+import { recordTurn } from "@/core/observability.ts";
+import { maybeScheduleSummary } from "@/core/summarizer.ts";
+import * as repository from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("graph.runtime");
 

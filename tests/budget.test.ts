@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { compute, describe as describeBudget, lookupWindow } from "../src/core/budget.ts";
+import {
+  compute,
+  describe as describeBudget,
+  lookupWindow,
+} from "@/core/budget.ts";
 
 describe("budget", () => {
   it("treats a large window as healthy", () => {

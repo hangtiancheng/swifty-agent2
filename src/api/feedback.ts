@@ -1,12 +1,13 @@
 // Flywheel entry point 3: user feedback pools unsolved questions (down-vote only).
 import { Hono } from "hono";
 
-import * as repository from "../db/repository.ts";
-import * as runtime from "../graph/runtime.ts";
-import { childLogger } from "../logger.ts";
-
 import { parseJsonBody } from "./http.ts";
 import { feedbackRequestSchema } from "./schemas.ts";
+
+import * as repository from "@/db/repository.ts";
+import * as runtime from "@/graph/runtime.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("api.feedback");
 export const feedbackRouter = new Hono();
@@ -36,7 +37,7 @@ feedbackRouter.post("/api/feedback", async (c) => {
     req.conversation_id,
     req.question,
     "user_feedback",
-    "用户反馈未解决",
+    "User feedback: not resolved",
     snapshot ?? undefined,
   );
   log.info({ conv: req.conversation_id, snapshot: snapshot ? "yes" : "no" }, "feedback down pooled");

@@ -1,15 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { modelsIn, repairHint, unsupportedModels } from "../src/core/model-guard.ts";
+import { modelsIn, repairHint, unsupportedModels } from "@/core/model-guard.ts";
 
 describe("model guard", () => {
   it("extracts product model numbers in order", () => {
-    expect(modelsIn("推荐 MH-LP100 和 MH-CAM1,还有 MH-LP100")).toEqual(["MH-LP100", "MH-CAM1"]);
+    expect(modelsIn("Try MH-LP100 and MH-CAM1, plus MH-LP100 again")).toEqual([
+      "MH-LP100",
+      "MH-CAM1",
+    ]);
   });
 
   it("flags models missing from the evidence", () => {
-    expect(unsupportedModels("可用 MH-CAM1 与 MH-CAD1", "规格:MH-CAM1 支持 2K")).toEqual(["MH-CAD1"]);
-    expect(unsupportedModels("可用 MH-CAM1", "规格:MH-CAM1 支持 2K")).toEqual([]);
+    expect(
+      unsupportedModels("Available: MH-CAM1 and MH-CAD1", "Specs: MH-CAM1 supports 2K"),
+    ).toEqual(["MH-CAD1"]);
+    expect(
+      unsupportedModels("Available: MH-CAM1", "Specs: MH-CAM1 supports 2K"),
+    ).toEqual([]);
   });
 
   it("matches case-sensitively", () => {

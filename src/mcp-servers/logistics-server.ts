@@ -9,7 +9,7 @@ const port = Number(process.env.PORT ?? "8101");
 const delaySeconds = Number(process.env.MOCK_DELAY_SECONDS ?? "0");
 
 const STATUS_CODES = ["PICKED_UP", "IN_TRANSIT", "DELIVERING", "DELIVERED"] as const;
-const CITIES = ["深圳", "广州", "杭州", "上海", "成都"] as const;
+const CITIES = ["Shenzhen", "Guangzhou", "Hangzhou", "Shanghai", "Chengdu"] as const;
 
 function seedFrom(key: string): () => number {
   let h = 0x811c9dc5;
@@ -33,10 +33,10 @@ server.registerTool(
   "query_logistics",
   {
     description:
-      "用物流单号(tracking_no)查询物流状态、当前位置和轨迹。用于用户询问物流/快递到哪了时。" +
-      "物流单号不是订单号,需先用 query_order 查订单拿到 tracking_no,再调用本工具。",
+      "Query the logistics status, current location, and trace by tracking number (tracking_no). Use it when the user asks where a shipment or courier package is. " +
+      "The tracking number is not the order number: first use query_order to fetch the order's tracking_no, then call this tool.",
     inputSchema: z.object({
-      tracking_no: z.string().describe("物流单号(形如 SF 开头),需先用 query_order 查订单拿到该单号"),
+      tracking_no: z.string().describe("Tracking number (starts with SF); obtain it first via query_order"),
     }),
   },
   async ({ tracking_no }) => {
@@ -50,7 +50,7 @@ server.registerTool(
       tracking_no,
       status_code: code, // internal enum; translated on the client side
       current_city: city,
-      trace: [`${city}分拨中心 已发出`, `内部状态码:${code}`],
+      trace: [`${city} sorting center: dispatched`, `Internal status code: ${code}`],
       carrier_code: "SF-EXP-01", // internal carrier code; dropped by the client formatter
     };
     return {

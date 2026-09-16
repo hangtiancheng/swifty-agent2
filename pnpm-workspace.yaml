@@ -3,3 +3,6 @@ allowBuilds:
   protobufjs: true
   prisma: true
   '@prisma/engines': true
+
+packages:
+  - fe

@@ -1,16 +1,16 @@
 // query_faq: RAG pipeline (rewrite + hybrid retrieval + rerank + self-check) exposed as a tool.
 import { z } from "zod";
 
-import { settings } from "../../config.ts";
-import * as queryUnderstanding from "../../core/query-understanding.ts";
-import * as retrieval from "../../core/retrieval.ts";
-import * as selfcheck from "../../core/selfcheck.ts";
-import type { KnowledgeHit } from "../../kb/store.ts";
-import { defineTool, register } from "../registry.ts";
+import { settings } from "@/config.ts";
+import * as queryUnderstanding from "@/core/query-understanding.ts";
+import * as retrieval from "@/core/retrieval.ts";
+import * as selfcheck from "@/core/selfcheck.ts";
+import type { KnowledgeHit } from "@/kb/store.ts";
+import { defineTool, register } from "@/tools/registry.ts";
 
 const faqInputSchema = z.object({
-  keyword: z.string().describe("用户咨询的政策/规则/操作类问题(可用原话)"),
-  category: z.string().nullable().optional().describe("可选:按品类过滤,如『运费』『退货』『商品手册』"),
+  keyword: z.string().describe("The policy/rule/procedure question the user is asking (the original wording is fine)"),
+  category: z.string().nullable().optional().describe("Optional: filter by category, e.g. 'shipping fee', 'returns', 'product manual'"),
 });
 
 export interface FaqArgs {
@@ -65,7 +65,7 @@ export async function evaluateHits(query: string, hits: KnowledgeHit[]): Promise
     return {
       sufficient: false,
       source: "retrieval_low_conf",
-      reason: `检索证据不足(top=${top.toFixed(3)})`,
+      reason: `Retrieved evidence insufficient (top=${top.toFixed(3)})`,
       citations: [],
     };
   }
@@ -93,8 +93,8 @@ register(
   defineTool({
     name: "query_faq",
     description:
-      "查询常见问题/政策知识库(混合检索+重排)。用于政策、规则、时效、费用、商品手册等通用问题。" +
-      "返回带编号证据供作答引用;证据不足时返回 sufficient=False,请据此向用户拒答。",
+      "Search the FAQ/policy knowledge base (hybrid retrieval + rerank). Use it for general questions about policies, rules, timeframes, fees, and product manuals. " +
+      "Returns numbered evidence to cite when answering; when the evidence is insufficient it returns sufficient=False, and you must decline to answer the user accordingly.",
     schema: faqInputSchema,
     // The RAG pipeline is slow by nature; a timeout is usually upstream slowness, so no retry.
     timeout: 30.0,

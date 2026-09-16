@@ -6,19 +6,18 @@ import path from "node:path";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 
-
-import { settings } from "../src/config.ts";
-import { getChatModel, structured } from "../src/core/llm.ts";
-import { contentToString } from "../src/core/memory.ts";
-import * as modelGuard from "../src/core/model-guard.ts";
-import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "../src/core/prompts.ts";
-import * as readNotes from "../src/core/read-notes.ts";
-import * as retrieval from "../src/core/retrieval.ts";
-import { closeDb } from "../src/db/client.ts";
-import * as repository from "../src/db/repository.ts";
-import type { KnowledgeHit } from "../src/kb/store.ts";
-import * as store from "../src/kb/store.ts";
-import { queryFaq } from "../src/tools/builtin/faq.ts";
+import { settings } from "@/config.ts";
+import { getChatModel, structured } from "@/core/llm.ts";
+import { contentToString } from "@/core/memory.ts";
+import * as modelGuard from "@/core/model-guard.ts";
+import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "@/core/prompts.ts";
+import * as readNotes from "@/core/read-notes.ts";
+import * as retrieval from "@/core/retrieval.ts";
+import { closeDb } from "@/db/client.ts";
+import * as repository from "@/db/repository.ts";
+import type { KnowledgeHit } from "@/kb/store.ts";
+import * as store from "@/kb/store.ts";
+import { queryFaq } from "@/tools/builtin/faq.ts";
 
 const ROOT = settings.root;
 const OUT_DIR = path.join(ROOT, "data/ch04/reports");
@@ -28,13 +27,18 @@ const OUT_TXT = path.join(OUT_DIR, "rag_eval.txt");
 const STRATEGIES = ["vector", "bm25", "hybrid", "hybrid_rerank"] as const;
 type Strategy = (typeof STRATEGIES)[number];
 const GRADED_BUCKETS = ["A_policy", "B_model", "C_colloquial", "E_multi"];
-const STRATEGY_LABEL: Record<string, string> = { vector: "纯向量", bm25: "纯 BM25", hybrid: "混合", hybrid_rerank: "混合 + 重排" };
+const STRATEGY_LABEL: Record<string, string> = {
+  vector: "Vector only",
+  bm25: "BM25 only",
+  hybrid: "Hybrid",
+  hybrid_rerank: "Hybrid + rerank",
+};
 const BUCKET_LABEL: Record<string, string> = {
-  A_policy: "政策类",
-  B_model: "型号类",
-  C_colloquial: "口语类",
-  E_multi: "跨文档类",
-  overall: "总体",
+  A_policy: "Policy",
+  B_model: "Model numbers",
+  C_colloquial: "Colloquial",
+  E_multi: "Cross-document",
+  overall: "Overall",
 };
 const SKIP_GEN = process.argv.includes("--skip-gen");
 const K = 10;
@@ -48,28 +52,33 @@ const sampleSchema = z.object({
   bucket: z.string(),
   query: z.string(),
   expect_section: z.array(z.string()).optional(),
-  expect_sections_all: z.array(z.union([z.string(), z.array(z.string())])).optional(),
+  expect_sections_all: z
+    .array(z.union([z.string(), z.array(z.string())]))
+    .optional(),
   expect_points: z.array(z.string()).optional(),
   should_refuse: z.boolean().optional(),
 });
 type Sample = z.infer<typeof sampleSchema>;
 
 const faithSchema = z.object({
-  faithful: z.boolean().describe("是否忠实于证据"),
+  faithful: z.boolean().describe("Whether the answer is faithful to the evidence"),
   reason: z.string().default(""),
 });
 const covSchema = z.object({
-  covered_count: z.number().int().describe("客服答案正确覆盖的要点个数"),
+  covered_count: z.number().int().describe("Number of key points the agent answer correctly covers"),
 });
 
 const COVERAGE_SYS =
-  "你是答案覆盖度评审员。给定用户问题、标准答案要点清单、客服答案。\n" +
-  "数一数客服答案里正确覆盖了几个要点:要点信息在答案中有正确体现才算,遗漏、编造或答错都不算。\n" +
-  "只需给出覆盖的要点个数(整数),不要超过要点总数。";
+  "You are an answer-coverage reviewer. You are given the user question, the standard answer's list of key points, and the agent's answer.\n" +
+  "Count how many key points the agent's answer covers correctly: a point counts only when its information is correctly reflected in the answer; omissions, fabrications, and wrong answers do not count.\n" +
+  "Return only the number of covered points (an integer), never more than the total number of points.";
 
 const COVERAGE_PROMPT = ChatPromptTemplate.fromMessages([
   ["system", COVERAGE_SYS],
-  ["human", "用户问题:{query}\n\n标准答案要点(共 {n} 个):\n{points}\n\n客服答案:\n{answer}"],
+  [
+    "human",
+    "User question: {query}\n\nStandard answer key points ({n} in total):\n{points}\n\nAgent answer:\n{answer}",
+  ],
 ]);
 
 const lines: string[] = [];
@@ -100,7 +109,10 @@ const genSem = new Semaphore(GEN_CONCURRENCY);
 const errors: string[] = [];
 
 function loadSamples(): Sample[] {
-  const raw = fs.readFileSync(path.join(ROOT, "tests/data/eval_ch04.jsonl"), "utf8");
+  const raw = fs.readFileSync(
+    path.join(ROOT, "tests/data/eval_ch04.jsonl"),
+    "utf8",
+  );
   return raw
     .split("\n")
     .filter((line) => line.trim())
@@ -109,7 +121,9 @@ function loadSamples(): Sample[] {
 
 function mean(xs: Array<number | null>): number {
   const values = xs.filter((x): x is number => x !== null);
-  return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  return values.length > 0
+    ? values.reduce((a, b) => a + b, 0) / values.length
+    : 0;
 }
 
 function hitRank(hits: KnowledgeHit[], aliases: string[]): number {
@@ -150,7 +164,10 @@ function evidenceText(hits: KnowledgeHit[]): string {
   return hits.map((h) => `${h.question}:${h.answer}`).join("\n");
 }
 
-function coverageMech(points: string[] | undefined, hits: KnowledgeHit[]): number | null {
+function coverageMech(
+  points: string[] | undefined,
+  hits: KnowledgeHit[],
+): number | null {
   if (!points || points.length === 0) {
     return null;
   }
@@ -162,7 +179,10 @@ function formatEvidence(hits: KnowledgeHit[]): string {
   return hits.map((h, i) => `[${i + 1}] ${h.question}:${h.answer}`).join("\n");
 }
 
-async function tryCall<T>(factory: () => Promise<T>, label: string): Promise<T | null> {
+async function tryCall<T>(
+  factory: () => Promise<T>,
+  label: string,
+): Promise<T | null> {
   for (let i = 0; i < 2; i += 1) {
     try {
       return await withTimeout(factory(), CALL_TIMEOUT);
@@ -171,7 +191,9 @@ async function tryCall<T>(factory: () => Promise<T>, label: string): Promise<T |
         await new Promise((resolve) => setTimeout(resolve, 2000));
         continue;
       }
-      errors.push(`${label}: ${error instanceof Error ? error.constructor.name : "Error"}`);
+      errors.push(
+        `${label}: ${error instanceof Error ? error.constructor.name : "Error"}`,
+      );
     }
   }
   return null;
@@ -197,41 +219,72 @@ async function deterministic(samples: Sample[]): Promise<{
   hits: HitsByStrategy;
 }> {
   const graded = samples.filter((s) => GRADED_BUCKETS.includes(s.bucket));
-  const retrievalOut: Record<string, Record<string, { recall: number; mrr: number }>> = {};
+  const retrievalOut: Record<
+    string,
+    Record<string, { recall: number; mrr: number }>
+  > = {};
   const coverageOut: Record<string, Record<string, number>> = {};
   const hitsByStrategy: HitsByStrategy = {};
-  logLine(`=== 段1 检索:四策略 × 分桶 Recall@${RECALL_K} / MRR ===`);
+  logLine(`=== Stage 1 retrieval: four strategies × buckets, Recall@${RECALL_K} / MRR ===`);
   for (const strat of STRATEGIES) {
-    const hitsList = await Promise.all(graded.map((s) => retrSem.use(() => retrieval.searchKnowledge(s.query, { strategy: strat, topK: K }))));
-    hitsByStrategy[strat] = Object.fromEntries(graded.map((s, i) => [s.id, hitsList[i]]));
+    const hitsList = await Promise.all(
+      graded.map((s) =>
+        retrSem.use(() =>
+          retrieval.searchKnowledge(s.query, { strategy: strat, topK: K }),
+        ),
+      ),
+    );
+    hitsByStrategy[strat] = Object.fromEntries(
+      graded.map((s, i) => [s.id, hitsList[i]]),
+    );
     const byBucket: Record<string, { recall: number; mrr: number }> = {};
     const covBucket: Record<string, number> = {};
     const allRec: number[] = [];
     const allRr: number[] = [];
     const allCov: number[] = [];
     for (const bucket of GRADED_BUCKETS) {
-      const idx = graded.map((s, i) => (s.bucket === bucket ? i : -1)).filter((i) => i >= 0);
+      const idx = graded
+        .map((s, i) => (s.bucket === bucket ? i : -1))
+        .filter((i) => i >= 0);
       const ranks = idx.map((i) => ranksPerGroup(hitsList[i], graded[i]));
-      const covs = idx.map((i) => coverageMech(graded[i].expect_points, hitsList[i]));
+      const covs = idx.map((i) =>
+        coverageMech(graded[i].expect_points, hitsList[i]),
+      );
       const rec = mean(ranks.map((r) => recallAt(r, RECALL_K)));
       const mrr = mean(ranks.map((r) => reciprocalRank(r)));
-      byBucket[bucket] = { recall: Number(rec.toFixed(3)), mrr: Number(mrr.toFixed(3)) };
+      byBucket[bucket] = {
+        recall: Number(rec.toFixed(3)),
+        mrr: Number(mrr.toFixed(3)),
+      };
       covBucket[bucket] = Number(mean(covs).toFixed(3));
       allRec.push(...ranks.map((r) => recallAt(r, RECALL_K)));
       allRr.push(...ranks.map((r) => reciprocalRank(r)));
       allCov.push(...covs.filter((c): c is number => c !== null));
     }
-    byBucket.overall = { recall: Number(mean(allRec).toFixed(3)), mrr: Number(mean(allRr).toFixed(3)) };
+    byBucket.overall = {
+      recall: Number(mean(allRec).toFixed(3)),
+      mrr: Number(mean(allRr).toFixed(3)),
+    };
     covBucket.overall = Number(mean(allCov).toFixed(3));
     retrievalOut[strat] = byBucket;
     coverageOut[strat] = covBucket;
-    logLine(`${strat.padEnd(16)}${GRADED_BUCKETS.map((b) => `  R${byBucket[b].recall.toFixed(2)}/M${byBucket[b].mrr.toFixed(2)}`.padStart(16)).join("")}  R${byBucket.overall.recall.toFixed(2)}/M${byBucket.overall.mrr.toFixed(2)}`);
+    logLine(
+      `${strat.padEnd(16)}${GRADED_BUCKETS.map((b) => `  R${byBucket[b].recall.toFixed(2)}/M${byBucket[b].mrr.toFixed(2)}`.padStart(16)).join("")}  R${byBucket.overall.recall.toFixed(2)}/M${byBucket.overall.mrr.toFixed(2)}`,
+    );
   }
-  logLine(`\n=== 段2 证据覆盖度(Top-${K} 证据盖住标准要点的比例,机械匹配·确定性)===`);
+  logLine(
+    `\n=== Stage 2 evidence coverage (share of standard key points covered by the top-${K} evidence; mechanical matching, deterministic) ===`,
+  );
   for (const strat of STRATEGIES) {
-    logLine(`${strat.padEnd(16)}${GRADED_BUCKETS.map((b) => coverageOut[strat][b].toFixed(2).padStart(12)).join("")}${coverageOut[strat].overall.toFixed(2).padStart(12)}`);
+    logLine(
+      `${strat.padEnd(16)}${GRADED_BUCKETS.map((b) => coverageOut[strat][b].toFixed(2).padStart(12)).join("")}${coverageOut[strat].overall.toFixed(2).padStart(12)}`,
+    );
   }
-  return { retrieval: retrievalOut, coverage: coverageOut, hits: hitsByStrategy };
+  return {
+    retrieval: retrievalOut,
+    coverage: coverageOut,
+    hits: hitsByStrategy,
+  };
 }
 
 interface FaithDetail {
@@ -252,14 +305,29 @@ interface GenResult {
   guardHits: Array<Record<string, unknown>>;
 }
 
-async function genOne(strat: Strategy, sample: Sample, hits: HitsByStrategy): Promise<GenResult> {
+async function genOne(
+  strat: Strategy,
+  sample: Sample,
+  hits: HitsByStrategy,
+): Promise<GenResult> {
   const sampleHits = hits[strat]?.[sample.id] ?? [];
   const evidence = formatEvidence(sampleHits);
   const model = getChatModel();
   return genSem.use(async () => {
-    const ans = await tryCall(() => RAG_ANSWER_PROMPT.pipe(model).invoke({ query: sample.query, evidence }), `gen:${strat}:${sample.id}`);
+    const ans = await tryCall(
+      () =>
+        RAG_ANSWER_PROMPT.pipe(model).invoke({ query: sample.query, evidence }),
+      `gen:${strat}:${sample.id}`,
+    );
     if (ans === null) {
-      return { strat, bucket: sample.bucket, coverage: null, faithful: null, faithDetail: null, guardHits: [] };
+      return {
+        strat,
+        bucket: sample.bucket,
+        coverage: null,
+        faithful: null,
+        faithDetail: null,
+        guardHits: [],
+      };
     }
     let text = contentToString(ans.content);
     const guardHits: Array<Record<string, unknown>> = [];
@@ -267,10 +335,18 @@ async function genOne(strat: Strategy, sample: Sample, hits: HitsByStrategy): Pr
     if (bad.length > 0) {
       guardHits.push({ id: sample.id, strat, models: bad, fixed: false });
       const retry = await tryCall(
-        () => RAG_ANSWER_PROMPT.pipe(model).invoke({ query: sample.query, evidence: `${evidence}\n\n${modelGuard.repairHint(bad)}` }),
+        () =>
+          RAG_ANSWER_PROMPT.pipe(model).invoke({
+            query: sample.query,
+            evidence: `${evidence}\n\n${modelGuard.repairHint(bad)}`,
+          }),
         `guard-retry:${strat}:${sample.id}`,
       );
-      if (retry !== null && modelGuard.unsupportedModels(contentToString(retry.content), evidence).length === 0) {
+      if (
+        retry !== null &&
+        modelGuard.unsupportedModels(contentToString(retry.content), evidence)
+          .length === 0
+      ) {
         text = contentToString(retry.content);
         guardHits[guardHits.length - 1].fixed = true;
       }
@@ -297,7 +373,11 @@ async function genOne(strat: Strategy, sample: Sample, hits: HitsByStrategy): Pr
     let faithDetail: FaithDetail | null = null;
     if (strat === "hybrid_rerank") {
       const judge = structured(faithSchema, { temperature: 0 });
-      const fa = await tryCall(() => FAITHFULNESS_PROMPT.pipe(judge).invoke({ evidence, answer: text }), `faith:${sample.id}`);
+      const fa = await tryCall(
+        () =>
+          FAITHFULNESS_PROMPT.pipe(judge).invoke({ evidence, answer: text }),
+        `faith:${sample.id}`,
+      );
       if (fa !== null) {
         faithful = fa.faithful;
         if (!faithful) {
@@ -307,45 +387,74 @@ async function genOne(strat: Strategy, sample: Sample, hits: HitsByStrategy): Pr
             query: sample.query,
             answer: text,
             reason: fa.reason,
-            citations: sampleHits.map((h, i) => ({ n: i + 1, chunk_id: h.id, section_path: h.section_path, question: h.question, answer: h.answer })),
+            citations: sampleHits.map((h, i) => ({
+              n: i + 1,
+              chunk_id: h.id,
+              section_path: h.section_path,
+              question: h.question,
+              answer: h.answer,
+            })),
           };
         }
       }
     }
-    return { strat, bucket: sample.bucket, coverage, faithful, faithDetail, guardHits };
+    return {
+      strat,
+      bucket: sample.bucket,
+      coverage,
+      faithful,
+      faithDetail,
+      guardHits,
+    };
   });
 }
 
 async function ledger(cases: FaithDetail[]): Promise<void> {
   if (cases.length === 0) {
-    logLine("\n-- 编造个案台账:本轮 0 例,无需写入 --");
+    logLine("\n-- Fabrication case ledger: 0 cases this round, nothing to write --");
     return;
   }
   try {
     let reopened = 0;
     for (const c of cases) {
-      const [, wasResolved] = await repository.upsertFaithCase(c.id, c.bucket, c.query, c.answer, c.reason, {
-        citations: c.citations,
-        judgeModel: settings.chatModel,
-      });
+      const [, wasResolved] = await repository.upsertFaithCase(
+        c.id,
+        c.bucket,
+        c.query,
+        c.answer,
+        c.reason,
+        {
+          citations: c.citations,
+          judgeModel: settings.chatModel,
+        },
+      );
       if (wasResolved) {
         reopened += 1;
       }
     }
     const { total, counts } = await repository.listFaithCases(null, 1, 1);
     logLine(
-      `\n-- 编造个案台账:本轮 ${cases.length} 例已写入,台账共 ${total} 条` +
-        `(未解决 ${counts["未解决"]} · 已解决 ${counts["已解决"]} · 无需解决 ${counts["无需解决"]})` +
-        (reopened > 0 ? `;其中 ${reopened} 条是处置过又复发` : "") +
+      `\n-- Fabrication case ledger: ${cases.length} cases written this round, ${total} entries in total` +
+        ` (unresolved ${counts.unresolved} · resolved ${counts.resolved} · dismissed ${counts.dismissed})` +
+        (reopened > 0 ? `; ${reopened} of them recurred after being handled` : "") +
         " --",
     );
   } catch (error) {
-    logLine(`\n-- 编造个案台账写入失败(${error instanceof Error ? error.constructor.name : "Error"}),报告不受影响 --`);
+    logLine(
+      `\n-- Fabrication case ledger write failed (${error instanceof Error ? error.constructor.name : "Error"}); the report is unaffected --`,
+    );
   }
 }
 
-async function refusalOne(sample: Sample): Promise<{ refused: boolean; detail: Record<string, unknown> | null } | null> {
-  const out = await genSem.use(() => tryCall(() => queryFaq({ keyword: sample.query }), `refuse:${sample.id}`));
+async function refusalOne(
+  sample: Sample,
+): Promise<{
+  refused: boolean;
+  detail: Record<string, unknown> | null;
+} | null> {
+  const out = await genSem.use(() =>
+    tryCall(() => queryFaq({ keyword: sample.query }), `refuse:${sample.id}`),
+  );
   if (out === null) {
     return null;
   }
@@ -363,11 +472,20 @@ async function refusalOne(sample: Sample): Promise<{ refused: boolean; detail: R
   return { refused, detail };
 }
 
-async function generation(samples: Sample[], hits: HitsByStrategy): Promise<Record<string, unknown>> {
+async function generation(
+  samples: Sample[],
+  hits: HitsByStrategy,
+): Promise<Record<string, unknown>> {
   const graded = samples.filter((s) => GRADED_BUCKETS.includes(s.bucket));
   const absent = samples.filter((s) => s.bucket === "D_absent");
-  logLine("\n=== 段3 生成:四策略答案覆盖度(判分)+ Faithfulness + D 桶拒答 ===");
-  const tasks: Array<Promise<GenResult | { refused: boolean; detail: Record<string, unknown> | null } | null>> = [];
+  logLine("\n=== Stage 3 generation: four-strategy answer coverage (graded) + Faithfulness + bucket-D refusal ===");
+  const tasks: Array<
+    Promise<
+      | GenResult
+      | { refused: boolean; detail: Record<string, unknown> | null }
+      | null
+    >
+  > = [];
   for (const strat of STRATEGIES) {
     for (const sample of graded) {
       tasks.push(genOne(strat, sample, hits));
@@ -375,55 +493,107 @@ async function generation(samples: Sample[], hits: HitsByStrategy): Promise<Reco
   }
   tasks.push(...absent.map((s) => refusalOne(s)));
   const results = await Promise.all(tasks);
-  const genResults = results.slice(0, STRATEGIES.length * graded.length).filter((r): r is GenResult => r !== null && "strat" in r);
+  const genResults = results
+    .slice(0, STRATEGIES.length * graded.length)
+    .filter((r): r is GenResult => r !== null && "strat" in r);
   const rawRefusals = results.slice(STRATEGIES.length * graded.length);
-  const refusals = rawRefusals.filter((r): r is { refused: boolean; detail: Record<string, unknown> | null } => r !== null && "refused" in r);
-  const refusalSkipped = absent.filter((_, i) => rawRefusals[i] === null).map((s) => s.id);
+  const refusals = rawRefusals.filter(
+    (r): r is { refused: boolean; detail: Record<string, unknown> | null } =>
+      r !== null && "refused" in r,
+  );
+  const refusalSkipped = absent
+    .filter((_, i) => rawRefusals[i] === null)
+    .map((s) => s.id);
 
-  if (refusals.length === 0 && !genResults.some((r) => r.coverage !== null || r.faithful !== null)) {
-    throw new Error(`生成段 ${errors.length} 次调用全部失败(上游不可用),不落零分`);
+  if (
+    refusals.length === 0 &&
+    !genResults.some((r) => r.coverage !== null || r.faithful !== null)
+  ) {
+    throw new Error(
+      `All ${errors.length} calls in the generation stage failed (upstream unavailable); refusing to record zero scores`,
+    );
   }
 
   const answerCov: Record<string, Record<string, number | null>> = {};
-  logLine("\n-- 答案覆盖度(生成答案盖住标准要点的比例)--");
+  logLine("\n-- Answer coverage (share of standard key points covered by the generated answer) --");
   for (const strat of STRATEGIES) {
     const by: Record<string, number | null> = {};
     const allc: number[] = [];
     for (const bucket of GRADED_BUCKETS) {
-      const cs = genResults.filter((r) => r.strat === strat && r.bucket === bucket && r.coverage !== null).map((r) => r.coverage as number);
+      const cs = genResults
+        .filter(
+          (r): r is GenResult & { coverage: number } =>
+            r.strat === strat && r.bucket === bucket && r.coverage !== null,
+        )
+        .map((r) => r.coverage);
       by[bucket] = cs.length > 0 ? Number(mean(cs).toFixed(3)) : null;
       allc.push(...cs);
     }
     by.overall = allc.length > 0 ? Number(mean(allc).toFixed(3)) : null;
     answerCov[strat] = by;
-    logLine(`${strat.padEnd(16)}${[...GRADED_BUCKETS, "overall"].map((b) => (by[b] === null ? "     未评上" : by[b].toFixed(2).padStart(12))).join("")}`);
+    logLine(
+      `${strat.padEnd(16)}${[...GRADED_BUCKETS, "overall"].map((b) => (by[b] === null ? "     not graded" : by[b].toFixed(2).padStart(12))).join("")}`,
+    );
   }
 
-  const faithfulness: Record<string, { v: number | null; answered: number }> = {};
-  logLine("\n-- Faithfulness(hybrid_rerank 线上管线,答案不编造)--");
+  const faithfulness: Record<string, { v: number | null; answered: number }> =
+    {};
+  logLine("\n-- Faithfulness (hybrid_rerank production pipeline; the answer fabricates nothing) --");
   for (const bucket of GRADED_BUCKETS) {
-    const fsVals = genResults.filter((r) => r.strat === "hybrid_rerank" && r.bucket === bucket && r.faithful !== null).map((r) => (r.faithful ? 1 : 0));
-    faithfulness[bucket] = { v: fsVals.length > 0 ? Number(mean(fsVals).toFixed(3)) : null, answered: fsVals.length };
-    logLine(`${bucket.padEnd(14)} faithfulness=${fsVals.length === 0 ? "未评上" : (faithfulness[bucket].v ?? 0).toFixed(3)} (评 ${fsVals.length} 题)`);
+    const fsVals = genResults
+      .filter(
+        (r) =>
+          r.strat === "hybrid_rerank" &&
+          r.bucket === bucket &&
+          r.faithful !== null,
+      )
+      .map((r) => (r.faithful ? 1 : 0));
+    faithfulness[bucket] = {
+      v: fsVals.length > 0 ? Number(mean(fsVals).toFixed(3)) : null,
+      answered: fsVals.length,
+    };
+    logLine(
+      `${bucket.padEnd(14)} faithfulness=${fsVals.length === 0 ? "not graded" : (faithfulness[bucket].v ?? 0).toFixed(3)} (${fsVals.length} questions graded)`,
+    );
   }
 
-  const faithCases = genResults.map((r) => r.faithDetail).filter((c): c is FaithDetail => c !== null).sort((a, b) => a.id.localeCompare(b.id));
-  logLine(faithCases.length > 0 ? `\n-- 被判不忠实(编造)个案:${faithCases.length} 例 → ${faithCases.map((c) => c.id).join(", ")} --` : "\n-- 被判不忠实(编造)个案:0 例 --");
+  const faithCases = genResults
+    .map((r) => r.faithDetail)
+    .filter((c): c is FaithDetail => c !== null)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  logLine(
+    faithCases.length > 0
+      ? `\n-- Cases judged unfaithful (fabricated): ${faithCases.length} → ${faithCases.map((c) => c.id).join(", ")} --`
+      : "\n-- Cases judged unfaithful (fabricated): 0 --",
+  );
 
   const correct = refusals.filter((r) => r.refused).length;
   const rate = refusals.length > 0 ? correct / refusals.length : null;
-  logLine(`\n-- D 桶拒答率(线上管线)= ${rate === null ? "未评上" : rate.toFixed(3)}(${correct}/${refusals.length} 正确拒答;评 ${refusals.length}/${absent.length} 题)--`);
-  const missCases = refusals.map((r) => r.detail).filter((d): d is Record<string, unknown> => d !== null).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  logLine(
+    `\n-- Bucket-D refusal rate (production pipeline) = ${rate === null ? "not graded" : rate.toFixed(3)} (${correct}/${refusals.length} correctly refused; ${refusals.length}/${absent.length} questions graded) --`,
+  );
+  const missCases = refusals
+    .map((r) => r.detail)
+    .filter((d): d is Record<string, unknown> => d !== null)
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
   for (const c of missCases) {
-    logLine(`   该拒没拒:${String(c.id)} 「${String(c.query)}」← 被当成答案的证据:${String(c.section_path)}`);
+    logLine(
+      `   should have refused but did not: ${String(c.id)} "${String(c.query)}" ← evidence mistaken for an answer: ${String(c.section_path)}`,
+    );
   }
   if (refusalSkipped.length > 0) {
-    logLine(`   未评上(调用失败/超时):${refusalSkipped.join(", ")}`);
+    logLine(`   not graded (call failed/timed out): ${refusalSkipped.join(", ")}`);
   }
 
   const guardHits = genResults.flatMap((r) => r.guardHits);
-  const guard = { hits: guardHits.length, fixed: guardHits.filter((h) => h.fixed === true).length, cases: guardHits };
-  logLine(`\n-- 型号机械闸:命中 ${guard.hits} 次,重写救回 ${guard.fixed} 次 --`);
+  const guard = {
+    hits: guardHits.length,
+    fixed: guardHits.filter((h) => h.fixed === true).length,
+    cases: guardHits,
+  };
+  logLine(
+    `\n-- Model-number mechanical gate: ${guard.hits} hits, ${guard.fixed} rescued by rewriting --`,
+  );
 
   await ledger(faithCases);
 
@@ -432,26 +602,50 @@ async function generation(samples: Sample[], hits: HitsByStrategy): Promise<Reco
     faithfulness,
     faithfulness_cases: faithCases,
     model_guard: guard,
-    refusal: { rate: rate === null ? null : Number(rate.toFixed(3)), total: refusals.length, correct, cases: missCases, skipped_ids: refusalSkipped },
+    refusal: {
+      rate: rate === null ? null : Number(rate.toFixed(3)),
+      total: refusals.length,
+      correct,
+      cases: missCases,
+      skipped_ids: refusalSkipped,
+    },
     skipped: errors.length,
   };
 }
 
-function labeled(data: Record<string, Record<string, unknown>>, pick?: (d: Record<string, unknown>) => unknown): Record<string, Record<string, unknown>> {
+function labeled<T>(
+  data: Record<string, Record<string, T>>,
+  pick?: (d: T) => unknown,
+): Record<string, Record<string, unknown>> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const strat of STRATEGIES) {
     const row: Record<string, unknown> = {};
     for (const bucket of [...GRADED_BUCKETS, "overall"]) {
       const raw = (data[strat] ?? {})[bucket];
-      row[BUCKET_LABEL[bucket]] = pick ? pick(raw as Record<string, unknown>) : raw;
+      row[BUCKET_LABEL[bucket]] = pick ? pick(raw) : raw;
     }
     out[STRATEGY_LABEL[strat]] = row;
   }
   return out;
 }
 
+function isNestedRecord(
+  value: unknown,
+): value is Record<string, Record<string, unknown>> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Object.values(value).every(
+      (inner) => typeof inner === "object" && inner !== null,
+    )
+  );
+}
+
 async function buildReadNotes(
-  retrievalData: Record<string, Record<string, { recall: number; mrr: number }>>,
+  retrievalData: Record<
+    string,
+    Record<string, { recall: number; mrr: number }>
+  >,
   coverageData: Record<string, Record<string, number>>,
   generationData: Record<string, unknown> | null,
 ): Promise<Record<string, string>> {
@@ -462,12 +656,17 @@ async function buildReadNotes(
   };
   if (generationData) {
     const answerCov = generationData.answer_coverage;
-    if (typeof answerCov === "object" && answerCov !== null) {
-      jobs.rag_answer_coverage = labeled(answerCov as Record<string, Record<string, unknown>>);
+    if (isNestedRecord(answerCov)) {
+      jobs.rag_answer_coverage = labeled(answerCov);
     }
   }
   const notes = await readNotes.generateAll(jobs);
-  logLine(`\n读图小注:生成 ${Object.keys(notes).length}/${Object.keys(jobs).length} 条` + (Object.keys(notes).length === Object.keys(jobs).length ? "" : "(缺的那几张页面用兜底句)"));
+  logLine(
+    `\nRead notes: generated ${Object.keys(notes).length}/${Object.keys(jobs).length}` +
+      (Object.keys(notes).length === Object.keys(jobs).length
+        ? ""
+        : " (the missing ones fall back to the page's default sentence)"),
+  );
   return notes;
 }
 
@@ -477,22 +676,34 @@ async function main(): Promise<void> {
   for (const s of samples) {
     per.set(s.bucket, (per.get(s.bucket) ?? 0) + 1);
   }
-  logLine(`评估集:${samples.length} 题(${[...per.entries()].map(([b, n]) => `${BUCKET_LABEL[b] ?? b} ${n}`).join("、")}),策略 ${STRATEGIES.join(",")}`);
-  logLine(`检索并发 ${RETR_CONCURRENCY} · 生成并发 ${GEN_CONCURRENCY} · 单调用超时 ${CALL_TIMEOUT / 1000}s\n`);
-  const { retrieval: retrievalData, coverage: coverageData, hits } = await deterministic(samples);
+  logLine(
+    `Eval set: ${samples.length} questions (${[...per.entries()].map(([b, n]) => `${BUCKET_LABEL[b] ?? b} ${n}`).join(", ")}), strategies ${STRATEGIES.join(",")}`,
+  );
+  logLine(
+    `Retrieval concurrency ${RETR_CONCURRENCY} · generation concurrency ${GEN_CONCURRENCY} · per-call timeout ${CALL_TIMEOUT / 1000}s\n`,
+  );
+  const {
+    retrieval: retrievalData,
+    coverage: coverageData,
+    hits,
+  } = await deterministic(samples);
   let generationData: Record<string, unknown> | null = null;
   if (SKIP_GEN) {
-    logLine("\n[生成段跳过] --skip-gen:本轮只跑确定性两段。");
+    logLine("\n[Generation stage skipped] --skip-gen: only the two deterministic stages ran this round.");
   } else {
     try {
       generationData = await generation(samples, hits);
     } catch (error) {
-      logLine(`\n[生成段未完成] ${error instanceof Error ? error.message.slice(0, 140) : "Error"}`);
-      logLine("检索段与证据覆盖度已完成;上游恢复后重跑补全。");
+      logLine(
+        `\n[Generation stage incomplete] ${error instanceof Error ? error.message.slice(0, 140) : "Error"}`,
+      );
+      logLine("The retrieval stage and evidence coverage are done; re-run to complete it once the upstream recovers.");
     }
   }
   if (errors.length > 0) {
-    logLine(`\n注:生成段有 ${errors.length} 次调用超时/失败被跳过(上游不稳),已按可用样本计。`);
+    logLine(
+      `\nNote: ${errors.length} calls in the generation stage timed out/failed and were skipped (unstable upstream); scores use the available samples.`,
+    );
   }
   const knowledgeCount = await store.count().catch(() => "—");
   const meta = {
@@ -504,13 +715,27 @@ async function main(): Promise<void> {
     chat_model: settings.chatModel,
     generated_at: new Date().toISOString().slice(0, 16).replace("T", " "),
   };
-  const notes = SKIP_GEN ? {} : await buildReadNotes(retrievalData, coverageData, generationData);
+  const notes = SKIP_GEN
+    ? {}
+    : await buildReadNotes(retrievalData, coverageData, generationData);
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT_TXT, `${lines.join("\n")}\n`, "utf8");
-  const report = { meta, retrieval: retrievalData, evidence_coverage: coverageData, generation: generationData, read_notes: notes };
+  const report = {
+    meta,
+    retrieval: retrievalData,
+    evidence_coverage: coverageData,
+    generation: generationData,
+    read_notes: notes,
+  };
   fs.writeFileSync(OUT_JSON, `${JSON.stringify(report, null, 1)}\n`, "utf8");
-  logLine(`\n已生成:data/ch04/reports/rag_eval.json · data/ch04/reports/rag_eval.txt`);
-  logLine(generationData !== null ? "完成。" : "完成(仅检索段+证据覆盖度;生成段待上游恢复重跑)。");
+  logLine(
+    `\nGenerated: data/ch04/reports/rag_eval.json · data/ch04/reports/rag_eval.txt`,
+  );
+  logLine(
+    generationData !== null
+      ? "Done."
+      : "Done (retrieval stage + evidence coverage only; re-run the generation stage once the upstream recovers).",
+  );
 }
 
 try {

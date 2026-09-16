@@ -52,7 +52,7 @@ export function createApp(): Hono {
       return c.json({ detail: error.message }, error.status);
     }
     log.error({ err: error, path: c.req.path }, "unhandled error");
-    return c.json({ detail: "服务内部错误,请稍后重试" }, 500);
+    return c.json({ detail: "Internal server error; please try again later" }, 500);
   });
   return app;
 }

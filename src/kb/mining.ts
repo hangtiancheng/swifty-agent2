@@ -1,18 +1,19 @@
 // Mine reusable Q&A pairs from historical conversations into the staging table.
 import { z } from "zod";
 
-import { structured } from "../core/llm.ts";
-import { MINING_PROMPT } from "../core/prompts.ts";
+import { dedupe, normalizeQuestion } from "./dedup.ts";
+
+import { structured } from "@/core/llm.ts";
+import { MINING_PROMPT } from "@/core/prompts.ts";
 import {
   insertStaging,
   listAllQuestions,
   listConversationsWithMessages,
   listStagingByStatus,
   setStagingStatus,
-} from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
+} from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
 
-import { dedupe, normalizeQuestion } from "./dedup.ts";
 
 const log = childLogger("kb.mining");
 
@@ -23,8 +24,8 @@ export interface QaPair {
 
 // Flat parallel arrays avoid nested object arrays, which some compatible upstreams reject.
 const qaExtractionSchema = z.object({
-  questions: z.array(z.string()).describe("问法列表,与 answers 一一对应;无可复用问答则为空"),
-  answers: z.array(z.string()).describe("答案列表,与 questions 一一对应"),
+  questions: z.array(z.string()).describe("Question list, one-to-one with answers; empty when there is no reusable Q&A"),
+  answers: z.array(z.string()).describe("Answer list, one-to-one with questions"),
 });
 
 export async function extractQa(conversationTexts: string[]): Promise<QaPair[]> {

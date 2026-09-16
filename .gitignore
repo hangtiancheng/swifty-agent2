@@ -1,31 +1,31 @@
-# 日志
+# Logs
 *.log
 logs/
 
 .astro/
 
-# npm/yarn/pnpm 调试日志
+# npm/yarn/pnpm debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 pnpm-debug.log*
 
-# Node.js 诊断报告
+# Node.js diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# 进程 pid 文件
+# Process pid files
 *.pid
-# 种子文件
+# Seed files
 *.seed
-# 进程 pid 锁文件
+# Process pid lock files
 *.pid.lock
 
-# MacOS 垃圾
+# macOS junk
 .DS_Store
 **/.DS_Store
 
-# IDE 垃圾
+# IDE junk
 .idea/
 **/.idea/
 *.iml
@@ -35,44 +35,44 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # !.vscode/launch.json
 # !.vscode/extensions.json
 
-# 环境变量
+# Environment variables
 .env
 .env.*
 !.env.example
 !**/.env.example
 
-# 依赖
+# Dependencies
 node_modules/
 **/node_modules/
 
-# npm 缓存
+# npm cache
 .npm/
 
-# eslint 缓存
+# eslint cache
 .eslintcache
 **/.eslintcache
 
-# stylelint 缓存
+# stylelint cache
 .stylelintcache
 **/.stylelintcache
 
-# parcel 缓存
+# parcel cache
 .parcel-cache/
 **/.parcel-cache/
 
-# turbopack/turborepo 缓存
+# turbopack/turborepo cache
 .turbo/
 **/.turbo/
 
-# nx 缓存
+# nx cache
 .nx/
 **/.nx/
 
-# pnpm store 目录
+# pnpm store directory
 .pnpm-store/
 **/.pnpm-store/
 
-# yarn 垃圾
+# yarn junk
 .pnp
 .pnp.*
 .yarn/cache/
@@ -80,11 +80,11 @@ node_modules/
 .yarn/build-state.yml
 .yarn/install-state.gz
 
-# 覆盖率
+# Coverage
 coverage/
 **/coverage/
 
-# 构建产物
+# Build artifacts
 dist/
 **/dist/
 dis-vite/
@@ -92,11 +92,11 @@ dis-vite/
 dist-webpack/
 **/dist-webpack/
 
-# ssr 构建产物
+# SSR build artifacts
 dist-ssr/
 **/dist-ssr/
 
-# 构建产物
+# Build artifacts
 build/
 **/build/
 out/
@@ -117,15 +117,15 @@ upload/
 volumes/
 **/volumes/
 
-# next 垃圾
+# Next.js junk
 .next/
 **/.next/
 
-# nuxt 垃圾
+# Nuxt junk
 .nuxt/
 **/.nuxt/
 
-# vite 缓存
+# vite cache
 .vite/
 **/.vite/
 
@@ -185,26 +185,24 @@ cmake-build-*/
 build.ninja
 rules.ninja
 
-# clangd 缓存
+# clangd cache
 .cache/
 **/.cache/
 
 *.swp
 *.swo
 
-doc_build/
-**/doc_build/
-
 tsconfig.tsbuildinfo
 **/tsconfig.tsbuildinfo
 
+target
+**/target
+
+*.local.yaml
+**/*.local.yaml
+
 .swifty/
-
-dist-docs/
-**/dist-docs/
-
-dist-swifty/
-**/dist-swifty/
+**/.swifty/
 
 .playwright-cli/
 **/.playwright-cli/

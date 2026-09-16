@@ -5,12 +5,13 @@ import { ToolMessage } from "@langchain/core/messages";
 import { Ajv } from "ajv";
 import type { ErrorObject, ValidateFunction } from "ajv";
 
-import { settings } from "../config.ts";
-import * as memory from "../core/memory.ts";
-import * as repository from "../db/repository.ts";
-import { childLogger } from "../logger.ts";
-
 import type { ToolSpec } from "./registry.ts";
+
+import { settings } from "@/config.ts";
+import * as memory from "@/core/memory.ts";
+import * as repository from "@/db/repository.ts";
+import { childLogger } from "@/logger.ts";
+
 
 const log = childLogger("tools.engine");
 
@@ -76,9 +77,9 @@ export function validateArgs(spec: ToolSpec, args: Record<string, unknown>): str
   }
   const err = bestMatch(validate.errors);
   if (err === null) {
-    return "参数不符合 schema";
+    return "Arguments do not match the schema";
   }
-  const where = err.instancePath ? ` (字段 ${err.instancePath})` : "";
+  const where = err.instancePath ? ` (field ${err.instancePath})` : "";
   return `${err.message ?? "invalid arguments"}${where}`;
 }
 
@@ -90,7 +91,7 @@ function timeoutOf(spec: ToolSpec): number {
 }
 
 function summarize(content: string): string {
-  return content.length <= SUMMARY_LIMIT ? content : `${content.slice(0, SUMMARY_LIMIT)}…(截断)`;
+  return content.length <= SUMMARY_LIMIT ? content : `${content.slice(0, SUMMARY_LIMIT)}… (truncated)`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -132,7 +133,7 @@ function capTokens(content: string): string {
   }
   const cut = content.lastIndexOf("\n", limit);
   const head = content.slice(0, cut > limit / 2 ? cut : limit);
-  return `${head}\n…(结果过长已截断,需要完整数据请缩小查询范围)`;
+  return `${head}\n… (result too long and truncated; narrow the query if you need the full data)`;
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -243,8 +244,8 @@ export async function executeToolCall(
 
   const spec = specs.get(name);
   if (!spec) {
-    const run = make(false, `工具执行失败:未知工具 ${name}`, "失败");
-    await audit(conversationId, tcId, name || "unknown", null, args, null, "失败", `未知工具 ${name}`, 0, run.durationMs);
+    const run = make(false, `Tool execution failed: unknown tool ${name}`, "failed");
+    await audit(conversationId, tcId, name || "unknown", null, args, null, "failed", `Unknown tool ${name}`, 0, run.durationMs);
     return run;
   }
 
@@ -253,21 +254,21 @@ export async function executeToolCall(
     verr = validateArgs(spec, args);
   } catch (error) {
     log.error({ err: error, tool: name }, "arg validator crashed (usually a malformed MCP schema)");
-    const run = make(false, `工具暂时不可用:参数定义异常(${error instanceof Error ? error.name : "Error"}),请如实告知用户。`, "失败");
-    await audit(conversationId, tcId, name, spec, args, null, "失败", `schema 异常`, 0, run.durationMs);
+    const run = make(false, `Tool temporarily unavailable: malformed argument definition (${error instanceof Error ? error.name : "Error"}); tell the user honestly.`, "failed");
+    await audit(conversationId, tcId, name, spec, args, null, "failed", `Schema error`, 0, run.durationMs);
     return run;
   }
   if (verr !== null) {
-    const run = make(false, `参数校验未通过:${verr}。请修正参数重新调用;缺少的信息请先向用户追问,不要编造。`, "校验拦下");
-    await audit(conversationId, tcId, name, spec, args, null, "校验拦下", verr, 0, run.durationMs);
+    const run = make(false, `Argument validation failed: ${verr}. Fix the arguments and call again; ask the user for any missing information first, and never fabricate it.`, "validation_blocked");
+    await audit(conversationId, tcId, name, spec, args, null, "validation_blocked", verr, 0, run.durationMs);
     return run;
   }
 
   // Write operations need the confirmation token issued after an interrupt.
   if (spec.permission === "write" && options.confirmed !== true) {
-    const note = options.denyNote ?? "该写操作需要用户确认,未确认前拒绝执行。请勿再次发起,除非用户明确要求。";
-    const run = make(false, `${name} 未执行:${note}`, "权限拒绝");
-    await audit(conversationId, tcId, name, spec, args, null, "权限拒绝", note.slice(0, 500), 0, run.durationMs);
+    const note = options.denyNote ?? "This write operation requires user confirmation and is refused until confirmed. Do not initiate it again unless the user explicitly asks.";
+    const run = make(false, `${name} was not executed: ${note}`, "permission_denied");
+    await audit(conversationId, tcId, name, spec, args, null, "permission_denied", note.slice(0, 500), 0, run.durationMs);
     return run;
   }
 
@@ -286,8 +287,8 @@ export async function executeToolCall(
     try {
       const result = await withTimeout(Promise.resolve(spec.invoke(args)), toolTimeout);
       const content = capTokens(formatContent(spec, result));
-      const run = make(true, content, "成功", attempt);
-      await audit(conversationId, tcId, name, spec, args, summarize(content), "成功", null, attempt, run.durationMs);
+      const run = make(true, content, "success", attempt);
+      await audit(conversationId, tcId, name, spec, args, summarize(content), "success", null, attempt, run.durationMs);
       return run;
     } catch (error) {
       if (isTransient(error) && attempt < retries) {
@@ -297,9 +298,9 @@ export async function executeToolCall(
         continue;
       }
       const isTimeout = error instanceof ToolTimeoutError;
-      const status = isTimeout ? "超时" : "失败";
-      const label = isTimeout ? "执行超时" : error instanceof Error ? error.name : "Error";
-      const run = make(false, `工具暂时不可用:${isTimeout ? "执行超时" : label},请稍后再试或如实告知用户。`, status, attempt);
+      const status = isTimeout ? "timeout" : "failed";
+      const label = isTimeout ? "execution timed out" : error instanceof Error ? error.name : "Error";
+      const run = make(false, `Tool temporarily unavailable: ${isTimeout ? "execution timed out" : label}; try again later or tell the user honestly.`, status, attempt);
       await audit(conversationId, tcId, name, spec, args, null, status, label, attempt, run.durationMs);
       return run;
     }

@@ -1,14 +1,15 @@
 // Dual write: MySQL-equivalent rows first (pending), then embeddings, then mark done.
-import { embedTexts } from "../core/embeddings.ts";
+import type { Chunk } from "./documents.ts";
+import { invalidateVectorCache } from "./store.ts";
+
+import { embedTexts } from "@/core/embeddings.ts";
 import {
   insertKnowledgeChunk,
   listPendingChunks,
   markChunkVectorized,
   setChunkNeighbors,
-} from "../db/repository.ts";
+} from "@/db/repository.ts";
 
-import type { Chunk } from "./documents.ts";
-import { invalidateVectorCache } from "./store.ts";
 
 export async function writePending(chunks: Chunk[]): Promise<number[]> {
   const ids: number[] = [];

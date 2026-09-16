@@ -1,10 +1,11 @@
 // Data access layer. JSON-ish columns are stored as text and validated on read.
 import { z } from "zod";
 
-import { settings } from "../config.ts";
 
 import { prisma } from "./client.ts";
 import { numberArraySchema, parseWith, stringArraySchema, toJson } from "./json.ts";
+
+import { settings } from "@/config.ts";
 
 const metricRecordSchema = z.record(z.string(), z.number());
 
@@ -60,7 +61,7 @@ export async function createTicket(conversationId: number, description: string, 
   const ticketNo = genTicketNo();
   await prisma.$transaction([
     prisma.ticket.create({ data: { ticketNo, conversationId, description, ticketType } }),
-    prisma.conversation.updateMany({ where: { id: conversationId }, data: { status: "已转人工" } }),
+    prisma.conversation.updateMany({ where: { id: conversationId }, data: { status: "transferred" } }),
   ]);
   return ticketNo;
 }
@@ -89,7 +90,7 @@ export async function listConversations(userId: string, limit = 50): Promise<Con
     out.push({
       id: c.id,
       status: c.status,
-      preview: String(first?.content ?? "(空会话)").slice(0, 40),
+      preview: String(first?.content ?? "(empty conversation)").slice(0, 40),
       has_summary: Boolean(c.summary),
       updated_at: c.updatedAt.toISOString(),
     });
@@ -252,7 +253,7 @@ export async function knowledgeStats(): Promise<KnowledgeStats> {
     prisma.knowledgeChunk.count({ where: { isKeyClause: 1 } }),
   ]);
   const byStatus = Object.fromEntries(statusRows.map((r) => [r.vectorizeStatus, r._count._all]));
-  const byType = Object.fromEntries(typeRows.map((r) => [r.contentType ?? "未标注", r._count._all]));
+  const byType = Object.fromEntries(typeRows.map((r) => [r.contentType ?? "untagged", r._count._all]));
   return {
     total,
     pending: byStatus.pending ?? 0,
@@ -440,7 +441,7 @@ export async function getReviewDetail(reviewId: number) {
 
 export async function updateReviewStatus(reviewId: number, status: string, approvedAnswer: string | null = null): Promise<boolean> {
   const row = await prisma.reviewQueue.findUnique({ where: { id: reviewId } });
-  if (!row || row.reviewStatus !== "待审") {
+  if (!row || row.reviewStatus !== "pending_review") {
     return false;
   }
   await prisma.reviewQueue.update({
@@ -690,7 +691,7 @@ export async function upsertFaithCase(
         citations: toJson(options.citations ?? null),
         strategy: options.strategy ?? "hybrid_rerank",
         judgeModel: options.judgeModel ?? null,
-        status: "未解决",
+        status: "unresolved",
         seenCount: 1,
         firstSeenAt: now,
         lastSeenAt: now,
@@ -698,7 +699,7 @@ export async function upsertFaithCase(
     });
     return [created.id, false];
   }
-  const reopened = row.status !== "未解决";
+  const reopened = row.status !== "unresolved";
   await prisma.faithCase.update({
     where: { id: row.id },
     data: {
@@ -711,23 +712,23 @@ export async function upsertFaithCase(
       ...(options.citations !== undefined ? { citations: toJson(options.citations) } : {}),
       seenCount: row.seenCount + 1,
       lastSeenAt: now,
-      status: "未解决",
+      status: "unresolved",
     },
   });
   return [row.id, reopened];
 }
 
 export interface FaithCounts {
-  未解决: number;
-  已解决: number;
-  无需解决: number;
+  unresolved: number;
+  resolved: number;
+  dismissed: number;
 }
 
 export async function listFaithCases(status: string | null = null, page = 1, size = 5) {
-  const counts: FaithCounts = { 未解决: 0, 已解决: 0, 无需解决: 0 };
+  const counts: FaithCounts = { unresolved: 0, resolved: 0, dismissed: 0 };
   const grouped = await prisma.faithCase.groupBy({ by: ["status"], _count: { _all: true } });
   for (const g of grouped) {
-    if (g.status === "未解决" || g.status === "已解决" || g.status === "无需解决") {
+    if (g.status === "unresolved" || g.status === "resolved" || g.status === "dismissed") {
       counts[g.status] = g._count._all;
     }
   }
@@ -740,7 +741,7 @@ export async function listFaithCases(status: string | null = null, page = 1, siz
     take: size,
   });
   rows.sort((a, b) => {
-    const rank = (s: string): number => (s === "未解决" ? 0 : 1);
+    const rank = (s: string): number => (s === "unresolved" ? 0 : 1);
     if (rank(a.status) !== rank(b.status)) {
       return rank(a.status) - rank(b.status);
     }
@@ -762,7 +763,7 @@ export async function setFaithCaseStatus(caseId: number, status: string, resolut
   return prisma.faithCase.update({
     where: { id: caseId },
     data:
-      status === "未解决"
+      status === "unresolved"
         ? { status, resolvedAt: null, resolution: null }
         : { status, resolvedAt: new Date(), resolution },
   });

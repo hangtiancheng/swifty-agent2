@@ -18,9 +18,10 @@ export function unsupportedModels(answer: string, evidence: string): string[] {
 export function repairHint(bad: string[]): string {
   // Only name the unsupported models; guessing the right one would create a new hallucination.
   return (
-    "上一版回答里这些型号在给你的证据里找不到:" +
-    bad.join("、") +
-    "。请重写回答:型号必须逐字复制证据里出现过的型号串,证据里没有的型号一个都不要写," +
-    "拿不准就不提型号。其余内容与引用编号保持不变。"
+    "These model numbers in the previous answer cannot be found in the evidence given to you: " +
+    bad.join(", ") +
+    ". Please rewrite the answer: model numbers must be copied verbatim from the model strings that appear in the evidence; " +
+    "do not write a single model number absent from the evidence; if unsure, do not mention model numbers at all. " +
+    "Keep the rest of the content and the citation numbers unchanged."
   );
 }

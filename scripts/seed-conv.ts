@@ -1,5 +1,5 @@
 // Seed historical conversations (equivalent of sql/ch03-seed.sql) for the mining job.
-import { closeDb, prisma } from "../src/db/client.ts";
+import { closeDb, prisma } from "@/db/client.ts";
 
 async function main(): Promise<void> {
   const seedConversations = await prisma.conversation.findMany({
@@ -12,17 +12,29 @@ async function main(): Promise<void> {
     await prisma.conversation.deleteMany({ where: { id: { in: ids } } });
   }
 
-  const c1 = await prisma.conversation.create({ data: { userId: "seed-u1", status: "已结束" } });
-  const c2 = await prisma.conversation.create({ data: { userId: "seed-u2", status: "已结束" } });
+  const c1 = await prisma.conversation.create({
+    data: { userId: "seed-u1", status: "closed" },
+  });
+  const c2 = await prisma.conversation.create({
+    data: { userId: "seed-u2", status: "closed" },
+  });
   await prisma.message.createMany({
     data: [
-      { conversationId: c1.id, role: "user", content: "你们发货一般多久啊" },
-      { conversationId: c1.id, role: "assistant", content: "现货商品付款后 48 小时内发货,预售以商品详情页标注时间为准。" },
-      { conversationId: c2.id, role: "user", content: "满多少包邮" },
-      { conversationId: c2.id, role: "assistant", content: "单笔订单满 99 元包邮,未满收取 10 元运费,偏远地区另计。" },
+      { conversationId: c1.id, role: "user", content: "How long does dispatch usually take?" },
+      {
+        conversationId: c1.id,
+        role: "assistant",
+        content: "In-stock items are dispatched within 48 hours of payment; pre-order items follow the dispatch time indicated on the product detail page.",
+      },
+      { conversationId: c2.id, role: "user", content: "How much do I need to spend for free shipping?" },
+      {
+        conversationId: c2.id,
+        role: "assistant",
+        content: "Orders of 99 yuan or more ship free; below that, a 10-yuan shipping fee is charged; shipping to remote areas is calculated separately.",
+      },
     ],
   });
-  console.log("✅ 已灌历史会话种子:seed-u1 / seed-u2 共 2 会话、4 消息");
+  console.log("✅ Historical conversation seeds inserted: seed-u1 / seed-u2, 2 conversations and 4 messages in total");
 }
 
 await main();
