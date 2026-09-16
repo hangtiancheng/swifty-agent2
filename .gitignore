@@ -214,12 +214,9 @@ dist-tsup/
 **/dist-tsup/
 
 data/swifty-agent2.db
-
-# train classifier pipeline artifacts (corpus, dataset, trained model, ONNX, reports) — all generated
 data/train/
-
-# Milvus Lite database written by the dense bridge (src/milvus/server.py)
 data/milvus/
-
-# Milvus Lite sandbox written by the pymilvus demo (src/milvus/main.py)
 milvus-lite.db
+
+.react-router
+**/.react-router
