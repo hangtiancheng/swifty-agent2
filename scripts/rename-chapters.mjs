@@ -200,59 +200,84 @@ function main() {
     );
   }
 
-  // Phase 1: plan. Read-only; nothing is modified until the plan validates.
+  // Phase 1: plan. Read-only; nothing is modified until the plan is built.
+  /** @type {PlannedFile[]} */
+  const planned = [];
+  /** @type {string[]} */
+  const binarySkipped = [];
+
+  for (const src of listTrackedFiles()) {
+    if (path.resolve(REPO_ROOT, src) === SELF_PATH) {
+      continue; // never rewrite this script's own mapping table
+    }
+    const bytes = fs.readFileSync(path.resolve(REPO_ROOT, src));
+    /** @type {Buffer | null} */
+    let content = null;
+    if (looksBinary(bytes)) {
+      binarySkipped.push(src);
+    } else {
+      const text = bytes.toString("latin1");
+      const next = replaceChapters(text);
+      if (next !== text) {
+        content = Buffer.from(next, "latin1");
+      }
+    }
+    planned.push({
+      src,
+      dst: replaceChapters(src),
+      digest: createHash("sha256").update(bytes).digest("hex"),
+      content,
+    });
+  }
+
+  // Phase 2: resolve destination collisions with content-hash suffixes. A
+  // destination can never be a path that another rename vacates — renaming
+  // strips every chXX occurrence while a vacated path must contain one — so
+  // "taken" simply means "already claimed by this plan, or present on disk".
+  /** @type {Set<string>} */
+  const claimed = new Set();
   /** @type {Rename[]} */
   const renames = [];
   /** @type {ContentWrite[]} */
   const writes = [];
   /** @type {string[]} */
-  const binarySkipped = [];
+  const resolved = [];
 
-  for (const file of listTrackedFiles()) {
-    if (path.resolve(REPO_ROOT, file) === SELF_PATH) {
-      continue; // never rewrite this script's own mapping table
+  for (const entry of planned) {
+    let dst = entry.dst;
+    if (dst !== entry.src) {
+      const isTaken = (
+        /** @type {string} */
+        candidate,
+      ) =>
+        claimed.has(candidate) ||
+        fs.existsSync(path.resolve(REPO_ROOT, candidate));
+      if (isTaken(dst)) {
+        const unique = uniqueDestination(dst, entry.digest, isTaken);
+        if (unique === null) {
+          fail(
+            `no collision-free destination for ${entry.src} (wanted ${dst})`,
+          );
+        }
+        resolved.push(`${entry.src}: ${dst} is taken -> ${unique}`);
+        dst = unique;
+      }
+      claimed.add(dst);
+      renames.push({ src: entry.src, dst });
     }
-    const dst = replaceChapters(file);
-    const renamed = dst !== file;
-    if (renamed) {
-      renames.push({ src: file, dst });
-    }
-    const bytes = fs.readFileSync(path.resolve(REPO_ROOT, file));
-    if (looksBinary(bytes)) {
-      binarySkipped.push(file);
-      continue;
-    }
-    const text = bytes.toString("latin1");
-    const next = replaceChapters(text);
-    if (next !== text) {
-      writes.push({
-        file: renamed ? dst : file,
-        bytes: Buffer.from(next, "latin1"),
-      });
-    }
-  }
-
-  // Validate: no destination may collide with an existing file (unless that
-  // file is itself being renamed away) or with another rename's destination.
-  /** @type {string[]} */
-  const collisions = [];
-  const sources = new Set(renames.map((rename) => rename.src));
-  /** @type {Set<string>} */
-  const seenDestinations = new Set();
-  for (const { src, dst } of renames) {
-    if (seenDestinations.has(dst)) {
-      collisions.push(`${src} -> ${dst} (duplicate destination)`);
-    }
-    seenDestinations.add(dst);
-    if (fs.existsSync(path.resolve(REPO_ROOT, dst)) && !sources.has(dst)) {
-      collisions.push(`${src} -> ${dst} (destination already exists)`);
+    if (entry.content !== null) {
+      writes.push({ file: dst, bytes: entry.content });
     }
   }
 
   console.log(
     `${dryRun ? "[dry run] " : ""}plan: ${writes.length} content rewrite(s), ` +
-      `${renames.length} rename(s), ${binarySkipped.length} binary file(s) content-skipped`,
+      `${renames.length} rename(s), ${resolved.length} collision(s) hash-resolved, ` +
+      `${binarySkipped.length} binary file(s) content-skipped`,
   );
+  for (const note of resolved) {
+    console.log(`  resolve: ${note}`);
+  }
   for (const { src, dst } of renames) {
     console.log(`  rename:  ${src} -> ${dst}`);
   }
@@ -265,20 +290,12 @@ function main() {
     );
   }
 
-  if (collisions.length > 0) {
-    for (const collision of collisions) {
-      console.error(`collision: ${collision}`);
-    }
-    fail(
-      "resolve the collisions above first (rename or remove one side); nothing was modified",
-    );
-  }
   if (dryRun) {
     console.log("dry run complete; nothing was modified");
     return;
   }
 
-  // Phase 2: apply. Renames first (git mv keeps the index consistent), then
+  // Phase 3: apply. Renames first (git mv keeps the index consistent), then
   // content rewrites at the final paths, so `git status` shows pure renames
   // plus plain modifications.
   for (const { src, dst } of renames) {
