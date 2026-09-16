@@ -220,3 +220,6 @@ data/train/
 
 # Milvus Lite database written by the dense bridge (src/milvus/server.py)
 data/milvus/
+
+# Milvus Lite sandbox written by the pymilvus demo (src/milvus/main.py)
+milvus-lite.db

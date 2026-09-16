@@ -12,8 +12,9 @@
 //   5) warn on questions whose expect_section is judged too loosely (one keyword hits many sections,
 //      inflating recall).
 //
-// The Python version read KB text from Milvus; here it comes from the local store over
-// knowledge_chunks (the same rows retrieval uses). Run: node scripts/validate-eval-rag.ts
+// KB text comes from the knowledge_chunks rows (the same rows retrieval uses): dense vectors
+// may live in Milvus through the bridge (src/kb/milvus-rpc.ts), but text lookups stay on the
+// relational rows in both modes. Run: node scripts/validate-eval-rag.ts
 import fs from "node:fs";
 import path from "node:path";
 

@@ -13,6 +13,7 @@ Milvus operation is serialized through one worker thread.
 
 Run: uv run python src/milvus/server.py [--uri data/milvus/kb.db] [--port 50051] [--collection knowledge]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -69,8 +70,12 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
         schema.add_field("content_type", DataType.VARCHAR, max_length=32)
         schema.add_field("category", DataType.VARCHAR, max_length=255)
         index_params = client.prepare_index_params()
-        index_params.add_index(field_name="dense", index_type="AUTOINDEX", metric_type="COSINE")
-        client.create_collection(self._collection, schema=schema, index_params=index_params)
+        index_params.add_index(
+            field_name="dense", index_type="AUTOINDEX", metric_type="COSINE"
+        )
+        client.create_collection(
+            self._collection, schema=schema, index_params=index_params
+        )
         client.load_collection(self._collection)
         self._ready = True
 
@@ -160,7 +165,9 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             client = self._loaded_client()
             if client is None:
                 return 0
-            res = client.query(self._collection, filter="id >= 0", output_fields=["count(*)"])
+            res = client.query(
+                self._collection, filter="id >= 0", output_fields=["count(*)"]
+            )
             return int(res[0]["count(*)"]) if res else 0
 
         try:
@@ -208,15 +215,24 @@ def serve(uri: str, port: int, collection: str) -> None:
     addr = f"127.0.0.1:{port}"
     server.add_insecure_port(addr)
     server.start()
-    print(f"Milvus dense bridge listening on {addr} (uri={uri}, collection={collection})", flush=True)
+    print(
+        f"Milvus dense bridge listening on {addr} (uri={uri}, collection={collection})",
+        flush=True,
+    )
     server.wait_for_termination()
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Milvus Lite dense-vector gRPC bridge")
-    parser.add_argument("--uri", default=os.environ.get("MILVUS_DB_PATH", "data/milvus/kb.db"))
-    parser.add_argument("--port", type=int, default=int(os.environ.get("MILVUS_RPC_PORT", "50051")))
-    parser.add_argument("--collection", default=os.environ.get("MILVUS_COLLECTION", "knowledge"))
+    parser.add_argument(
+        "--uri", default=os.environ.get("MILVUS_DB_PATH", "data/milvus/kb.db")
+    )
+    parser.add_argument(
+        "--port", type=int, default=int(os.environ.get("MILVUS_RPC_PORT", "50051"))
+    )
+    parser.add_argument(
+        "--collection", default=os.environ.get("MILVUS_COLLECTION", "knowledge")
+    )
     args = parser.parse_args()
     serve(args.uri, args.port, args.collection)
 

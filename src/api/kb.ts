@@ -104,7 +104,9 @@ async function existingFingerprints(): Promise<Set<string> | null> {
 }
 
 export async function milvusState(): Promise<Record<string, unknown>> {
-  // The local store has no separate service to probe: "offline" here means the DB read failed.
+  // store.count() probes whichever dense backend is active: with MILVUS_RPC_URL set it is a
+  // real gRPC round-trip to the Milvus bridge ("offline" = bridge unreachable); in legacy mode
+  // it is a SQLite read ("offline" = the DB read failed).
   try {
     return {
       online: true,

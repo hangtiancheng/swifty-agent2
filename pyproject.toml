@@ -22,6 +22,16 @@ dependencies = [
 [tool.uv]
 package = false
 
+# Generated protobuf/gRPC stubs (regenerate via `make milvus-proto`): machine-generated,
+# never hand-edited, so ruff check/format must leave them byte-for-byte alone.
+# force-exclude: honor the exclusion even when the files are passed explicitly on the CLI.
+[tool.ruff]
+force-exclude = true
+extend-exclude = [
+    "src/milvus/kb_store_pb2.py",
+    "src/milvus/kb_store_pb2_grpc.py",
+]
+
 # Strict typing for the vendored train training pipeline (scripts/train/py). Scoped via `files`
 # so a bare `mypy` run targets only this typed subtree and leaves the other loose scripts alone.
 [tool.mypy]
