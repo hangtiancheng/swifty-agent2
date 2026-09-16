@@ -30,6 +30,7 @@ force-exclude = true
 extend-exclude = [
     "src/milvus/kb_store_pb2.py",
     "src/milvus/kb_store_pb2_grpc.py",
+    ".agents",
 ]
 
 # Strict typing for the vendored train training pipeline (scripts/train/py). Scoped via `files`
