@@ -37,7 +37,7 @@ export function contentToString(content: BaseMessage["content"]): string {
 }
 
 export function countTokens(messages: BaseMessage[]): number {
-  // Approximate token count calibrated for Chinese: chars / zh_chars_per_token plus a
+  // Approximate token count calibrated for English: chars / en_chars_per_token plus a
   // small per-message overhead. All budgeting paths go through this one entry point.
   let chars = 0;
   for (const m of messages) {
@@ -50,11 +50,11 @@ export function countTokens(messages: BaseMessage[]): number {
 }
 
 export function charsToTokens(nChars: number): number {
-  return Math.floor(nChars / settings.zhCharsPerToken);
+  return Math.floor(nChars / settings.enCharsPerToken);
 }
 
 export function tokensToChars(nTokens: number): number {
-  return Math.floor(nTokens * settings.zhCharsPerToken);
+  return Math.floor(nTokens * settings.enCharsPerToken);
 }
 
 export function windowBudget(): number {

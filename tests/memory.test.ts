@@ -15,8 +15,8 @@ import {
 
 describe("memory", () => {
   it("converts between chars and tokens with the calibrated ratio", () => {
-    expect(charsToTokens(120)).toBe(100);
-    expect(tokensToChars(100)).toBe(120);
+    expect(charsToTokens(120)).toBe(30);
+    expect(tokensToChars(30)).toBe(120);
   });
 
   it("counts tokens monotonically", () => {

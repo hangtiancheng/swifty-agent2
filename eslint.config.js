@@ -48,9 +48,9 @@ export default defineConfig(
     files: ["**/*.{ts,tsx}"],
     extends: [
       eslint.configs.recommended,
-      tseslint.configs.recommendedTypeChecked,
-      // tseslint.configs.strictTypeChecked,
-      // tseslint.configs.stylisticTypeChecked,
+      // tseslint.configs.recommendedTypeChecked,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
       reactRefresh.configs.vite,
     ],
     languageOptions: {
@@ -86,6 +86,8 @@ export default defineConfig(
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-call": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unnecessary-type-conversion": "warn",
+      "@typescript-eslint/restrict-template-expressions": "warn",
       "@typescript-eslint/no-unsafe-return": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "no-console": "warn",

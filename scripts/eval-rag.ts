@@ -110,7 +110,7 @@ const errors: string[] = [];
 
 function loadSamples(): Sample[] {
   const raw = fs.readFileSync(
-    path.join(ROOT, "tests/data/eval_ch04.jsonl"),
+    path.join(ROOT, "tests/data/eval_rag.jsonl"),
     "utf8",
   );
   return raw

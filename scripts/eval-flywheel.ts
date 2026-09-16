@@ -142,7 +142,7 @@ async function runOnce(): Promise<{
   metrics: Record<string, number>;
 }> {
   const raw = fs.readFileSync(
-    path.join(ROOT, "tests/data/eval_ch04.jsonl"),
+    path.join(ROOT, "tests/data/eval_rag.jsonl"),
     "utf8",
   );
   const samples: Sample[] = raw

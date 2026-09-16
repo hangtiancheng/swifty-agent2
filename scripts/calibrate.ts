@@ -80,7 +80,7 @@ function dist(name: string, xs: number[]): DistStat | null {
 
 async function main(): Promise<void> {
   const raw = fs.readFileSync(
-    path.join(ROOT, "tests/data/eval_ch04.jsonl"),
+    path.join(ROOT, "tests/data/eval_rag.jsonl"),
     "utf8",
   );
   const samples: Sample[] = raw
@@ -205,7 +205,7 @@ async function main(): Promise<void> {
         meta: {
           generated_at: new Date().toISOString().slice(0, 16).replace("T", " "),
           strategy: "hybrid_rerank",
-          dataset: "tests/data/eval_ch04.jsonl",
+          dataset: "tests/data/eval_rag.jsonl",
           n_answerable: answerable.length,
           n_absent: absent.length,
         },
