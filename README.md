@@ -5,8 +5,15 @@ migrated backend of the Python project in `~/Downloads/python` (the static pages
 It is not wire-compatible with the Python service; capabilities are aligned, response shapes are
 kept close.
 
+- ch01 => chat
+- ch02 => tool
+- ch03 => db
 - ch04 => rag
-- ch09 => eval
+- ch05 => workflow
+- ch06 => intent
+- ch07 => context
+- ch08 => mcp
+- ch09 => observability
 - ch10 => train
 
 ## Stack
