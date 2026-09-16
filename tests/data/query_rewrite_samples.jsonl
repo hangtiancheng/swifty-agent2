@@ -1,0 +1,5 @@
+{"query": "how much is that shipping fee anyway urgent", "expect_any": ["shipping", "postage"]}
+{"query": "when will my stuff get to me", "expect_any": ["delivery time", "how long", "delivery"]}
+{"query": "can the Pro model litter box scoop the waste automatically", "expect_any": ["Pro", "litter box"]}
+{"query": "i dont want it anymore can i return it", "expect_any": ["return", "refund", "no-reason"]}
+{"query": "it is broken what should i do", "expect_any": ["repair", "after-sales", "quality"]}

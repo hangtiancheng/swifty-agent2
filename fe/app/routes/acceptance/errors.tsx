@@ -35,7 +35,7 @@ interface ErrorItem {
   pred: string[];
   missed: string[];
   extra: string[];
-  kind: string; // backend enum: 漏打 | 错位 | 多打
+  kind: string; // backend enum: missed | misplaced | extra
   matrix_entries: number;
 }
 
@@ -84,29 +84,30 @@ export function meta() {
   ];
 }
 
-// Keys are backend enum values and must stay Chinese; tones and labels are display-only.
+// Keys are backend enum values (error direction from eval_report.json; severity from
+// taxonomy.ts) and must match the API exactly; tones and labels are display-only.
 const KIND_PILL: Record<string, PillTone> = {
-  漏打: "info",
-  错位: "fail",
-  多打: "running",
+  missed: "info",
+  misplaced: "fail",
+  extra: "running",
 };
 
 const KIND_LABEL: Record<string, string> = {
-  漏打: "Missed",
-  错位: "Misplaced",
-  多打: "Extra",
+  missed: "Missed",
+  misplaced: "Misplaced",
+  extra: "Extra",
 };
 
 const SEV_TONE: Record<string, PillTone> = {
-  严: "sev-strict",
-  中: "sev-medium",
-  宽: "sev-lenient",
+  strict: "sev-strict",
+  medium: "sev-medium",
+  lenient: "sev-lenient",
 };
 
 const SEV_LABEL: Record<string, string> = {
-  严: "Strict",
-  中: "Medium",
-  宽: "Lenient",
+  strict: "Strict",
+  medium: "Medium",
+  lenient: "Lenient",
 };
 
 /** Label legend: standard-missed → red, prediction-extra → orange, matched → green. */

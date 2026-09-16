@@ -13,7 +13,7 @@ import * as repository from "#/db/repository.ts";
 
 export const observabilityRouter = new Hono();
 
-const REPORT_DIR = path.join(settings.root, "data/eval/reports");
+const REPORT_DIR = path.join(settings.root, "data/observability/reports");
 const COST = path.join(REPORT_DIR, "cost_by_intent.json");
 const CALIB = path.join(REPORT_DIR, "confidence_calibration.json");
 const TREND_NOTE = path.join(REPORT_DIR, "eval_trend_note.json");

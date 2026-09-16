@@ -3,7 +3,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   LabelList,
   Line,
   LineChart,
@@ -101,7 +100,7 @@ export function GroupedBarChart({
                 <LabelList
                   dataKey={s.key}
                   position="top"
-                  formatter={(v: number | null) => (typeof v === "number" ? fmt2(v) : "")}
+                  formatter={(v: unknown) => (typeof v === "number" ? fmt2(v) : "")}
                   style={VALUE_TICK}
                 />
               </Bar>
@@ -214,8 +213,8 @@ export function RingGauge({
           <PieChart>
             <Pie
               data={[
-                { name: "rate", value: clamped },
-                { name: "rest", value: 1 - clamped },
+                { name: "rate", value: clamped, fill: "var(--online)" },
+                { name: "rest", value: 1 - clamped, fill: "var(--cream)" },
               ]}
               dataKey="value"
               innerRadius={40}
@@ -225,10 +224,7 @@ export function RingGauge({
               stroke="var(--ink)"
               strokeWidth={1}
               isAnimationActive={false}
-            >
-              <Cell fill="var(--online)" />
-              <Cell fill="var(--cream)" />
-            </Pie>
+            />
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center">

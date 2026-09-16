@@ -777,8 +777,8 @@ function HallucBox({ h }: { h: Hallucination }) {
           fabricated ones, <b>{h.dismissed}</b> were reviewed as over-strict judge calls
           (marked "Dismissed"). Denominator = {h.graded ?? "—"} answerable + {h.absent ?? "—"}{" "}
           out-of-KB questions. The ledger holds <b>{lg.total ?? "—"}</b> cases across all
-          rounds (Unresolved {lg["unresolved"] ?? "—"} · Resolved {lg["resolved"] ?? "—"} ·
-          Dismissed {lg["dismissed"] ?? "—"}) — a cross-round management view; don't divide it
+          rounds (Unresolved {lg.unresolved ?? "—"} · Resolved {lg.resolved ?? "—"} ·
+          Dismissed {lg.dismissed ?? "—"}) — a cross-round management view; don't divide it
           by one round's question count.
         </div>
       </div>
@@ -1055,15 +1055,15 @@ function LedgerPanel() {
   const h = data?.hallucination;
   const counts = data?.counts ?? {};
   const all =
-    (counts["unresolved"] ?? 0) +
-    (counts["resolved"] ?? 0) +
-    (counts["dismissed"] ?? 0);
+    (counts.unresolved ?? 0) +
+    (counts.resolved ?? 0) +
+    (counts.dismissed ?? 0);
 
   return (
     <Panel
       title="Fabricated-case ledger"
       pill={<Pill tone="info">Cumulative across rounds · actionable</Pill>}
-      lede="The section above only covers the current round — re-running the report overwrites it. The ledger keeps flagged cases across rounds, keyed by question: when the same question is flagged again, its entry updates and the count increments; a case that resurfaces after being handled reverts to "Unresolved" and is marked "Recurred" — the previous fix didn't hold. Every entry keeps the evidence behind the [n] markers in the answer at the time, so you can open it and see exactly what the model was fed."
+      lede="The section above only covers the current round — re-running the report overwrites it. The ledger keeps flagged cases across rounds, keyed by question: when the same question is flagged again, its entry updates and the count increments; a case that resurfaces after being handled reverts to “Unresolved” and is marked “Recurred” — the previous fix didn't hold. Every entry keeps the evidence behind the [n] markers in the answer at the time, so you can open it and see exactly what the model was fed."
     >
       {err ? (
         <div className="border-3 border-ink bg-error-bg p-2.5 text-[12.5px]">
@@ -1079,13 +1079,13 @@ function LedgerPanel() {
               {
                 label: "Unresolved",
                 st: "unresolved",
-                cnt: counts["unresolved"] ?? 0,
+                cnt: counts.unresolved ?? 0,
               },
-              { label: "Resolved", st: "resolved", cnt: counts["resolved"] ?? 0 },
+              { label: "Resolved", st: "resolved", cnt: counts.resolved ?? 0 },
               {
                 label: "Dismissed",
                 st: "dismissed",
-                cnt: counts["dismissed"] ?? 0,
+                cnt: counts.dismissed ?? 0,
               },
               { label: "All", st: "", cnt: all },
             ].map(({ label, st, cnt }) => (
@@ -1241,7 +1241,7 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       <GateBar>
         <Stat label="Eval set" value={String(m.n_samples ?? "—") + " questions"} />
         <Stat label="Knowledge Base" value={String(m.kb_chunks ?? "—") + " chunks"} />
-        <Stat label="Embedding / rerank" value="bge-m3 · reranker-v2-m3" small />
+        <Stat label="Embedding / rerank" value="qwen3.7-text-embedding-flash · reranker-v2-m3" small />
         <Stat label="Judge model" value={m.chat_model ?? "—"} small />
         <Stat label="Last run" value={m.generated_at ?? "—"} small />
       </GateBar>

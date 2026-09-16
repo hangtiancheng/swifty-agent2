@@ -23,6 +23,22 @@ export interface JobSpec {
 }
 
 const script = (name: string): string[] => [process.execPath, path.join("scripts", `${name}.ts`)];
+// ch10 TS scripts live under scripts/ch10/; the three torch-dependent steps stay in Python and run
+// through uv's ml dependency group; classifier-up/down are daemon management, so they go through make.
+const ch10Script = (name: string, ...args: string[]): string[] => [
+  process.execPath,
+  path.join("scripts", "ch10", `${name}.ts`),
+  ...args,
+];
+const pyScript = (name: string): string[] => [
+  "uv",
+  "run",
+  "--group",
+  "ml",
+  "python",
+  path.join("scripts", "ch10", "py", `${name}.py`),
+];
+const makeTarget = (...args: string[]): string[] => ["make", ...args];
 
 function spec(name: string, title: string, argv: string[], needs: string, heavy = false): JobSpec {
   return { name, title, argv, needs, heavy };
@@ -43,6 +59,18 @@ export const JOBS: Record<string, JobSpec> = Object.fromEntries(
     spec("cost-report", "Cost ledger by intent", script("cost-report"), "Requires Langfuse running with traces inside the window"),
     spec("eval-flywheel", "Evaluation pipeline (records one trend round)", script("eval-flywheel"), "Requires the local DB + a built KB + chat upstream; takes minutes", true),
     spec("calibrate-confidence", "Confidence threshold calibration", script("calibrate-confidence"), "Requires the local vector store + a built KB + rerank upstream; takes minutes", true),
+    // ch10 topic classifier: corpus -> dataset -> train -> eval -> export -> threshold scan -> serve -> bypass classify
+    spec("ch10-golden", "Golden sample gate", ch10Script("validate-golden"), "Requires chat upstream"),
+    spec("ch10-corpus", "Corpus pipeline", ch10Script("build-corpus"), "Requires the local DB + chat upstream", true),
+    spec("ch10-dataset", "Dataset split & augmentation", ch10Script("build-dataset"), "Requires chat upstream", true),
+    spec("ch10-train", "Full-parameter fine-tune", pyScript("train"), "Requires the ml deps (uv); takes minutes", true),
+    spec("train-eval", "Test set evaluation", pyScript("evaluate"), "Requires the ml deps + trained weights"),
+    spec("ch10-export", "ONNX export & consistency check", pyScript("export_onnx"), "Requires the ml deps + trained weights", true),
+    spec("ch10-threshold-scan", "Threshold scan replay", ch10Script("scan-threshold-replay"), "Requires the classifier service :8110"),
+    spec("classifier-up", "Start the classifier service", makeTarget("classifier-up"), "Requires exported ONNX"),
+    spec("classifier-down", "Stop the classifier service", makeTarget("classifier-down"), "—"),
+    spec("classify-pool", "Bypass batch classification", ch10Script("classify-pool"), "Requires the local DB + :8110"),
+    spec("classify-pool-force", "Bypass batch classification (force a partial batch)", ch10Script("classify-pool", "--force"), "Requires the local DB + :8110"),
   ].map((s) => [s.name, s]),
 );
 

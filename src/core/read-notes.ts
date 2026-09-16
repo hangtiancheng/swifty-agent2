@@ -15,7 +15,7 @@ const log = childLogger("read-notes");
 const MAX_CHARS = 130;
 const TIMEOUT_MS = 120_000;
 
-// Numbers inside identifiers (p25, Recall@10, bge-m3) are not conclusions.
+// Numbers inside identifiers (p25, Recall@10, qwen3.7-text-embedding-flash) are not conclusions.
 const NUM_RE = /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?(?![A-Za-z_])/g;
 
 const KINDS: Record<string, [string, string]> = {

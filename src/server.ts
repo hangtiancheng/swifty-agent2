@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { pinoLogger } from "hono-pino";
 
+import { acceptanceRouter } from "./api/acceptance.ts";
 import { actionsRouter } from "./api/actions.ts";
 import { adminRouter } from "./api/admin.ts";
 import { agentRouter } from "./api/agent.ts";
@@ -32,6 +33,7 @@ export function createApp(): Hono {
   app.use(pinoLogger({ pino: logger }));
 
   app.get("/healthz", (c) => c.json({ ok: true }));
+  app.route("/", acceptanceRouter);
   app.route("/", actionsRouter);
   app.route("/", adminRouter);
   app.route("/", agentRouter);

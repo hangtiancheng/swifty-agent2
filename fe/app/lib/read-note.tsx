@@ -9,7 +9,7 @@ import { cn } from "./cn";
  *  no longer draws its own conclusions. */
 
 // Bold only real numbers, not digits inside names (the 25 in BM25, the 10 in
-// Recall@10, the 3 in bge-m3) — matching the boundary rule read_notes.py validates with.
+// Recall@10, the 3 in qwen3.7-text-embedding-flash) — matching the boundary rule read_notes.py validates with.
 const NUM_RE =
   /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?%?(?![A-Za-z_])/g;
 

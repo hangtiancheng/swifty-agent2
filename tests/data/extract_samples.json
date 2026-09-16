@@ -1,0 +1,22 @@
+[
+  {
+    "text": "I bought a cat tree last week, order number MH20260701123, and it fell apart right out of the box. I want a refund.",
+    "expected": { "order_id": "MH20260701123", "request_type": "refund" }
+  },
+  {
+    "text": "I bought the cat food in the wrong flavor and want to exchange it for the salmon one, order number MH20260705888. Can you do that?",
+    "expected": { "order_id": "MH20260705888", "request_type": "exchange" }
+  },
+  {
+    "text": "The automatic feeder stopped dispensing food after three days. Please help me get it repaired. I forgot the order number and will provide it later.",
+    "expected": { "order_id": null, "request_type": "repair" }
+  },
+  {
+    "text": "Your delivery courier had a terrible attitude, threw the box at the door and left without a word. I want to file a complaint against him.",
+    "expected": { "order_id": null, "request_type": "complaint" }
+  },
+  {
+    "text": "The item arrived fine. I just want to ask what I should watch out for when maintaining it going forward.",
+    "expected": { "order_id": null, "request_type": "other" }
+  }
+]

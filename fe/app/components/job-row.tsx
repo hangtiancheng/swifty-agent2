@@ -174,7 +174,7 @@ function JobButton({
   );
 }
 
-/** 一排作业按钮 + 它们共用的一个日志窗口 */
+/** A row of job buttons + the single log window they share */
 export function JobRow({
   specs,
   onFinish,

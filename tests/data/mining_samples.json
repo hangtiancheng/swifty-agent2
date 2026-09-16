@@ -1,0 +1,10 @@
+[
+  {
+    "conversation": "user: How is your shipping fee calculated\nassistant: Free shipping on orders of 99 yuan or more; below that a 10 yuan shipping fee applies, with a separate surcharge for remote areas.",
+    "expect_question_contains": "shipping"
+  },
+  {
+    "conversation": "user: Where is my order MH123\nassistant: Your parcel is at the Guangzhou sorting center and is expected to arrive tomorrow.",
+    "expect_empty": true
+  }
+]

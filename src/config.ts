@@ -43,14 +43,14 @@ export const settings = {
   chatReasoningSplit: str("CHAT_REASONING_SPLIT"),
 
   // --- embeddings upstream (required at runtime) ---
-  embedBaseUrl: str("EMBED_BASE_URL", "https://api.siliconflow.cn/v1"),
+  embedBaseUrl: str("EMBED_BASE_URL", "https://maas.aliyuncs.com/compatible-mode/v1"),
   embedApiKey: str("EMBED_API_KEY"),
-  embedModel: str("EMBED_MODEL", "BAAI/bge-m3"),
+  embedModel: str("EMBED_MODEL", "qwen3.7-text-embedding-flash"),
 
   // --- rerank upstream (required at runtime) ---
-  rerankBaseUrl: str("RERANK_BASE_URL", "https://api.siliconflow.cn/v1"),
+  rerankBaseUrl: str("RERANK_BASE_URL", "https://maas.aliyuncs.com/compatible-mode/v1"),
   rerankApiKey: str("RERANK_API_KEY"),
-  rerankModel: str("RERANK_MODEL", "BAAI/bge-reranker-v2-m3"),
+  rerankModel: str("RERANK_MODEL", "qwen3.7-text-rerank"),
 
   tokenBudget: num("TOKEN_BUDGET", 2000),
 

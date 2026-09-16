@@ -1,0 +1,30 @@
+{"text": "Can I still return it under the 7-day no-reason policy?", "labels": ["returns_refunds"]}
+{"text": "Where is my package? It hasn't moved at all.", "labels": ["logistics"]}
+{"text": "The cat bed is too big, can I exchange it for a smaller one?", "labels": ["sizing", "returns_refunds"]}
+{"text": "Can I get a VAT invoice?", "labels": ["invoicing"]}
+{"text": "The litter box arrived broken, the motor won't spin.", "labels": ["quality_issue"]}
+{"text": "Who pays the return shipping fee?", "labels": ["shipping_fee"]}
+{"text": "Can the coupons be stacked together?", "labels": ["promotions"]}
+{"text": "The price dropped right after I bought it, can I get the difference back?", "labels": ["price_protection"]}
+{"text": "I was charged twice when paying.", "labels": ["payment"]}
+{"text": "Can the order still be canceled?", "labels": ["order_modification"]}
+{"text": "When will the smart litter box be back in stock?", "labels": ["stock_replenishment"]}
+{"text": "How do I store the freeze-dried cat food?", "labels": ["product_info"]}
+{"text": "How long is the warranty on the cat tree?", "labels": ["warranty_repair"]}
+{"text": "I can't log in, I forgot my password.", "labels": ["account"]}
+{"text": "Can I use my points to offset money?", "labels": ["membership_points"]}
+{"text": "Where do I write a follow-up review?", "labels": ["reviews"]}
+{"text": "What time does your customer service start?", "labels": ["other"]}
+{"text": "where's that thing i ordered, why ain't it here yet", "labels": ["logistics"]}
+{"text": "I wanna retrun this cat scratcher", "labels": ["returns_refunds"]}
+{"text": "Can you chase up the courier? Also this one has a color difference, can I exchange it?", "labels": ["logistics", "returns_refunds"]}
+{"text": "This cat bed is one size too big.", "labels": ["sizing"]}
+{"text": "The cat villa fence broke, can it be repaired?", "labels": ["warranty_repair"]}
+{"text": "I want to return it, but do I have to pay the return shipping myself?", "labels": ["returns_refunds", "shipping_fee"]}
+{"text": "The invoice title is wrong, can it be reissued?", "labels": ["invoicing"]}
+{"text": "Do you support cash on delivery?", "labels": ["payment"]}
+{"text": "Please help me change the shipping address.", "labels": ["order_modification"]}
+{"text": "Is the cat bowl ceramic or stainless steel?", "labels": ["product_info"]}
+{"text": "Any deals on Singles' Day?", "labels": ["promotions"]}
+{"text": "How do I delete my account?", "labels": ["account"]}
+{"text": "There are bugs in the cat food I bought, I want a refund and you cover the shipping.", "labels": ["quality_issue", "returns_refunds", "shipping_fee"]}

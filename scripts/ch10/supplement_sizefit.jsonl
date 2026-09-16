@@ -1,0 +1,34 @@
+{"text": "Bought it too big, want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Bought it too small, want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "It's too big, just return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Ordered one size too big, want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Ordered too small, want to exchange it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Too big, want to exchange for a smaller one.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Too small, need to exchange for a bigger one.", "labels": ["sizing", "returns_refunds"]}
+{"text": "The size is too big, can I return it?", "labels": ["sizing", "returns_refunds"]}
+{"text": "Ordered the wrong small size, please exchange it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "One size too big, I want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "A bit small, want to swap for a bigger one.", "labels": ["sizing", "returns_refunds"]}
+{"text": "It's too big, can I return it?", "labels": ["sizing", "returns_refunds"]}
+{"text": "It's too small, can I exchange it?", "labels": ["sizing", "returns_refunds"]}
+{"text": "Ordered the wrong size, want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "The size is too big, how do I return it?", "labels": ["sizing", "returns_refunds"]}
+{"text": "The size doesn't fit, want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Too big, want to return it, can that be done?", "labels": ["sizing", "returns_refunds"]}
+{"text": "I bought it too big, just return it for me.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Way too big, the cat can't use it, return it!", "labels": ["sizing", "returns_refunds"]}
+{"text": "This size is way too big, I want to return it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Runs small, want to exchange it.", "labels": ["sizing", "returns_refunds"]}
+{"text": "Wrong size, return it and I'll buy again.", "labels": ["sizing", "returns_refunds"]}
+{"text": "One size too big.", "labels": ["sizing"]}
+{"text": "Did I buy this too big?", "labels": ["sizing"]}
+{"text": "Did I buy it too small?", "labels": ["sizing"]}
+{"text": "Feels like I ordered one size too big.", "labels": ["sizing"]}
+{"text": "It's too big, can the cat still use it?", "labels": ["sizing"]}
+{"text": "If the size is too small, will it be cramped?", "labels": ["sizing"]}
+{"text": "Is it a problem that I ordered one size too big?", "labels": ["sizing"]}
+{"text": "I don't want it anymore, want to return it.", "labels": ["returns_refunds"]}
+{"text": "Bought the wrong one, want to return it.", "labels": ["returns_refunds"]}
+{"text": "How do I return an item?", "labels": ["returns_refunds"]}
+{"text": "Can I exchange it?", "labels": ["returns_refunds"]}
+{"text": "Placed the wrong order, cancel it.", "labels": ["returns_refunds"]}

@@ -1,7 +1,33 @@
 [project]
 name = "swifty-agent2"
 version = "0.0.0"
-description = "Add your description here"
+description = "Swifty Agent2 Python Force"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "accelerate>=1.15.0",
+    "numpy>=2.5.3",
+    "onnx>=1.22.0",
+    "onnxruntime>=1.30.0",
+    "pymilvus>=3.0.1",
+    "ruff>=0.16.7",
+    "scikit-learn>=1.9.1",
+    "torch>=2.14.0",
+    "transformers>=5.17.0",
+]
+
+# uv syncs the dependencies but never builds/installs this repo as a Python package (it is a Node project).
+[tool.uv]
+package = false
+
+# Strict typing for the vendored ch10 training pipeline (scripts/ch10/py). Scoped via `files`
+# so a bare `mypy` run targets only this typed subtree and leaves the other loose scripts alone.
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["scripts/ch10/py"]
+
+# scikit-learn and onnxruntime ship no py.typed marker / stubs; treat them as Any at the boundary.
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "onnxruntime.*"]
+ignore_missing_imports = true

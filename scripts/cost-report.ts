@@ -10,7 +10,7 @@ import { langfuseConfig } from "#/core/observability.ts";
 import * as readNotes from "#/core/read-notes.ts";
 
 const ROOT = settings.root;
-const OUT_DIR = path.join(ROOT, "data/eval/reports");
+const OUT_DIR = path.join(ROOT, "data/observability/reports");
 const OUT = path.join(OUT_DIR, "cost_by_intent.txt");
 const OUT_JSON = path.join(OUT_DIR, "cost_by_intent.json");
 
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
     )}\n`,
     "utf8",
   );
-  console.log("\nReport written to data/eval/reports/cost_by_intent.txt and .json");
+  console.log("\nReport written to data/observability/reports/cost_by_intent.txt and .json");
 }
 
 await main();

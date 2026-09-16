@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 
 
+import * as acceptance from "./acceptance.ts";
 import * as kb from "./kb.ts";
 import * as observability from "./observability.ts";
 import * as rageval from "./rageval.ts";
@@ -232,6 +233,39 @@ async function topicsCard(): Promise<Card> {
   return c;
 }
 
+// Classifier acceptance: the nine evidence gates, read straight from the acceptance overview — not recomputed here.
+async function classifierCard(): Promise<Card> {
+  const c = card("classifier", "Classifier acceptance", "/acceptance", "Corpus → fine-tune → evaluate → export → bypass grouping, nine evidence checks gated one by one");
+  let ov: acceptance.AcceptanceOverview;
+  try {
+    ov = await acceptance.overview();
+  } catch (error) {
+    c.note = errText(error);
+    return c;
+  }
+  c.metrics = [
+    { label: "Gates passed", value: `${ov.passed}/${ov.total}` },
+    { label: ":8110", value: ov.classifier.online ? "online" : "offline" },
+  ];
+  if (ov.all_pass) {
+    c.status = "ok";
+    c.headline = "All nine gates passed";
+  } else {
+    const missing = ov.blocks.filter((b) => b.status === "missing").map((b) => b.title);
+    const failed = ov.blocks.filter((b) => b.status === "fail").map((b) => b.title);
+    c.status = failed.length > 0 ? "attention" : "missing";
+    c.headline =
+      [
+        failed.length > 0 ? `${failed.length} below bar: ${failed.join("/")}` : "",
+        missing.length > 0 ? `${missing.length} missing artifact: ${missing.join("/")}` : "",
+      ]
+        .filter(Boolean)
+        .join("; ") || "Not run yet";
+  }
+  c.note = c.note ?? "The numbers on the page are the same artifacts the terminal make targets produce";
+  return c;
+}
+
 export async function overview(): Promise<Record<string, unknown>> {
   return {
     modules: [
@@ -240,6 +274,7 @@ export async function overview(): Promise<Record<string, unknown>> {
       await reviewCard(),
       await observabilityCard(),
       await topicsCard(),
+      await classifierCard(),
     ],
   };
 }

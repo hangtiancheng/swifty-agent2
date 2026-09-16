@@ -35,7 +35,7 @@ import type { JobSpec } from "~/lib/types";
 
 interface ClassMetric {
   name: string;
-  severity: string; // backend enum: 严 | 中 | 宽
+  severity: string; // backend enum: strict | medium | lenient
   p: number;
   r: number;
   f1: number;
@@ -118,17 +118,18 @@ export function meta() {
   ];
 }
 
-// Keys are backend enum values and must stay Chinese; tones and labels are display-only.
+// Keys are backend enum values (severity from taxonomy.ts) and must match the API
+// exactly; tones and labels are display-only.
 const SEV_TONE: Record<string, PillTone> = {
-  严: "sev-strict",
-  中: "sev-medium",
-  宽: "sev-lenient",
+  strict: "sev-strict",
+  medium: "sev-medium",
+  lenient: "sev-lenient",
 };
 
 const SEV_LABEL: Record<string, string> = {
-  严: "Strict",
-  中: "Medium",
-  宽: "Lenient",
+  strict: "Strict",
+  medium: "Medium",
+  lenient: "Lenient",
 };
 
 export default function AcceptanceEvalPage({
