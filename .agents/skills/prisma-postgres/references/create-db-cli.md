@@ -42,16 +42,16 @@ Top-level commands currently exposed:
 
 ## `create` options
 
-| Flag | Shorthand | Description |
-|---|---|---|
-| `--region [string]` | `-r` | Region choice: `ap-southeast-1`, `ap-northeast-1`, `eu-central-1`, `eu-west-3`, `us-east-1`, `us-west-1` |
-| `--interactive [boolean]` | `-i` | Open region selector |
-| `--json [boolean]` | `-j` | Output machine-readable JSON |
-| `--env [string]` | `-e` | Write `DATABASE_URL` and `CLAIM_URL` into a target `.env` |
-| `--ttl [string]` | `-t` | Auto-delete after a TTL like `30m` or `1h-24h` |
-| `--copy [boolean]` | `-c` | Copy the connection string to the clipboard |
-| `--quiet [boolean]` | `-q` | Only print the connection string |
-| `--open [boolean]` | `-o` | Open the claim URL in your browser |
+| Flag                      | Shorthand | Description                                                                                              |
+| ------------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `--region [string]`       | `-r`      | Region choice: `ap-southeast-1`, `ap-northeast-1`, `eu-central-1`, `eu-west-3`, `us-east-1`, `us-west-1` |
+| `--interactive [boolean]` | `-i`      | Open region selector                                                                                     |
+| `--json [boolean]`        | `-j`      | Output machine-readable JSON                                                                             |
+| `--env [string]`          | `-e`      | Write `DATABASE_URL` and `CLAIM_URL` into a target `.env`                                                |
+| `--ttl [string]`          | `-t`      | Auto-delete after a TTL like `30m` or `1h-24h`                                                           |
+| `--copy [boolean]`        | `-c`      | Copy the connection string to the clipboard                                                              |
+| `--quiet [boolean]`       | `-q`      | Only print the connection string                                                                         |
+| `--open [boolean]`        | `-o`      | Open the claim URL in your browser                                                                       |
 
 ## Lifecycle and claim flow
 

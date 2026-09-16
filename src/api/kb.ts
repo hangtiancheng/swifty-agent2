@@ -94,8 +94,8 @@ export async function milvusState(): Promise<Record<string, unknown>> {
   }
 }
 
-async function sources(): Promise<Array<Record<string, unknown>>> {
-  const out: Array<Record<string, unknown>> = [];
+async function sources(): Promise<Record<string, unknown>[]> {
+  const out: Record<string, unknown>[] = [];
   for (const [fname, ctype] of Object.entries(SOURCE_TYPES)) {
     const file = path.join(KB_DIR, fname);
     const item: Record<string, unknown> = {
@@ -123,7 +123,7 @@ async function sources(): Promise<Array<Record<string, unknown>>> {
 kbRouter.get("/api/kb/overview", async () => {
   const milvus = await milvusState();
   let stats: repository.KnowledgeStats | null = null;
-  let recent: Array<Record<string, unknown>> = [];
+  let recent: Record<string, unknown>[] = [];
   let staging: repository.StagingStats | null = null;
   let dbError: string | null = null;
   try {
@@ -194,7 +194,7 @@ kbRouter.post("/api/kb/preview", async (c) => {
   const [text, ctype, source] = resolvePreview(body);
   const chunks = await documents.buildChunks(text, ctype);
   const seen = await existingFingerprints();
-  const views: Array<Record<string, unknown>> = [];
+  const views: Record<string, unknown>[] = [];
   let dups = 0;
   const batch = new Set<string>();
   chunks.forEach((chunk, i) => {
@@ -232,7 +232,7 @@ kbRouter.post("/api/kb/ingest", async (c) => {
   }
 
   const kept: documents.Chunk[] = [];
-  const skipped: Array<Record<string, unknown>> = [];
+  const skipped: Record<string, unknown>[] = [];
   for (const chunk of chunks) {
     const fp = fingerprint(chunk.questions, chunk.answer);
     if (seen.has(fp)) {

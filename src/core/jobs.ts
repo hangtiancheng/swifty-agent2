@@ -122,7 +122,7 @@ export function start(name: string): JobRun {
 export async function stop(name: string): Promise<void> {
   const run = runOf(name);
   const child = run.proc;
-  if (run.status !== "running" || child === null || child.pid === undefined) {
+  if (run.status !== "running" || child?.pid === undefined) {
     throw new Error("This job is not currently running");
   }
   run.status = "stopped";
@@ -136,7 +136,7 @@ export async function stop(name: string): Promise<void> {
       resolve();
       return;
     }
-    child.once("exit", () => resolve());
+    child.once("exit", () => { resolve(); });
   });
   const timer = setTimeout(() => {
     try {

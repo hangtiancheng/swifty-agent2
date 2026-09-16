@@ -39,12 +39,12 @@ await prisma.$transaction(async (tx) => {
     where: { id: senderId },
     data: { balance: { decrement: amount } }
   })
-  
+
   // Check balance
   if (sender.balance < 0) {
     throw new Error('Insufficient funds')
   }
-  
+
   // Increment recipient balance
   await tx.account.update({
     where: { id: recipientId },
@@ -70,12 +70,12 @@ await prisma.$transaction(
 
 ### Isolation levels
 
-| Level | Description |
-|-------|-------------|
+| Level             | Description                                    |
+| ----------------- | ---------------------------------------------- |
 | `ReadUncommitted` | Lowest isolation, can read uncommitted changes |
-| `ReadCommitted` | Only read committed changes |
-| `RepeatableRead` | Consistent reads within transaction |
-| `Serializable` | Highest isolation, serialized execution |
+| `ReadCommitted`   | Only read committed changes                    |
+| `RepeatableRead`  | Consistent reads within transaction            |
+| `Serializable`    | Highest isolation, serialized execution        |
 
 ## Nested Writes
 
@@ -108,7 +108,7 @@ await prisma.$transaction(async (tx) => {
   // Use tx instead of prisma
   await tx.user.create({ ... })
   await tx.post.create({ ... })
-  
+
   // Can call methods
   const count = await tx.user.count()
 })
@@ -124,7 +124,7 @@ await prisma.$transaction(async (tx) => {
   const user = await tx.user.findUniqueOrThrow({
     where: { id: 1 }
   })
-  
+
   await tx.post.create({
     data: { title: 'New Post', authorId: user.id }
   })
@@ -175,10 +175,10 @@ await prisma.$transaction(
 
 ## Sequential vs Interactive
 
-| Feature | Sequential | Interactive |
-|---------|------------|-------------|
-| Syntax | Array | Async function |
-| Dependent ops | No | Yes |
-| Conditional logic | No | Yes |
-| Performance | Better | More flexible |
-| Use case | Simple batch | Complex logic |
+| Feature           | Sequential   | Interactive    |
+| ----------------- | ------------ | -------------- |
+| Syntax            | Array        | Async function |
+| Dependent ops     | No           | Yes            |
+| Conditional logic | No           | Yes            |
+| Performance       | Better       | More flexible  |
+| Use case          | Simple batch | Complex logic  |

@@ -73,10 +73,10 @@ await pool.end()
 
 ## Common mistakes
 
-| Mistake | Error | Fix |
-|---|---|---|
-| `import { PrismaClient } from './generated/prisma'` | `Cannot find module` | Use `./generated/prisma/client.js` |
-| `new PrismaClient()` | `PrismaClient needs non-empty options` | Pass `{ adapter }` |
-| `new PrismaClient({ datasourceUrl: url })` | `Unknown property datasourceUrl` | Use adapter pattern instead |
-| Missing `"type": "module"` in package.json | ESM import errors | Add `"type": "module"` |
-| `import { PrismaClient } from '@prisma/client'` | Wrong export | Use `./generated/prisma/client.js` |
+| Mistake                                             | Error                                  | Fix                                |
+| --------------------------------------------------- | -------------------------------------- | ---------------------------------- |
+| `import { PrismaClient } from './generated/prisma'` | `Cannot find module`                   | Use `./generated/prisma/client.js` |
+| `new PrismaClient()`                                | `PrismaClient needs non-empty options` | Pass `{ adapter }`                 |
+| `new PrismaClient({ datasourceUrl: url })`          | `Unknown property datasourceUrl`       | Use adapter pattern instead        |
+| Missing `"type": "module"` in package.json          | ESM import errors                      | Add `"type": "module"`             |
+| `import { PrismaClient } from '@prisma/client'`     | Wrong export                           | Use `./generated/prisma/client.js` |

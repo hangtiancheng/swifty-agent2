@@ -4,7 +4,7 @@ description: Prisma Compute deployment and hosting guide. Use whenever the user 
 license: MIT
 metadata:
   author: prisma
-  version: "1.5.1"
+  version: '1.5.1'
 ---
 
 # Prisma Compute
@@ -82,16 +82,16 @@ Use this skill for:
 
 ## Rules by Priority
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Command verification | CRITICAL | `verify-` |
-| 2 | Auth and workspace selection | CRITICAL | `auth-` |
-| 3 | Framework readiness | CRITICAL | `framework-` |
-| 4 | Runtime host and port binding | CRITICAL | `runtime-` |
-| 5 | Typed Compute config | HIGH | `config-` |
-| 6 | Branch, environment, and database wiring | HIGH | `env-` |
-| 7 | Deploy operations | HIGH | `deploy-` |
-| 8 | SDK and API automation | MEDIUM | `sdk-` |
+| Priority | Category                                 | Impact   | Prefix       |
+| -------- | ---------------------------------------- | -------- | ------------ |
+| 1        | Command verification                     | CRITICAL | `verify-`    |
+| 2        | Auth and workspace selection             | CRITICAL | `auth-`      |
+| 3        | Framework readiness                      | CRITICAL | `framework-` |
+| 4        | Runtime host and port binding            | CRITICAL | `runtime-`   |
+| 5        | Typed Compute config                     | HIGH     | `config-`    |
+| 6        | Branch, environment, and database wiring | HIGH     | `env-`       |
+| 7        | Deploy operations                        | HIGH     | `deploy-`    |
+| 8        | SDK and API automation                   | MEDIUM   | `sdk-`       |
 
 ## Quick Rules
 

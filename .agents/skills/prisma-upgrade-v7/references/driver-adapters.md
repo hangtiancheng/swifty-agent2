@@ -14,18 +14,18 @@ MongoDB should not follow this path. There is no published MongoDB `@prisma/adap
 
 ## Available Adapters
 
-| Database | Adapter Package | Underlying Driver |
-|----------|-----------------|-------------------|
-| PostgreSQL | `@prisma/adapter-pg` | `pg` |
-| MySQL / MariaDB | `@prisma/adapter-mariadb` | `mariadb` |
-| SQLite | `@prisma/adapter-better-sqlite3` | `better-sqlite3` |
-| Prisma Postgres (Node.js) | `@prisma/adapter-pg` | `pg` |
-| Prisma Postgres (edge/serverless) | `@prisma/adapter-ppg` | `@prisma/ppg` |
-| SQL Server | `@prisma/adapter-mssql` | `mssql` |
-| Neon | `@prisma/adapter-neon` | `@neondatabase/serverless` |
-| PlanetScale | `@prisma/adapter-planetscale` | `@planetscale/database` |
-| Turso/libSQL | `@prisma/adapter-libsql` | `@libsql/client` |
-| D1 (Cloudflare) | `@prisma/adapter-d1` | Cloudflare D1 |
+| Database                          | Adapter Package                  | Underlying Driver          |
+| --------------------------------- | -------------------------------- | -------------------------- |
+| PostgreSQL                        | `@prisma/adapter-pg`             | `pg`                       |
+| MySQL / MariaDB                   | `@prisma/adapter-mariadb`        | `mariadb`                  |
+| SQLite                            | `@prisma/adapter-better-sqlite3` | `better-sqlite3`           |
+| Prisma Postgres (Node.js)         | `@prisma/adapter-pg`             | `pg`                       |
+| Prisma Postgres (edge/serverless) | `@prisma/adapter-ppg`            | `@prisma/ppg`              |
+| SQL Server                        | `@prisma/adapter-mssql`          | `mssql`                    |
+| Neon                              | `@prisma/adapter-neon`           | `@neondatabase/serverless` |
+| PlanetScale                       | `@prisma/adapter-planetscale`    | `@planetscale/database`    |
+| Turso/libSQL                      | `@prisma/adapter-libsql`         | `@libsql/client`           |
+| D1 (Cloudflare)                   | `@prisma/adapter-d1`             | Cloudflare D1              |
 
 ## Installation
 

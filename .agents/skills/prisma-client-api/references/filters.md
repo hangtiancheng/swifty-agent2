@@ -57,11 +57,11 @@ where: { email: { startsWith: 'alice' } }
 where: { email: { endsWith: '@prisma.io' } }
 
 // Case-insensitive (default for some databases)
-where: { 
-  email: { 
+where: {
+  email: {
     contains: 'PRISMA',
-    mode: 'insensitive' 
-  } 
+    mode: 'insensitive'
+  }
 }
 ```
 

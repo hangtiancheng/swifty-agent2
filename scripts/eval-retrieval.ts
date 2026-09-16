@@ -29,7 +29,7 @@ for (const sample of samples) {
   });
   const top = hits[0];
   const ok =
-    top !== undefined && top.answer.includes(sample.expect_answer_contains);
+    top?.answer.includes(sample.expect_answer_contains);
   if (!ok) {
     failures += 1;
   }

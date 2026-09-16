@@ -62,16 +62,16 @@ Do not define both. Besides `app`/`apps`, the only other allowed top-level key i
 
 Each app target accepts:
 
-| Field | Meaning |
-|-------|---------|
-| `name` | Deployed app name. Defaults to the `apps` key, then CLI inference. |
-| `region` | Compute region id used only when deploy creates a new app. Existing apps keep their current region. |
-| `root` | App directory relative to the config file. Defaults to the config directory. |
-| `framework` | Deploy framework: `nextjs`, `nuxt`, `astro`, `hono`, `nestjs`, `tanstack-start`, `custom`, or `bun`. |
-| `entry` | Entrypoint path for Bun/Hono-style deploys, relative to the app root. |
-| `httpPort` | Deployed HTTP port. Use this for fixed-port apps. |
-| `env` | Dotenv file path string, or `{ file, vars }`. Paths resolve from the config directory. |
-| `build` | `{ command, outputDirectory, entrypoint }`. Present means the config owns build settings for that target. |
+| Field       | Meaning                                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| `name`      | Deployed app name. Defaults to the `apps` key, then CLI inference.                                        |
+| `region`    | Compute region id used only when deploy creates a new app. Existing apps keep their current region.       |
+| `root`      | App directory relative to the config file. Defaults to the config directory.                              |
+| `framework` | Deploy framework: `nextjs`, `nuxt`, `astro`, `hono`, `nestjs`, `tanstack-start`, `custom`, or `bun`.      |
+| `entry`     | Entrypoint path for Bun/Hono-style deploys, relative to the app root.                                     |
+| `httpPort`  | Deployed HTTP port. Use this for fixed-port apps.                                                         |
+| `env`       | Dotenv file path string, or `{ file, vars }`. Paths resolve from the config directory.                    |
+| `build`     | `{ command, outputDirectory, entrypoint }`. Present means the config owns build settings for that target. |
 
 `env` examples:
 

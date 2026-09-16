@@ -99,9 +99,9 @@ With `moduleResolution: "bundler"`, bare relative imports are usually fine.
 ## Minimum Versions
 
 | Requirement | Minimum Version |
-|-------------|-----------------|
-| Node.js | 20.19.0 |
-| TypeScript | 5.4.0 |
+| ----------- | --------------- |
+| Node.js     | 20.19.0         |
+| TypeScript  | 5.4.0           |
 
 ## Framework Considerations
 

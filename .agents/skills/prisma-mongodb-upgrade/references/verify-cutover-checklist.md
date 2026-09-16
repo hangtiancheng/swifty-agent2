@@ -8,7 +8,7 @@ CRITICAL
 
 ## Why It Matters
 
-A v6 → Next migration is a *client and workflow* migration against the **same MongoDB
+A v6 → Next migration is a _client and workflow_ migration against the **same MongoDB
 database** — there is no data export/import step, and introducing one (or pointing the new
 stack at a fresh database) turns a code migration into an outage. The checklist below keeps
 the cutover observable and reversible.

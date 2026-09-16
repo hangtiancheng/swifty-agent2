@@ -112,7 +112,7 @@ const FORMATTERS: Record<string, ResultFormatter> = {
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("MCP request timed out")), ms);
+    timer = setTimeout(() => { reject(new Error("MCP request timed out")); }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {

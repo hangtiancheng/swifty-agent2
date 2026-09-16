@@ -117,20 +117,20 @@ config()
 
 These Prisma-specific env vars are removed in v7:
 
-| Removed Variable | Alternative |
-|-----------------|-------------|
-| `PRISMA_CLI_QUERY_ENGINE_TYPE` | Not needed (no engines) |
-| `PRISMA_CLIENT_ENGINE_TYPE` | Not needed (no engines) |
-| `PRISMA_QUERY_ENGINE_BINARY` | Not needed |
-| `PRISMA_QUERY_ENGINE_LIBRARY` | Not needed |
-| `PRISMA_GENERATE_SKIP_AUTOINSTALL` | Not needed |
-| `PRISMA_SKIP_POSTINSTALL_GENERATE` | Not needed |
-| `PRISMA_GENERATE_IN_POSTINSTALL` | Not needed |
-| `PRISMA_GENERATE_DATAPROXY` | Migrate to `prisma-client` with driver adapters |
-| `PRISMA_GENERATE_NO_ENGINE` | Migrate to `prisma-client` with driver adapters |
-| `PRISMA_CLIENT_NO_RETRY` | Configure on adapter |
-| `PRISMA_MIGRATE_SKIP_GENERATE` | Not needed (auto-generate removed) |
-| `PRISMA_MIGRATE_SKIP_SEED` | Not needed (auto-seed removed) |
+| Removed Variable                   | Alternative                                     |
+| ---------------------------------- | ----------------------------------------------- |
+| `PRISMA_CLI_QUERY_ENGINE_TYPE`     | Not needed (no engines)                         |
+| `PRISMA_CLIENT_ENGINE_TYPE`        | Not needed (no engines)                         |
+| `PRISMA_QUERY_ENGINE_BINARY`       | Not needed                                      |
+| `PRISMA_QUERY_ENGINE_LIBRARY`      | Not needed                                      |
+| `PRISMA_GENERATE_SKIP_AUTOINSTALL` | Not needed                                      |
+| `PRISMA_SKIP_POSTINSTALL_GENERATE` | Not needed                                      |
+| `PRISMA_GENERATE_IN_POSTINSTALL`   | Not needed                                      |
+| `PRISMA_GENERATE_DATAPROXY`        | Migrate to `prisma-client` with driver adapters |
+| `PRISMA_GENERATE_NO_ENGINE`        | Migrate to `prisma-client` with driver adapters |
+| `PRISMA_CLIENT_NO_RETRY`           | Configure on adapter                            |
+| `PRISMA_MIGRATE_SKIP_GENERATE`     | Not needed (auto-generate removed)              |
+| `PRISMA_MIGRATE_SKIP_SEED`         | Not needed (auto-seed removed)                  |
 
 ## TypeScript env() Helper
 

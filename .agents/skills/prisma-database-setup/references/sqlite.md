@@ -57,6 +57,7 @@ file:PATH
 Use a driver adapter for the standard SQL workflow.
 
 1. Install adapter and driver:
+
    ```bash
    npm install @prisma/adapter-better-sqlite3 better-sqlite3
    ```
@@ -78,6 +79,7 @@ Use a driver adapter for the standard SQL workflow.
 For edge compatibility or Turso:
 
 1. Install:
+
    ```bash
    npm install @prisma/adapter-libsql @libsql/client
    ```
@@ -103,4 +105,5 @@ For edge compatibility or Turso:
 ## Common Issues
 
 ### "Database file not found"
+
 Ensure the path in `DATABASE_URL` is correct relative to where Prisma is running or the schema file. `file:./dev.db` creates it next to schema.

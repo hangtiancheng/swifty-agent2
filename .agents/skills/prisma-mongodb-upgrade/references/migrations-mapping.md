@@ -25,9 +25,9 @@ history on disk.
 Migration authoring in Next is first-class for Postgres **and Mongo** (prisma-next
 `skills/prisma-next-migrations/SKILL.md`) — MongoDB is not a push-only special case:
 
-- **Flow:** contract *emit* → diff → *plan* (writes a content-hashed migration package) →
-  *migrate* (apply in graph order) → *verify* (live schema vs destination contract) →
-  *sign* (advance the marker after a verify pass).
+- **Flow:** contract _emit_ → diff → _plan_ (writes a content-hashed migration package) →
+  _migrate_ (apply in graph order) → _verify_ (live schema vs destination contract) →
+  _sign_ (advance the marker after a verify pass).
 - **Mongo migration ops** come from dedicated factories: `createCollection`,
   `dropCollection`, `validatedCollection`, `setValidation`, `createIndex`, `dropIndex`,
   `collMod`, and `dataTransform` for data backfills.

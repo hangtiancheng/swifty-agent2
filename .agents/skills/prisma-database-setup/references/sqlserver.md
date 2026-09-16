@@ -59,6 +59,7 @@ sqlserver://HOST:PORT;database=DB;user=USER;password=PASS;encrypt=true;trustServ
 Use a driver adapter for the standard SQL workflow.
 
 1. Install adapter and driver:
+
    ```bash
    npm install @prisma/adapter-mssql mssql
    ```
@@ -87,8 +88,10 @@ Use a driver adapter for the standard SQL workflow.
 ## Common Issues
 
 ### "Login failed for user"
+
 - SQL Server auth vs Windows auth. Prisma typically uses SQL Server authentication (username/password).
 - Ensure TCP/IP is enabled in SQL Server Configuration Manager.
 
 ### "Table not found" (dbo schema)
+
 Prisma assumes `dbo` schema by default. If using another schema, update the model or connection string? SQL Server provider mostly sticks to default schema.

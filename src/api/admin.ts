@@ -26,7 +26,7 @@ interface Card {
   lede: string;
   status: "error" | "ok" | "attention" | "missing";
   headline: string;
-  metrics: Array<{ label: string; value: unknown }>;
+  metrics: { label: string; value: unknown }[];
   note: string | null;
 }
 
@@ -144,9 +144,9 @@ async function reviewCard(): Promise<Card> {
   if (total === 0) {
     c.status = "missing";
     c.headline = "The queue is empty; ask a few unanswerable questions on the chat page first";
-  } else if (counts["pending_review"] > 0) {
+  } else if (counts.pending_review > 0) {
     c.status = "attention";
-    c.headline = `${counts["pending_review"]} items awaiting review`;
+    c.headline = `${counts.pending_review} items awaiting review`;
   } else {
     c.status = "ok";
     c.headline = `Nothing awaiting review; ${total} items processed in total`;
@@ -183,7 +183,7 @@ async function observabilityCard(): Promise<Card> {
     c.note = typeof trend.note === "string" ? trend.note : null;
     return c;
   }
-  const blocks: Array<[string, Record<string, unknown>]> = [
+  const blocks: [string, Record<string, unknown>][] = [
     ["Cost ledger by intent", cost],
     ["Eval trend", trend],
     ["Threshold calibration", calib],

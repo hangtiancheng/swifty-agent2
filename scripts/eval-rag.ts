@@ -88,7 +88,7 @@ function logLine(msg = ""): void {
 }
 
 class Semaphore {
-  private queue: Array<() => void> = [];
+  private queue: (() => void)[] = [];
   private active = 0;
   constructor(private readonly limit: number) {}
   async use<T>(fn: () => Promise<T>): Promise<T> {
@@ -119,7 +119,7 @@ function loadSamples(): Sample[] {
     .map((line) => sampleSchema.parse(JSON.parse(line)));
 }
 
-function mean(xs: Array<number | null>): number {
+function mean(xs: (number | null)[]): number {
   const values = xs.filter((x): x is number => x !== null);
   return values.length > 0
     ? values.reduce((a, b) => a + b, 0) / values.length
@@ -202,7 +202,7 @@ async function tryCall<T>(
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("call timeout")), ms);
+    timer = setTimeout(() => { reject(new Error("call timeout")); }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {
@@ -293,7 +293,7 @@ interface FaithDetail {
   query: string;
   answer: string;
   reason: string;
-  citations: Array<Record<string, unknown>>;
+  citations: Record<string, unknown>[];
 }
 
 interface GenResult {
@@ -302,7 +302,7 @@ interface GenResult {
   coverage: number | null;
   faithful: boolean | null;
   faithDetail: FaithDetail | null;
-  guardHits: Array<Record<string, unknown>>;
+  guardHits: Record<string, unknown>[];
 }
 
 async function genOne(
@@ -330,7 +330,7 @@ async function genOne(
       };
     }
     let text = contentToString(ans.content);
-    const guardHits: Array<Record<string, unknown>> = [];
+    const guardHits: Record<string, unknown>[] = [];
     const bad = modelGuard.unsupportedModels(text, evidence);
     if (bad.length > 0) {
       guardHits.push({ id: sample.id, strat, models: bad, fixed: false });
@@ -479,13 +479,11 @@ async function generation(
   const graded = samples.filter((s) => GRADED_BUCKETS.includes(s.bucket));
   const absent = samples.filter((s) => s.bucket === "D_absent");
   logLine("\n=== Stage 3 generation: four-strategy answer coverage (graded) + Faithfulness + bucket-D refusal ===");
-  const tasks: Array<
-    Promise<
+  const tasks: Promise<
       | GenResult
       | { refused: boolean; detail: Record<string, unknown> | null }
       | null
-    >
-  > = [];
+    >[] = [];
   for (const strat of STRATEGIES) {
     for (const sample of graded) {
       tasks.push(genOne(strat, sample, hits));
@@ -621,7 +619,7 @@ function labeled<T>(
   for (const strat of STRATEGIES) {
     const row: Record<string, unknown> = {};
     for (const bucket of [...GRADED_BUCKETS, "overall"]) {
-      const raw = (data[strat] ?? {})[bucket];
+      const raw = data[strat]?.[bucket];
       row[BUCKET_LABEL[bucket]] = pick ? pick(raw) : raw;
     }
     out[STRATEGY_LABEL[strat]] = row;

@@ -1,7 +1,7 @@
 // Markdown-aware chunking: header split, recursive split with sentence overlap, table row split.
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
-const HEADERS: Array<[string, string]> = [
+const HEADERS: [string, string][] = [
   ["#", "h1"],
   ["##", "h2"],
   ["###", "h3"],
@@ -37,7 +37,8 @@ export function splitSections(md: string): MarkdownSection[] {
       }
       const level = m[1].length;
       for (let l = level; l <= HEADERS.length; l += 1) {
-        delete stack[`h${l}`];
+        // delete stack[`h${l}`];
+        Reflect.deleteProperty(stack, `h${l}`)
       }
       stack[`h${level}`] = m[2].trim();
       started = true;

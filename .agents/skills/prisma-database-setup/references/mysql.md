@@ -62,6 +62,7 @@ mysql://USER:PASSWORD@HOST:PORT/DATABASE
 Use a driver adapter for the standard SQL workflow.
 
 1. Install adapter and driver:
+
    ```bash
    npm install @prisma/adapter-mariadb mariadb
    ```
@@ -117,10 +118,13 @@ datasource db {
 ## Common Issues
 
 ### "Too many connections"
+
 MySQL has a connection limit. Adjust connection pool size in URL:
+
 ```env
 DATABASE_URL="mysql://...?connection_limit=5"
 ```
 
 ### JSON Support
+
 MySQL 5.7+ supports JSON. MariaDB 10.2+ supports JSON (as an alias for LONGTEXT with check constraints). Prisma handles this, but verify your version.

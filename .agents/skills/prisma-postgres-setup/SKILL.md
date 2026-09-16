@@ -4,7 +4,7 @@ description: Set up a new Prisma Postgres database and connect it to a local pro
 license: MIT
 metadata:
   author: prisma
-  version: "1.1.0"
+  version: '1.1.0'
 ---
 
 # Prisma Postgres Setup
@@ -129,6 +129,7 @@ npm install prisma @prisma/client @prisma/adapter-pg pg dotenv
 ```
 
 All five packages are required:
+
 - `prisma` — CLI for migrations, schema push, client generation
 - `@prisma/client` — the generated query client
 - `@prisma/adapter-pg` — Prisma 7 driver adapter for direct PostgreSQL connections
@@ -172,6 +173,7 @@ export default defineConfig({
 ```
 
 **Important Prisma 7 notes:**
+
 - Connection URLs go in `prisma.config.ts`, never in `schema.prisma`
 - The provider in `schema.prisma` must be `"postgresql"` (not `"prismaPostgres"`)
 - `dotenv/config` must be imported in `prisma.config.ts` to load `.env` variables
@@ -224,6 +226,7 @@ npx tsx test-connection.ts
 ```
 
 **Prisma 7 client instantiation rules:**
+
 - Import from `./generated/prisma/client.js` (not `./generated/prisma`)
 - Create a `pg.Pool` with the `DATABASE_URL` connection string
 - Wrap it in a `PrismaPg` adapter
@@ -244,12 +247,12 @@ Read `references/prisma7-client.md` for the full client instantiation reference.
 
 Read `references/api-basics.md` for the full error reference. Key self-correction patterns:
 
-| HTTP Status | Error Code | Action |
-|---|---|---|
-| 401 | `authentication-failed` | Service token is invalid or expired. Ask the user to create a new one in Console → Workspace Settings → Service Tokens. |
-| 404 | `resource-not-found` | Check that the resource ID includes the correct prefix (`proj_`, `db_`, `con_`). |
-| 422 | `validation-error` | Check request body against the endpoint schema. Common: missing `name`, invalid `region`. |
-| 429 | `rate-limit-exceeded` | Back off and retry after a few seconds. |
+| HTTP Status | Error Code              | Action                                                                                                                  |
+| ----------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 401         | `authentication-failed` | Service token is invalid or expired. Ask the user to create a new one in Console → Workspace Settings → Service Tokens. |
+| 404         | `resource-not-found`    | Check that the resource ID includes the correct prefix (`proj_`, `db_`, `con_`).                                        |
+| 422         | `validation-error`      | Check request body against the endpoint schema. Common: missing `name`, invalid `region`.                               |
+| 429         | `rate-limit-exceeded`   | Back off and retry after a few seconds.                                                                                 |
 
 ## Reference Files
 

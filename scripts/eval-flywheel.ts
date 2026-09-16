@@ -44,7 +44,7 @@ function logLine(msg = ""): void {
   lines.push(msg);
 }
 
-function mean(xs: Array<number | null>): number {
+function mean(xs: (number | null)[]): number {
   const values = xs.filter((x): x is number => x !== null);
   return values.length > 0
     ? values.reduce((a, b) => a + b, 0) / values.length
@@ -91,7 +91,7 @@ function formatEvidence(
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("call timeout")), ms);
+    timer = setTimeout(() => { reject(new Error("call timeout")); }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) {

@@ -1,15 +1,206 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+/* 类名暗色模式:.dark 挂在 <html> 上,由 root.tsx 的内联脚本在首帧前决定 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- 设计令牌:像素猫主题 ----------
+   亮色沿用原工程配色;暗色整套翻转(背景变深、ink 变浅、硬阴影转黑)。
+   组件只消费语义色(bg-paper / text-ink / border-ink …),明暗切换零改动。 */
+:root {
+  --ink: #2b2632;
+  --ink-soft: #6d6478;
+  --fur: #ff9f57;
+  --fur-hover: #ffedd6;
+  --coral: #ff7a59;
+  --coral-hover: #ff8b6d;
+  --cream: #fff6e6;
+  --paper: #fffaf0;
+  --page: #f7d9a8;
+  --grid-line: rgba(43, 38, 50, 0.05);
+  --muted: #9b8f86;
+  --error: #d6455a;
+  --error-bg: #ffe3e6;
+  --error-deep: #8e1f31;
+  --online: #5fcf6a;
+  --online-deep: #2f8f3c;
+  --online-bg: #e8fae9;
+  --sky: #7fc4e8;
+  --violet: #b7a6ff;
+  --track: #efe6d4;
+  --code-bg: rgba(0, 0, 0, 0.06);
+  --shadow-rgb: 43 38 50;
+  --warn-bg: #ffd66e;
+  --picked: #ffe0b3;
+  color-scheme: light;
 }
 
+.dark {
+  --ink: #ece3d2;
+  --ink-soft: #a99fb4;
+  --fur: #ff9f57;
+  --fur-hover: #3b3140;
+  --coral: #ff7a59;
+  --coral-hover: #ff8b6d;
+  --cream: #241e2b;
+  --paper: #2c2536;
+  --page: #17131f;
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --muted: #8d8397;
+  --error: #ff6b81;
+  --error-bg: #3a2028;
+  --error-deep: #ffb3bf;
+  --online: #5fcf6a;
+  --online-deep: #8fe09a;
+  --online-bg: #1e3125;
+  --sky: #7fc4e8;
+  --violet: #b7a6ff;
+  --track: #211b29;
+  --code-bg: rgba(255, 255, 255, 0.08);
+  --shadow-rgb: 0 0 0;
+  --warn-bg: #8a6d1f;
+  --picked: #4a3a24;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-fur: var(--fur);
+  --color-fur-hover: var(--fur-hover);
+  --color-coral: var(--coral);
+  --color-coral-hover: var(--coral-hover);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-page: var(--page);
+  --color-muted: var(--muted);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-deep: var(--error-deep);
+  --color-online: var(--online);
+  --color-online-deep: var(--online-deep);
+  --color-online-bg: var(--online-bg);
+  --color-sky: var(--sky);
+  --color-violet: var(--violet);
+  --color-track: var(--track);
+  --color-code-bg: var(--code-bg);
+  --color-warn-bg: var(--warn-bg);
+  --color-picked: var(--picked);
+  /* 固定品牌色:猫鼻子粉,也是 RAG 评估四策略配色之三,明暗通用 */
+  --color-pink: #ff8095;
+
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas,
+    "PingFang SC", "Microsoft YaHei", monospace;
+
+  --shadow-hard-xs: 2px 2px 0 rgb(var(--shadow-rgb));
+  --shadow-hard-sm: 3px 3px 0 rgb(var(--shadow-rgb));
+  --shadow-hard: 4px 4px 0 rgb(var(--shadow-rgb));
+  --shadow-hard-lg: 8px 8px 0 rgb(var(--shadow-rgb));
+
+  --animate-blink: blink 1s steps(2) infinite;
+  --animate-pop-in: pop-in 0.14s steps(2);
+  --animate-caret: caret 1.1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    transform: translateY(6px);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* ---------- 基础 ---------- */
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  min-height: 100%;
+}
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
+body {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  background-color: var(--page);
+  /* 像素网格底纹,与原工程一致 */
+  background-image: linear-gradient(var(--grid-line) 2px, transparent 2px),
+    linear-gradient(90deg, var(--grid-line) 2px, transparent 2px);
+  background-size: 24px 24px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--fur);
+  color: var(--ink);
+}
+
+/* 硬阴影按钮的按压手感:按下位移 + 去阴影,像素风的"物理键" */
+.press {
+  transition:
+    transform 60ms steps(1),
+    box-shadow 60ms steps(1),
+    background-color 120ms;
+}
+.press:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none !important;
+}
+.press-sm:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
+
+/* 滚动条:橙色方块拇指,贴主题 */
+.scroll-cat {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fur) transparent;
+}
+.scroll-cat::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.scroll-cat::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-cat::-webkit-scrollbar-thumb {
+  background: var(--fur);
+  border: 3px solid var(--cream);
+}
+
+/* 表格数字列:等宽数字右对齐 */
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

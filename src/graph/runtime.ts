@@ -304,7 +304,7 @@ const actionSchema = z
 type StreamSource = Parameters<Graph["stream"]>[0];
 
 async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<StreamEvent> {
-  const streamModes: Array<"messages" | "updates"> = ["messages", "updates"];
+  const streamModes: ("messages" | "updates")[] = ["messages", "updates"];
   const config = {
     configurable: { thread_id: String(cid) },
     metadata: { langfuse_session_id: String(cid) },

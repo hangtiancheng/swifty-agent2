@@ -141,7 +141,7 @@ export async function generate(kind: string, payload: unknown, model: ChatOpenAI
   let timer: NodeJS.Timeout | undefined;
   try {
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error("read note timeout")), TIMEOUT_MS);
+      timer = setTimeout(() => { reject(new Error("read note timeout")); }, TIMEOUT_MS);
     });
     const response = await Promise.race([chat.invoke(prompt), timeout]);
     text = tidy(contentToString(response.content));

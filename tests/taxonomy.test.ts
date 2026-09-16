@@ -12,7 +12,7 @@ import {
 describe("taxonomy", () => {
   it("keeps label ids in tuple order", () => {
     expect(NUM_CLASSES).toBe(17);
-    expect(LABEL2ID["returns_refunds"]).toBe(0);
+    expect(LABEL2ID.returns_refunds).toBe(0);
     expect(ID2LABEL[16]).toBe("other");
     expect(TOPIC_NAMES).toHaveLength(17);
   });

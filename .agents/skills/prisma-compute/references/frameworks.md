@@ -34,19 +34,19 @@ If detection is ambiguous, set `framework` in `prisma.compute.ts` or pass a supp
 
 ## CLI Matrix
 
-| App shape | Deploy command shape | Auto-detected | Required output/entry | Notes |
-|-----------|----------------------|---------------|-----------------------|-------|
-| Next.js | `--framework nextjs` | Yes | standalone `server.js` output | Requires `output: "standalone"` |
-| Nuxt | `--framework nuxt` | Yes | `.output/server/index.mjs` | Framework strategy supplies build defaults; a config `build` block is optional |
-| Astro | `--framework astro` | Yes | standalone Node server artifact | Framework strategy supplies build defaults; a config `build` block is optional |
-| Hono | `--framework hono` | Yes | Bun entry from `main`, `module`, `--entry`, or `src/index.ts` | Usually fixed port `8080` in generated config/scripts |
-| NestJS | `--framework nestjs` | Yes | NestJS server artifact | Omit host or bind to `0.0.0.0`; a config `build` block is optional |
-| TanStack Start | `--framework tanstack-start` | Yes | `.output/server/index.mjs` | Requires Nitro node output |
-| Custom artifact | config-backed `framework: "custom"` | No | configured `build.outputDirectory` and `build.entrypoint` | Use for prebuilt/custom-built Node artifacts |
-| Bun / plain server | `--framework bun --entry <path>` | With explicit entry | server entrypoint | Use for Elysia and custom HTTP servers |
-| Elysia | `--framework bun --entry src/index.ts` | No dedicated deploy key | Bun entrypoint | Preserve port/host handling |
-| SvelteKit | No deploy framework key | No | Node adapter/prebuilt artifact | Do not deploy `vite preview` |
-| Turborepo | Deploy concrete app targets | No | app-specific entry/output | Prefer `prisma.compute.ts` with `apps` |
+| App shape          | Deploy command shape                   | Auto-detected           | Required output/entry                                         | Notes                                                                          |
+| ------------------ | -------------------------------------- | ----------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Next.js            | `--framework nextjs`                   | Yes                     | standalone `server.js` output                                 | Requires `output: "standalone"`                                                |
+| Nuxt               | `--framework nuxt`                     | Yes                     | `.output/server/index.mjs`                                    | Framework strategy supplies build defaults; a config `build` block is optional |
+| Astro              | `--framework astro`                    | Yes                     | standalone Node server artifact                               | Framework strategy supplies build defaults; a config `build` block is optional |
+| Hono               | `--framework hono`                     | Yes                     | Bun entry from `main`, `module`, `--entry`, or `src/index.ts` | Usually fixed port `8080` in generated config/scripts                          |
+| NestJS             | `--framework nestjs`                   | Yes                     | NestJS server artifact                                        | Omit host or bind to `0.0.0.0`; a config `build` block is optional             |
+| TanStack Start     | `--framework tanstack-start`           | Yes                     | `.output/server/index.mjs`                                    | Requires Nitro node output                                                     |
+| Custom artifact    | config-backed `framework: "custom"`    | No                      | configured `build.outputDirectory` and `build.entrypoint`     | Use for prebuilt/custom-built Node artifacts                                   |
+| Bun / plain server | `--framework bun --entry <path>`       | With explicit entry     | server entrypoint                                             | Use for Elysia and custom HTTP servers                                         |
+| Elysia             | `--framework bun --entry src/index.ts` | No dedicated deploy key | Bun entrypoint                                                | Preserve port/host handling                                                    |
+| SvelteKit          | No deploy framework key                | No                      | Node adapter/prebuilt artifact                                | Do not deploy `vite preview`                                                   |
+| Turborepo          | Deploy concrete app targets            | No                      | app-specific entry/output                                     | Prefer `prisma.compute.ts` with `apps`                                         |
 
 `app build --build-type` uses the framework build type. Build types include `auto`, `nextjs`, `nuxt`, `astro`, `nestjs`, `tanstack-start`, `custom`, and `bun`.
 

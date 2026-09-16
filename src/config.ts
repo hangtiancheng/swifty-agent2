@@ -121,7 +121,7 @@ export const settings = {
 };
 
 export function missingRuntimeConfig(): string[] {
-  const required: Array<[string, string]> = [
+  const required: [string, string][] = [
     ["CHAT_MODEL", settings.chatModel],
     ["CHAT_BASE_URL", settings.chatBaseUrl],
     ["CHAT_API_KEY", settings.chatApiKey],

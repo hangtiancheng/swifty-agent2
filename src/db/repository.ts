@@ -267,7 +267,7 @@ export async function listRecentChunks(limit = 20) {
   return prisma.knowledgeChunk.findMany({ orderBy: { id: "desc" }, take: limit });
 }
 
-export async function listChunkPairs(): Promise<Array<[string, string]>> {
+export async function listChunkPairs(): Promise<[string, string][]> {
   const rows = await prisma.knowledgeChunk.findMany({ select: { questions: true, answer: true } });
   return rows.map((r) => [r.questions, r.answer]);
 }
@@ -373,7 +373,7 @@ export async function insertLowConfidence(
 
 export async function listConversationsWithMessages() {
   const convIds = await prisma.conversation.findMany({ orderBy: { id: "asc" }, select: { id: true } });
-  const out: Array<{ id: number; messages: Awaited<ReturnType<typeof listMessages>> }> = [];
+  const out: { id: number; messages: Awaited<ReturnType<typeof listMessages>> }[] = [];
   for (const { id } of convIds) {
     out.push({ id, messages: await listMessages(id) });
   }
@@ -390,7 +390,7 @@ export async function fetchUnmatchedLowConf(limit: number) {
   });
 }
 
-export async function listReviewCandidates(limit = 200): Promise<Array<{ id: number; normalized_question: string }>> {
+export async function listReviewCandidates(limit = 200): Promise<{ id: number; normalized_question: string }[]> {
   const rows = await prisma.reviewQueue.findMany({
     orderBy: { updatedAt: "desc" },
     take: limit,
@@ -441,7 +441,7 @@ export async function getReviewDetail(reviewId: number) {
 
 export async function updateReviewStatus(reviewId: number, status: string, approvedAnswer: string | null = null): Promise<boolean> {
   const row = await prisma.reviewQueue.findUnique({ where: { id: reviewId } });
-  if (!row || row.reviewStatus !== "pending_review") {
+  if (row?.reviewStatus !== "pending_review") {
     return false;
   }
   await prisma.reviewQueue.update({
@@ -553,7 +553,7 @@ export async function listUnclassifiedQuestions(limit = 500): Promise<PoolText[]
   return rows.map((r) => ({ question_id: r.id, text: r.matchedReview?.normalizedQuestion || r.rawQuestion }));
 }
 
-export async function insertTopicClassifications(rows: Array<{ question_id: number; labels: string[] }>): Promise<number> {
+export async function insertTopicClassifications(rows: { question_id: number; labels: string[] }[]): Promise<number> {
   await prisma.topicClassification.createMany({
     data: rows.map((r) => ({ questionId: r.question_id, labels: toJson(r.labels) ?? "" })),
   });
@@ -563,7 +563,7 @@ export async function insertTopicClassifications(rows: Array<{ question_id: numb
 export interface TopicDistribution {
   total: number;
   latest: string | null;
-  classes: Array<{ label: string; count: number; samples: string[] }>;
+  classes: { label: string; count: number; samples: string[] }[];
 }
 
 export async function topicDistribution(samplesPerClass = 3): Promise<TopicDistribution> {

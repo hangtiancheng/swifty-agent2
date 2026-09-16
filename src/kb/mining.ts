@@ -40,9 +40,9 @@ export async function extractQa(conversationTexts: string[]): Promise<QaPair[]> 
   return Array.from({ length: n }, (_, i) => ({ question: qs[i], answer: ans[i] }));
 }
 
-async function loadConversationTexts(): Promise<Array<[string, string]>> {
+async function loadConversationTexts(): Promise<[string, string][]> {
   const convs = await listConversationsWithMessages();
-  const out: Array<[string, string]> = [];
+  const out: [string, string][] = [];
   for (const { id, messages } of convs) {
     const lines = messages.filter((m) => m.content).map((m) => `${m.role}: ${m.content}`);
     if (lines.length > 0) {

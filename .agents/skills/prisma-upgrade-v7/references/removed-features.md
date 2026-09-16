@@ -160,13 +160,13 @@ prisma db execute --file ./script.sql
 
 ## migrate diff Options
 
-| Removed | Replacement |
-|---------|-------------|
-| `--from-url` | `--from-config-datasource` |
-| `--to-url` | `--to-config-datasource` |
-| `--from-schema-datasource` | `--from-config-datasource` |
-| `--to-schema-datasource` | `--to-config-datasource` |
-| `--shadow-database-url` | Configure in `prisma.config.ts` |
+| Removed                    | Replacement                     |
+| -------------------------- | ------------------------------- |
+| `--from-url`               | `--from-config-datasource`      |
+| `--to-url`                 | `--to-config-datasource`        |
+| `--from-schema-datasource` | `--from-config-datasource`      |
+| `--to-schema-datasource`   | `--to-config-datasource`        |
+| `--shadow-database-url`    | Configure in `prisma.config.ts` |
 
 ### Example
 

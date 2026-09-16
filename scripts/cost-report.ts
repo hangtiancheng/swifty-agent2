@@ -51,7 +51,7 @@ async function query(
   config: { publicKey: string; secretKey: string; baseUrl: string },
   from: string,
   to: string,
-): Promise<Array<Record<string, unknown>>> {
+): Promise<Record<string, unknown>[]> {
   const query = {
     view: "observations",
     metrics: [{ measure: "totalTokens", aggregation: "sum" }],
@@ -80,7 +80,7 @@ async function query(
   return parsed.data;
 }
 
-function aggregate(rows: Array<Record<string, unknown>>): IntentRow[] {
+function aggregate(rows: Record<string, unknown>[]): IntentRow[] {
   const acc = new Map<string, { tokens: number; traces: Set<string | null> }>();
   for (const row of rows) {
     const tags = Array.isArray(row.tags)

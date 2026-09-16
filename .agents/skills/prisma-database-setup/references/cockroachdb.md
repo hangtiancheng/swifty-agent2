@@ -51,6 +51,7 @@ Note: CockroachDB uses the PostgreSQL wire protocol, so the URL often looks like
 Use a driver adapter for the standard SQL workflow. CockroachDB is PostgreSQL-compatible, so use the PostgreSQL adapter.
 
 1. Install adapter and driver:
+
    ```bash
    npm install @prisma/adapter-pg pg
    ```
@@ -86,4 +87,5 @@ model User {
 ## Common Issues
 
 ### Schema Introspection
+
 Always use `provider = "cockroachdb"` to ensure correct type mapping during `db pull`.

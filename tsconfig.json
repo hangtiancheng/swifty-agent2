@@ -47,7 +47,7 @@
       "@generated/*": ["./generated/*"],
       "@scripts/*": ["./scripts/*"],
       "@tests/*": ["./tests/*"]
-    },
+    }
   },
   "exclude": ["fe"]
 }

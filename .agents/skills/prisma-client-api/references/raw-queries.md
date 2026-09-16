@@ -58,7 +58,7 @@ const conditions = [
 ]
 
 const users = await prisma.$queryRaw`
-  SELECT * FROM "User" 
+  SELECT * FROM "User"
   WHERE ${Prisma.join(conditions, ' AND ')}
 `
 ```

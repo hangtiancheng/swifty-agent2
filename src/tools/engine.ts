@@ -139,7 +139,7 @@ function capTokens(content: string): string {
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new ToolTimeoutError()), ms);
+    timer = setTimeout(() => { reject(new ToolTimeoutError()); }, ms);
   });
   try {
     return await Promise.race([promise, timeout]);

@@ -122,7 +122,7 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
     }
   }
   const casesJudged = roundIds.length;
-  const confirmedCases = tally["resolved"];
+  const confirmedCases = tally.resolved;
   const rate = (n: number): number | null => (evaluated ? Number((n / evaluated).toFixed(4)) : null);
   return {
     evaluated,
@@ -130,14 +130,14 @@ export function hallucination(counts: repository.FaithCounts, report: Record<str
     absent: absent || null,
     cases_judged: casesJudged,
     cases_confirmed: confirmedCases,
-    pending: tally["unresolved"],
-    dismissed: tally["dismissed"],
+    pending: tally.unresolved,
+    dismissed: tally.dismissed,
     refusal_missed: missed,
     judged: casesJudged + missed,
     confirmed: confirmedCases + missed,
     judged_rate: rate(casesJudged + missed),
     confirmed_rate: rate(confirmedCases + missed),
-    ledger: { total: counts["unresolved"] + counts["resolved"] + counts["dismissed"], ...counts },
+    ledger: { total: counts.unresolved + counts.resolved + counts.dismissed, ...counts },
   };
 }
 

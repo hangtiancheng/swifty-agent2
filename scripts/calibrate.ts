@@ -30,7 +30,7 @@ function logLine(msg = ""): void {
 }
 
 class Semaphore {
-  private queue: Array<() => void> = [];
+  private queue: (() => void)[] = [];
   private active = 0;
   constructor(private readonly limit: number) {}
   async use<T>(fn: () => Promise<T>): Promise<T> {
@@ -120,12 +120,12 @@ async function main(): Promise<void> {
   logLine(
     `${"t".padStart(6)} ${"pass rate".padStart(10)} ${"leak rate".padStart(10)} ${"YoudenJ".padStart(8)}`,
   );
-  const scan: Array<{
+  const scan: {
     t: number;
     pass_rate: number;
     leak_rate: number;
     youden_j: number;
-  }> = [];
+  }[] = [];
   let bestT = 0;
   let bestJ = -1;
   for (let i = 5; i <= 95; i += 1) {

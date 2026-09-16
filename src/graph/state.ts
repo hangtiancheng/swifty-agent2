@@ -8,7 +8,7 @@ import type { RetrievalSnapshot } from "@/core/confidence.ts";
 export interface SuggestedAction {
   type: string;
   draft?: Record<string, unknown>;
-  orders?: Array<Record<string, unknown>>;
+  orders?: Record<string, unknown>[];
 }
 
 export interface Citation {

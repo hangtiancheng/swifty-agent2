@@ -2,20 +2,20 @@
 
 ## Handling Time Limits for Common Issues
 
-| Issue Type | First Response | Resolution Time Limit |
-| --- | --- | --- |
-| Refund | 2 hours | 3 business days |
-| Exchange | 2 hours | 5 business days |
-| Repair | 4 hours | 7 business days |
-| Complaint | 1 hour | 3 business days |
-| Invoice | 4 hours | 3 business days |
-| Logistics anomaly | 2 hours | 5 business days |
-| Product inquiry | 1 hour | Same day |
-| Price protection | 2 hours | 3 business days |
-| Account issues | 2 hours | 3 business days |
-| Return/exchange shipping | 2 hours | 3 business days |
-| Out-of-stock reshipment | 2 hours | 5 business days |
-| Other | 4 hours | 7 business days |
+| Issue Type               | First Response | Resolution Time Limit |
+| ------------------------ | -------------- | --------------------- |
+| Refund                   | 2 hours        | 3 business days       |
+| Exchange                 | 2 hours        | 5 business days       |
+| Repair                   | 4 hours        | 7 business days       |
+| Complaint                | 1 hour         | 3 business days       |
+| Invoice                  | 4 hours        | 3 business days       |
+| Logistics anomaly        | 2 hours        | 5 business days       |
+| Product inquiry          | 1 hour         | Same day              |
+| Price protection         | 2 hours        | 3 business days       |
+| Account issues           | 2 hours        | 3 business days       |
+| Return/exchange shipping | 2 hours        | 3 business days       |
+| Out-of-stock reshipment  | 2 hours        | 5 business days       |
+| Other                    | 4 hours        | 7 business days       |
 
 ## Warranty Notes
 

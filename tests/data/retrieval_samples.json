@@ -1,7 +1,7 @@
 [
-  {"query": "How much is the postage", "expect_answer_contains": "ship free"},
-  {"query": "How is the courier fee charged", "expect_answer_contains": "shipping fee"},
-  {"query": "How long until it ships", "expect_answer_contains": "48"},
-  {"query": "Can I return it if I no longer want it", "expect_answer_contains": "7"},
-  {"query": "How do I get an invoice", "expect_answer_contains": "invoice"}
+  { "query": "How much is the postage", "expect_answer_contains": "ship free" },
+  { "query": "How is the courier fee charged", "expect_answer_contains": "shipping fee" },
+  { "query": "How long until it ships", "expect_answer_contains": "48" },
+  { "query": "Can I return it if I no longer want it", "expect_answer_contains": "7" },
+  { "query": "How do I get an invoice", "expect_answer_contains": "invoice" }
 ]

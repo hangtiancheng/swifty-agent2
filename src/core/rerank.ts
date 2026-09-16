@@ -63,7 +63,7 @@ async function post(url: string, body: Record<string, unknown>): Promise<Respons
   return lastResponse;
 }
 
-export async function rerank(query: string, docs: string[], topN: number | null = null): Promise<Array<[number, number]>> {
+export async function rerank(query: string, docs: string[], topN: number | null = null): Promise<[number, number][]> {
   if (docs.length === 0) {
     return [];
   }
