@@ -4,10 +4,13 @@
 - NEVER add MIT license header manually
 - Swifty Agent2 is a pure English project
 
+- ch01 => chat
+- ch02 => tool
+- ch03 => db
 - ch04 => rag
-- ch05 => workflow 工作流
-- ch06 => conversation 意图识别 + 会话管理
-- ch07 => context 上下文
-- ch08 => tool 工具
-- ch09 => observability (observability + flywheel) 可观测性 + 数据飞轮
-- ch10 => train 模型微调
+- ch05 => workflow
+- ch06 => intent
+- ch07 => context
+- ch08 => mcp
+- ch09 => observability
+- ch10 => train
