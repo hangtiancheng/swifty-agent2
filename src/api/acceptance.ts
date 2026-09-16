@@ -733,12 +733,14 @@ acceptanceRouter.get("/api/acceptance/service", async (c) => {
 
 const classifyInSchema = z.object({ text: z.string() });
 const classifyResponseSchema = z.object({
-  results: z.array(
-    z.object({
-      labels: z.array(z.string()),
-      scores: z.record(z.string(), z.number()),
-    }),
-  ),
+  results: z
+    .array(
+      z.object({
+        labels: z.array(z.string()),
+        scores: z.record(z.string(), z.number()),
+      }),
+    )
+    .min(1),
 });
 
 // Single-sentence classify: feed one sentence to :8110, return 17-class scores + the labels above the line.
@@ -765,7 +767,7 @@ acceptanceRouter.post("/api/acceptance/classify", async (c) => {
       throw new Error(`HTTP ${resp.status}`);
     }
     const parsed = classifyResponseSchema.parse(await resp.json());
-    result = parsed.results[0] ?? { labels: [], scores: {} };
+    result = parsed.results[0];
   } catch (error) {
     throw new HTTPException(502, {
       message: `Classifier service unavailable (${errMsg(error)}); start :8110 first`,

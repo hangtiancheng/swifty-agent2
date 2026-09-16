@@ -38,3 +38,15 @@ export const logger = pino(
 export function childLogger(name: string): pino.Logger {
   return logger.child({ module: name });
 }
+
+export function flushLogs(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    logger.flush((error) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
+}

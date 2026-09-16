@@ -60,8 +60,7 @@ const hitSchema = z.object({
   category: z.string(),
 });
 const searchResponseSchema = z.object({ hits: z.array(hitSchema) });
-const countResponseSchema = z.object({ count: z.coerce.number() });
-const upsertResponseSchema = z.object({ count: z.coerce.number() });
+const countResultSchema = z.object({ count: z.coerce.number() });
 const emptyResponseSchema = z.object({});
 
 // --- connection (lazy singleton) ---
@@ -148,7 +147,7 @@ function unary<S extends z.ZodType>(
 
 // --- public API ---
 export async function upsert(rows: MilvusRow[]): Promise<number> {
-  const res = await unary("Upsert", { rows }, upsertResponseSchema);
+  const res = await unary("Upsert", { rows }, countResultSchema);
   return res.count;
 }
 
@@ -166,7 +165,12 @@ export async function search(
 }
 
 export async function count(): Promise<number> {
-  const res = await unary("Count", {}, countResponseSchema);
+  const res = await unary("Count", {}, countResultSchema);
+  return res.count;
+}
+
+export async function deleteRows(ids: number[]): Promise<number> {
+  const res = await unary("Delete", { ids }, countResultSchema);
   return res.count;
 }
 

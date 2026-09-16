@@ -12,7 +12,7 @@
 import * as milvus from "./milvus-rpc.ts";
 
 import { settings } from "#/config.ts";
-import { listVectorizedChunks } from "#/db/repository.ts";
+import { knowledgeRevision, listVectorizedChunks } from "#/db/repository.ts";
 
 export const COLLECTION = settings.milvusCollection;
 
@@ -43,8 +43,8 @@ interface StoreDoc {
 }
 
 interface StoreCache {
+  revision: string;
   docs: StoreDoc[];
-  df: Map<string, number>;
 }
 
 // Tokenizer: CJK runs become character bigrams; ASCII words/numbers stay whole.
@@ -68,40 +68,51 @@ export function tokenize(text: string): string[] {
 }
 
 let cache: StoreCache | null = null;
+let loading: Promise<StoreCache> | null = null;
 
 export function invalidateVectorCache(): void {
   cache = null;
 }
 
 async function loadChunks(): Promise<StoreCache> {
-  if (cache === null) {
+  if (loading !== null) {
+    return loading;
+  }
+  loading = (async () => {
+    const revision = await knowledgeRevision();
+    if (cache?.revision === revision) {
+      return cache;
+    }
     const rows = await listVectorizedChunks();
     const docs: StoreDoc[] = rows.map((row) => {
-      const text = `${row.question}\n${row.answer}`;
+      const text = `${row.category}\n${row.question}\n${row.answer}`;
       const tokens = tokenize(text);
       const tf = new Map<string, number>();
-      for (const t of tokens) {
-        tf.set(t, (tf.get(t) ?? 0) + 1);
+      for (const token of tokens) {
+        tf.set(token, (tf.get(token) ?? 0) + 1);
       }
       return { ...row, tokens, tf };
     });
-    const df = new Map<string, number>();
-    for (const doc of docs) {
-      for (const term of doc.tf.keys()) {
-        df.set(term, (df.get(term) ?? 0) + 1);
-      }
-    }
-    cache = { docs, df };
+    cache = { revision, docs };
+    return cache;
+  })();
+  try {
+    return await loading;
+  } finally {
+    loading = null;
   }
-  return cache;
 }
 
 function cosine(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(
+      `Embedding dimension mismatch: query=${a.length}, stored=${b.length}`,
+    );
+  }
   let dot = 0;
   let na = 0;
   let nb = 0;
-  const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i += 1) {
+  for (let i = 0; i < a.length; i += 1) {
     dot += a[i] * b[i];
     na += a[i] * a[i];
     nb += b[i] * b[i];
@@ -137,8 +148,11 @@ export async function denseSearch(
   }
   const { docs } = await loadChunks();
   const scored = docs
-    .filter((d) => !category || d.category === category)
-    .map((d): [StoreDoc, number] => [d, cosine(vector, d.embedding)])
+    .filter(
+      (doc) =>
+        doc.embedding.length > 0 && (!category || doc.category === category),
+    )
+    .map((doc): [StoreDoc, number] => [doc, cosine(vector, doc.embedding)])
     .sort((a, b) => b[1] - a[1])
     .slice(0, topK);
   return scored.map(([doc, score]) => toHit(doc, score));
@@ -149,12 +163,18 @@ export async function bm25Search(
   topK: number,
   category: string | null = null,
 ): Promise<KnowledgeHit[]> {
-  const { docs, df } = await loadChunks();
-  const pool = docs.filter((d) => !category || d.category === category);
+  const { docs } = await loadChunks();
+  const pool = docs.filter((doc) => !category || doc.category === category);
   const queryTerms = [...new Set(tokenize(text))];
   const avgdl =
-    pool.reduce((sum, d) => sum + d.tokens.length, 0) / (pool.length || 1);
-  const N = pool.length || 1;
+    pool.reduce((sum, doc) => sum + doc.tokens.length, 0) / (pool.length || 1);
+  const documentCount = pool.length || 1;
+  const documentFrequency = new Map<string, number>();
+  for (const doc of pool) {
+    for (const term of doc.tf.keys()) {
+      documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1);
+    }
+  }
   const scored = pool.map((doc): [StoreDoc, number] => {
     let score = 0;
     for (const term of queryTerms) {
@@ -162,8 +182,11 @@ export async function bm25Search(
       if (tf === 0) {
         continue;
       }
-      const n = df.get(term) ?? 0;
-      const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
+      const matchingDocuments = documentFrequency.get(term) ?? 0;
+      const idf = Math.log(
+        1 +
+          (documentCount - matchingDocuments + 0.5) / (matchingDocuments + 0.5),
+      );
       score +=
         (idf * (tf * (K1 + 1))) /
         (tf + K1 * (1 - B + (B * doc.tokens.length) / avgdl));
@@ -221,7 +244,12 @@ export async function drop(): Promise<void> {
   }
   const { prisma } = await import("../db/client.ts");
   await prisma.knowledgeChunk.updateMany({
-    data: { embedding: null, vectorId: null, vectorizeStatus: "pending" },
+    data: {
+      embedding: null,
+      embeddingModel: null,
+      vectorId: null,
+      vectorizeStatus: "pending",
+    },
   });
   invalidateVectorCache();
 }

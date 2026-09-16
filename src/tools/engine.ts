@@ -151,12 +151,15 @@ function capTokens(content: string): string {
   return `${head}\n… (result too long and truncated; narrow the query if you need the full data)`;
 }
 
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  seconds: number,
+): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       reject(new ToolTimeoutError());
-    }, ms);
+    }, seconds * 1000);
   });
   try {
     return await Promise.race([promise, timeout]);
@@ -378,10 +381,12 @@ export async function executeToolCall(
   let attempt = 0;
   for (;;) {
     try {
-      const result = await withTimeout(
-        Promise.resolve(spec.invoke(args)),
-        toolTimeout,
-      );
+      const invocation = Promise.resolve(spec.invoke(args));
+      // Arbitrary promises cannot be cancelled safely, so never report a timed-out write that may still commit.
+      const result =
+        spec.permission === "write"
+          ? await invocation
+          : await withTimeout(invocation, toolTimeout);
       const content = capTokens(formatContent(spec, result));
       const run = make(true, content, "success", attempt);
       await audit(

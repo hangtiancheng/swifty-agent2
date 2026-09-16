@@ -2,6 +2,16 @@
 // Shared by the evaluation path and the ONNX serving path — behaviour must not fork.
 // No heavy dependencies so the light runtime can import it safely.
 
+export function truncateWithTerminalToken(
+  values: number[],
+  maxLength: number,
+): number[] {
+  if (values.length <= maxLength) {
+    return values;
+  }
+  return [...values.slice(0, maxLength - 1), values[values.length - 1]];
+}
+
 export function applyThreshold(
   probs: number[][],
   threshold: number,

@@ -18,7 +18,7 @@ import type { GraphState, SuggestedAction } from "./state.ts";
 import { settings } from "#/config.ts";
 import * as budget from "#/core/budget.ts";
 import * as memory from "#/core/memory.ts";
-import { recordTurn } from "#/core/observability.ts";
+import { graphCallbacks, recordTurn } from "#/core/observability.ts";
 import { maybeScheduleSummary } from "#/core/summarizer.ts";
 import * as repository from "#/db/repository.ts";
 import { childLogger } from "#/logger.ts";
@@ -34,7 +34,12 @@ const DETERMINISTIC_ANSWER_NODES = new Set([
 const CITATION_NODES = new Set(["retrieve_knowledge", "retrieve_policy"]);
 
 type Graph = ReturnType<typeof buildGraph>;
-let graph: Graph | null = null;
+interface RuntimeState {
+  graph: Graph;
+  checkpointer: SqliteSaver;
+}
+
+let runtimeState: RuntimeState | null = null;
 
 export class ConversationNotFound extends Error {
   constructor(conversationId: number) {
@@ -44,24 +49,35 @@ export class ConversationNotFound extends Error {
 }
 
 export function initGraph(): void {
+  closeGraph();
   const dbPath = path.resolve(settings.root, settings.checkpointerDbPath);
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  const saver = SqliteSaver.fromConnString(dbPath);
-  graph = buildGraph(saver);
+  const checkpointer = SqliteSaver.fromConnString(dbPath);
+  runtimeState = { graph: buildGraph(checkpointer), checkpointer };
   log.info({ checkpointer: dbPath }, "graph compiled");
 }
 
 export function closeGraph(): void {
-  graph = null;
+  const current = runtimeState;
+  runtimeState = null;
+  current?.checkpointer.db.close();
 }
 
 function getGraph(): Graph {
-  if (graph === null) {
+  if (runtimeState === null) {
     throw new Error(
       "graph is not initialized; call initGraph() during startup",
     );
   }
-  return graph;
+  return runtimeState.graph;
+}
+
+function graphConfig(conversationId: number, userId: string) {
+  return {
+    configurable: { thread_id: String(conversationId) },
+    metadata: { langfuse_session_id: String(conversationId) },
+    callbacks: graphCallbacks(conversationId, userId),
+  };
 }
 
 export interface StreamEvent {
@@ -305,13 +321,9 @@ export async function runTurn(
   const msgId = await repository.appendMessage(cid, "user", {
     content: message,
   });
-  const config = {
-    configurable: { thread_id: String(cid) },
-    metadata: { langfuse_session_id: String(cid) },
-  };
   const final = await getGraph().invoke(
     graphInput(userId, message, cid, msgId, summary, upto, layer1),
-    config,
+    graphConfig(cid, userId),
   );
   recordFromValues(cid, { message }, final);
   await settleLayers(cid, final, upto, layer1);
@@ -327,16 +339,13 @@ export async function resumeTurn(
   conversationId: number,
   resumeValue: unknown,
 ): Promise<TurnResult> {
-  if ((await repository.getConversation(conversationId)) === null) {
+  const conversation = await repository.getConversation(conversationId);
+  if (conversation === null) {
     throw new ConversationNotFound(conversationId);
   }
-  const config = {
-    configurable: { thread_id: String(conversationId) },
-    metadata: { langfuse_session_id: String(conversationId) },
-  };
   const final = await getGraph().invoke(
     new Command({ resume: resumeValue }),
-    config,
+    graphConfig(conversationId, conversation.userId),
   );
   recordFromValues(conversationId, { resume: true }, final);
   await maybeScheduleSummary(conversationId);
@@ -365,12 +374,12 @@ type StreamSource = Parameters<Graph["stream"]>[0];
 
 async function* streamEvents(
   cid: number,
+  userId: string,
   source: StreamSource,
 ): AsyncGenerator<StreamEvent> {
   const streamModes: ("messages" | "updates")[] = ["messages", "updates"];
   const config = {
-    configurable: { thread_id: String(cid) },
-    metadata: { langfuse_session_id: String(cid) },
+    ...graphConfig(cid, userId),
     streamMode: streamModes,
   };
   const actions: SuggestedAction[] = [];
@@ -491,6 +500,7 @@ export async function* streamTurn(
   let answer = "";
   for await (const ev of streamEvents(
     cid,
+    userId,
     graphInput(userId, message, cid, msgId, summary, upto, layer1),
   )) {
     if (ev.type === "delta" && ev.text) {
@@ -507,12 +517,14 @@ export async function* streamResume(
   conversationId: number,
   resumeValue: unknown,
 ): AsyncGenerator<StreamEvent> {
-  if ((await repository.getConversation(conversationId)) === null) {
+  const conversation = await repository.getConversation(conversationId);
+  if (conversation === null) {
     throw new ConversationNotFound(conversationId);
   }
   let answer = "";
   for await (const ev of streamEvents(
     conversationId,
+    conversation.userId,
     new Command({ resume: resumeValue }),
   )) {
     if (ev.type === "delta" && ev.text) {

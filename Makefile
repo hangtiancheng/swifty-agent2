@@ -1,3 +1,16 @@
+.DEFAULT_GOAL := help
+
+.PHONY: help dev dev-down mcp-up mcp-down kb-build kb-vectorize kb-mine kb-reset kb-preview kb-repatch milvus-up milvus-down seed-conv flywheel eval-rag eval-flywheel eval-retrieval eval-judge calibrate calibrate-confidence cost-report train-golden train-corpus train-dataset train-train train-eval train-export train-typecheck train-threshold-scan classifier-up classifier-down classify-pool
+
+help:
+	@grep -E '^[a-z][a-z0-9-]*:.*?## ' $(MAKEFILE_LIST) \
+		| sed 's/:.*## /\t/' | sort | awk -F'\t' '{printf "  %-22s %s\n", $$1, $$2}'
+
+dev: mcp-up ## Start MCP servers and the API
+	pnpm dev
+
+dev-down: mcp-down ## Stop background development services
+
 kb-build:
 	node scripts/kb-build.ts
 
@@ -38,10 +51,10 @@ flywheel:
 	node scripts/flywheel.ts
 
 eval-rag:
-	node scripts/eval-rag.ts
+	node scripts/eval-rag.ts $(if $(SKIP_GEN),--skip-gen,)
 
 eval-flywheel:
-	node scripts/eval-flywheel.ts
+	node scripts/eval-flywheel.ts --triggered-by $(or $(TRIGGER),manual)
 
 eval-retrieval:
 	node scripts/eval-retrieval.ts
@@ -49,11 +62,11 @@ eval-retrieval:
 eval-judge:
 	node scripts/eval-judge.ts
 
-calibrate:
+calibrate calibrate-confidence:
 	node scripts/calibrate-confidence.ts
 
 cost-report:
-	node scripts/cost-report.ts
+	node scripts/cost-report.ts --days $(or $(DAYS),7)
 
 mcp-logistics:
 	node src/mcp-servers/logistics.ts
@@ -61,8 +74,18 @@ mcp-logistics:
 mcp-aftersales:
 	node src/mcp-servers/aftersales.ts
 
+mcp-up: ## Start both MCP servers
+	@mkdir -p log data
+	@nohup node src/mcp-servers/logistics.ts > log/mcp-logistics.log 2>&1 & echo $$! > data/mcp-logistics.pid
+	@nohup node src/mcp-servers/aftersales.ts > log/mcp-aftersales.log 2>&1 & echo $$! > data/mcp-aftersales.pid
+	@sleep 1 && echo "MCP servers started: logistics=:8101 aftersales=:8102"
+
+mcp-down: ## Stop both MCP servers
+	-@kill `cat data/mcp-logistics.pid 2>/dev/null` 2>/dev/null; rm -f data/mcp-logistics.pid
+	-@kill `cat data/mcp-aftersales.pid 2>/dev/null` 2>/dev/null; rm -f data/mcp-aftersales.pid
+
 # train topic classifier: corpus -> dataset -> train/eval/export (Python, torch) -> threshold scan
-# -> serve (:8110) -> bypass batch classification. The three torch steps run through uv's ml group.
+# -> serve (:8110) -> bypass batch classification.
 train-golden:
 	node scripts/train/validate-golden.ts
 
@@ -73,13 +96,13 @@ train-dataset:
 	node scripts/train/build-dataset.ts
 
 train-train:
-	uv run --group ml python scripts/train/py/train.py
+	uv run python scripts/train/py/train.py
 
 train-eval:
-	uv run --group ml python scripts/train/py/evaluate.py
+	uv run python scripts/train/py/evaluate.py
 
 train-export:
-	uv run --group ml python scripts/train/py/export_onnx.py
+	uv run python scripts/train/py/export_onnx.py
 
 train-typecheck:
 	uv run --with mypy mypy scripts/train/py
@@ -89,7 +112,7 @@ train-threshold-scan:
 
 classifier-up:
 	@mkdir -p log data
-	@nohup node scripts/train/serve.ts > log/classifier.log 2>&1 & echo $! > data/classifier.pid
+	@nohup node scripts/train/serve.ts > log/classifier.log 2>&1 & echo $$! > data/classifier.pid
 	@sleep 2 && curl -sf http://127.0.0.1:8110/healthz >/dev/null && echo "Classifier service started: :8110 (pid in data/classifier.pid)" || echo "Start failed; see log/classifier.log"
 
 classifier-down:

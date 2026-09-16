@@ -108,10 +108,15 @@ const FORMATTERS: Record<string, ResultFormatter> = {
   query_return_status: fmtReturn,
 };
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  onTimeout: () => void,
+): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
+      onTimeout();
       reject(new Error("MCP request timed out"));
     }, ms);
   });
@@ -128,12 +133,20 @@ async function withClient<T>(
 ): Promise<T> {
   const client = new Client({ name: "swifty-agent2", version: "0.1.0" });
   const transport = new StreamableHTTPClientTransport(new URL(url));
-  await withTimeout(client.connect(transport), settings.mcpToolTimeout * 1000);
-  try {
-    return await fn(client);
-  } finally {
-    await client.close().catch(() => undefined);
-  }
+  return withTimeout(
+    (async () => {
+      await client.connect(transport);
+      try {
+        return await fn(client);
+      } finally {
+        await client.close().catch(() => undefined);
+      }
+    })(),
+    settings.mcpToolTimeout * 1000,
+    () => {
+      void client.close().catch(() => undefined);
+    },
+  );
 }
 
 function textOf(content: unknown): string {
@@ -165,13 +178,18 @@ export async function fetchMcpSpecs(): Promise<ToolSpec[]> {
     }
     for (const tool of tools.tools) {
       const input = jsonObjectSchema.safeParse(tool.inputSchema);
+      if (!input.success) {
+        log.warn(
+          { server, tool: tool.name },
+          "MCP tool has a malformed input schema; skipping it",
+        );
+        continue;
+      }
       specs.push(
         defineRawTool({
           name: tool.name,
           description: tool.description ?? "",
-          jsonSchema: input.success
-            ? input.data
-            : { type: "object", properties: {} },
+          jsonSchema: input.data,
           source: "mcp",
           mcpServer: server,
           formatResult: FORMATTERS[tool.name] ?? null,

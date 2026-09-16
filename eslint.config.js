@@ -121,11 +121,9 @@ export default defineConfig(
     },
   },
   {
-    // React Router 路由模块约定:同一文件导出 meta/clientLoader/组件(官方模板同款豁免),
-    // fast-refresh 对路由 chunk 退化为整页刷新,可接受
     files: ["fe/app/**/*.{ts,tsx}"],
     rules: {
-      "react-refresh/only-export-components": "off",
+      "react-refresh/only-export-components": "warn",
     },
   },
   {

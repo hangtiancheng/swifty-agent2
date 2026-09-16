@@ -44,7 +44,7 @@ export const extractRequestSchema = z.object({
   text: z.string().min(1, "text must not be empty"),
 });
 
-const PLACEHOLDER_ORDER_IDS = new Set(["", "null", "none", "n/a"]);
+const PLACEHOLDER_ORDER_IDS = new Set(["", "null", "none", "n/a", "无"]);
 
 export const afterSalesTicketSchema = z.object({
   order_id: z

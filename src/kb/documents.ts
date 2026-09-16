@@ -32,6 +32,28 @@ export function isKey(title: string, body: string): number {
   return KEY_TERMS.some((t) => head.includes(t)) ? 1 : 0;
 }
 
+export function approvedReviewChunk(question: string, answer: string): Chunk {
+  return {
+    category: "flywheel_review",
+    questions: question,
+    answer,
+    sectionPath: `flywheel_review / ${question}`,
+    contentType: "faq",
+    isKeyClause: isKey(question, answer),
+  };
+}
+
+export function approvedStagingChunk(question: string, answer: string): Chunk {
+  return {
+    category: "conversation_history",
+    questions: question,
+    answer,
+    sectionPath: "mined",
+    contentType: "mined",
+    isKeyClause: isKey(question, answer),
+  };
+}
+
 export async function buildChunks(
   md: string,
   contentType: string,

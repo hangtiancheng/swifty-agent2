@@ -70,15 +70,15 @@ export async function createTicket(
   ticketType: string,
 ): Promise<string> {
   const ticketNo = genTicketNo();
-  await prisma.$transaction([
-    prisma.ticket.create({
-      data: { ticketNo, conversationId, description, ticketType },
-    }),
-    prisma.conversation.updateMany({
+  await prisma.$transaction(async (tx) => {
+    await tx.conversation.update({
       where: { id: conversationId },
       data: { status: "transferred" },
-    }),
-  ]);
+    });
+    await tx.ticket.create({
+      data: { ticketNo, conversationId, description, ticketType },
+    });
+  });
   return ticketNo;
 }
 
@@ -209,25 +209,50 @@ export interface InsertChunkInput {
   isKeyClause?: number;
 }
 
-export async function insertKnowledgeChunk(
-  input: InsertChunkInput,
-): Promise<number> {
-  const row = await prisma.knowledgeChunk.create({
-    data: {
-      category: input.category,
-      questions: input.questions,
-      answer: input.answer,
-      sectionPath: input.sectionPath ?? null,
-      contentType: input.contentType ?? null,
-      isKeyClause: input.isKeyClause ?? 0,
-    },
+export async function insertKnowledgeChunks(
+  inputs: InsertChunkInput[],
+): Promise<number[]> {
+  return prisma.$transaction(async (tx) => {
+    const ids: number[] = [];
+    for (const input of inputs) {
+      const row = await tx.knowledgeChunk.create({
+        data: {
+          category: input.category,
+          questions: input.questions,
+          answer: input.answer,
+          sectionPath: input.sectionPath ?? null,
+          contentType: input.contentType ?? null,
+          isKeyClause: input.isKeyClause ?? 0,
+        },
+      });
+      ids.push(row.id);
+    }
+    for (let index = 0; index < ids.length; index += 1) {
+      await tx.knowledgeChunk.update({
+        where: { id: ids[index] },
+        data: {
+          prevChunkId: index > 0 ? ids[index - 1] : null,
+          nextChunkId: index < ids.length - 1 ? ids[index + 1] : null,
+        },
+      });
+    }
+    return ids;
   });
-  return row.id;
 }
 
-export async function listPendingChunks() {
+export async function listChunksForVectorization(
+  useExternalStore: boolean,
+  embeddingModel: string,
+) {
   return prisma.knowledgeChunk.findMany({
-    where: { vectorizeStatus: "pending" },
+    where: {
+      OR: [
+        { vectorizeStatus: "pending" },
+        { embeddingModel: null },
+        { embeddingModel: { not: embeddingModel } },
+        useExternalStore ? { embedding: { not: null } } : { embedding: null },
+      ],
+    },
     orderBy: { id: "asc" },
   });
 }
@@ -236,33 +261,32 @@ export async function markChunkVectorized(
   chunkId: number,
   vectorId: string,
   embedding: number[],
+  embeddingModel: string,
 ): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
-    data: { vectorId, vectorizeStatus: "done", embedding: toJson(embedding) },
+    data: {
+      vectorId,
+      vectorizeStatus: "done",
+      embedding: toJson(embedding),
+      embeddingModel,
+    },
   });
 }
 
-// Milvus-bridge variant: the dense vector lives in Milvus, so only the vector id and status
-// are recorded here and the embedding column is left null (see src/kb/milvus-rpc.ts).
 export async function markChunkVectorizedExternal(
   chunkId: number,
   vectorId: string,
+  embeddingModel: string,
 ): Promise<void> {
   await prisma.knowledgeChunk.updateMany({
     where: { id: chunkId },
-    data: { vectorId, vectorizeStatus: "done" },
-  });
-}
-
-export async function setChunkNeighbors(
-  chunkId: number,
-  prevId: number | null,
-  nextId: number | null,
-): Promise<void> {
-  await prisma.knowledgeChunk.updateMany({
-    where: { id: chunkId },
-    data: { prevChunkId: prevId, nextChunkId: nextId },
+    data: {
+      vectorId,
+      vectorizeStatus: "done",
+      embedding: null,
+      embeddingModel,
+    },
   });
 }
 
@@ -273,21 +297,30 @@ export async function listChunksByContentTypes(contentTypes: Iterable<string>) {
   });
 }
 
-export async function rependChunkText(
-  chunkId: number,
-  questions: string,
-  answer: string,
+export interface RependChunkInput {
+  id: number;
+  questions: string;
+  answer: string;
+}
+
+export async function rependChunkTexts(
+  chunks: RependChunkInput[],
 ): Promise<void> {
-  await prisma.knowledgeChunk.updateMany({
-    where: { id: chunkId },
-    data: {
-      questions,
-      answer,
-      vectorizeStatus: "pending",
-      embedding: null,
-      vectorId: null,
-    },
-  });
+  await prisma.$transaction(
+    chunks.map((chunk) =>
+      prisma.knowledgeChunk.update({
+        where: { id: chunk.id },
+        data: {
+          questions: chunk.questions,
+          answer: chunk.answer,
+          vectorizeStatus: "pending",
+          embedding: null,
+          embeddingModel: null,
+          vectorId: null,
+        },
+      }),
+    ),
+  );
 }
 
 export async function countChunksByStatus(status: string): Promise<number> {
@@ -367,6 +400,14 @@ export interface VectorizedChunk {
   content_type: string;
   category: string;
   embedding: number[];
+}
+
+export async function knowledgeRevision(): Promise<string> {
+  const result = await prisma.knowledgeChunk.aggregate({
+    _count: { _all: true },
+    _max: { id: true, updatedAt: true },
+  });
+  return `${result._count._all}:${result._max.id ?? 0}:${result._max.updatedAt?.getTime() ?? 0}`;
 }
 
 export async function listVectorizedChunks(): Promise<VectorizedChunk[]> {
@@ -526,30 +567,51 @@ export async function listReviewCandidates(
   }));
 }
 
-export async function insertReviewItem(
+export interface MatchLowConfidenceResult {
+  reviewId: number;
+  created: boolean;
+}
+
+export async function matchLowConfidence(
+  lowConfidenceId: number,
   normalizedQuestion: string,
   aiSuggestedAnswer: string | null,
-): Promise<number> {
-  const row = await prisma.reviewQueue.create({
-    data: { normalizedQuestion, aiSuggestedAnswer },
-  });
-  return row.id;
-}
+  matchedReviewId: number | null,
+): Promise<MatchLowConfidenceResult | null> {
+  return prisma.$transaction(async (tx) => {
+    if (matchedReviewId !== null) {
+      const claimed = await tx.lowConfidenceQuestion.updateMany({
+        where: { id: lowConfidenceId, matchedReviewId: null },
+        data: { matchedReviewId },
+      });
+      if (claimed.count === 0) {
+        return null;
+      }
+      await tx.reviewQueue.update({
+        where: { id: matchedReviewId },
+        data: { occurrenceCount: { increment: 1 } },
+      });
+      return { reviewId: matchedReviewId, created: false };
+    }
 
-export async function incrementOccurrence(reviewId: number): Promise<void> {
-  await prisma.reviewQueue.updateMany({
-    where: { id: reviewId },
-    data: { occurrenceCount: { increment: 1 } },
-  });
-}
-
-export async function setMatchedReview(
-  lcqId: number,
-  reviewId: number,
-): Promise<void> {
-  await prisma.lowConfidenceQuestion.updateMany({
-    where: { id: lcqId },
-    data: { matchedReviewId: reviewId },
+    const current = await tx.lowConfidenceQuestion.findUnique({
+      where: { id: lowConfidenceId },
+      select: { matchedReviewId: true },
+    });
+    if (current?.matchedReviewId !== null) {
+      return null;
+    }
+    const review = await tx.reviewQueue.create({
+      data: { normalizedQuestion, aiSuggestedAnswer },
+    });
+    const claimed = await tx.lowConfidenceQuestion.updateMany({
+      where: { id: lowConfidenceId, matchedReviewId: null },
+      data: { matchedReviewId: review.id },
+    });
+    if (claimed.count === 0) {
+      throw new Error("low-confidence question was claimed concurrently");
+    }
+    return { reviewId: review.id, created: true };
   });
 }
 
@@ -949,22 +1011,46 @@ export async function listFaithCases(
       counts[g.status] = g._count._all;
     }
   }
-  const where = status ? { status } : {};
-  const total = await prisma.faithCase.count({ where });
-  const rows = await prisma.faithCase.findMany({
-    where,
-    orderBy: [{ lastSeenAt: "desc" }, { id: "desc" }],
-    skip: Math.max(0, (page - 1) * size),
-    take: size,
-  });
-  rows.sort((a, b) => {
-    const rank = (s: string): number => (s === "unresolved" ? 0 : 1);
-    if (rank(a.status) !== rank(b.status)) {
-      return rank(a.status) - rank(b.status);
-    }
-    return b.lastSeenAt.getTime() - a.lastSeenAt.getTime() || b.id - a.id;
-  });
-  return { rows, total, counts };
+  const total = status
+    ? await prisma.faithCase.count({ where: { status } })
+    : counts.unresolved + counts.resolved + counts.dismissed;
+  const offset = Math.max(0, (page - 1) * size);
+  const orderBy = [{ lastSeenAt: "desc" as const }, { id: "desc" as const }];
+  if (status) {
+    const rows = await prisma.faithCase.findMany({
+      where: { status },
+      orderBy,
+      skip: offset,
+      take: size,
+    });
+    return { rows, total, counts };
+  }
+
+  const unresolvedTake = Math.max(
+    0,
+    Math.min(size, counts.unresolved - offset),
+  );
+  const unresolved =
+    unresolvedTake > 0
+      ? await prisma.faithCase.findMany({
+          where: { status: "unresolved" },
+          orderBy,
+          skip: offset,
+          take: unresolvedTake,
+        })
+      : [];
+  const remaining = size - unresolved.length;
+  const resolvedOffset = Math.max(0, offset - counts.unresolved);
+  const handled =
+    remaining > 0
+      ? await prisma.faithCase.findMany({
+          where: { status: { not: "unresolved" } },
+          orderBy,
+          skip: resolvedOffset,
+          take: remaining,
+        })
+      : [];
+  return { rows: [...unresolved, ...handled], total, counts };
 }
 
 export async function faithCaseStatusMap(): Promise<Record<string, string>> {

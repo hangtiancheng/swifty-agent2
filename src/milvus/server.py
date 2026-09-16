@@ -178,6 +178,29 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             return pb2.CountResponse(count=0)
         return pb2.CountResponse(count=n)
 
+    def Delete(
+        self, request: pb2.DeleteRequest, context: grpc.ServicerContext
+    ) -> pb2.DeleteResponse:
+        ids = [int(value) for value in request.ids]
+        if not ids:
+            return pb2.DeleteResponse(count=0)
+
+        def work() -> int:
+            client = self._loaded_client()
+            if client is None:
+                return 0
+            client.delete(self._collection, ids=ids)
+            client.flush(self._collection)
+            return len(ids)
+
+        try:
+            count = self._run(work)
+        except Exception as exc:  # noqa: BLE001
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"delete failed: {exc}")
+            return pb2.DeleteResponse(count=0)
+        return pb2.DeleteResponse(count=count)
+
     def Drop(self, request, context):
         def work() -> None:
             client = self._get_client()

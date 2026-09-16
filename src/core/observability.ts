@@ -1,5 +1,5 @@
 // Langfuse observability: OTEL-based tracing that degrades to a no-op when unconfigured.
-// Traces are recorded at turn end with session id, intent tag, output and token usage.
+import { CallbackHandler } from "@langfuse/langchain";
 import { LangfuseSpanProcessor } from "@langfuse/otel";
 import { propagateAttributes, startActiveObservation } from "@langfuse/tracing";
 import { NodeSDK } from "@opentelemetry/sdk-node";
@@ -17,6 +17,22 @@ export function langfuseEnabled(): boolean {
     settings.langfuseSecretKey &&
     settings.langfuseBaseUrl,
   );
+}
+
+export function graphCallbacks(
+  sessionId: number,
+  userId?: string,
+): CallbackHandler[] {
+  if (!langfuseEnabled()) {
+    return [];
+  }
+  return [
+    new CallbackHandler({
+      sessionId: String(sessionId),
+      ...(userId ? { userId } : {}),
+      tags: ["chat-turn"],
+    }),
+  ];
 }
 
 export function initObservability(): void {

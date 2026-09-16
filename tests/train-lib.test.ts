@@ -6,7 +6,10 @@ import {
   splitDataset,
   type CorpusSample,
 } from "#/train/corpus-lib.ts";
-import { applyThreshold } from "#/train/inference-lib.ts";
+import {
+  applyThreshold,
+  truncateWithTerminalToken,
+} from "#/train/inference-lib.ts";
 
 describe("inference-lib applyThreshold", () => {
   it("marks every class at or above the line", () => {
@@ -30,6 +33,13 @@ describe("inference-lib applyThreshold", () => {
       [1, 0],
       [0, 1],
     ]);
+  });
+
+  it("preserves the tokenizer terminal token when truncating", () => {
+    expect(truncateWithTerminalToken([101, 10, 11, 12, 102], 4)).toEqual([
+      101, 10, 11, 102,
+    ]);
+    expect(truncateWithTerminalToken([101, 102], 4)).toEqual([101, 102]);
   });
 });
 

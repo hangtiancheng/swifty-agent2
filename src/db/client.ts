@@ -21,6 +21,11 @@ ensureSqliteDir(settings.databaseUrl);
 const adapter = new PrismaBetterSqlite3({ url: settings.databaseUrl });
 export const prisma = new PrismaClient({ adapter });
 
+export async function assertDbReady(): Promise<void> {
+  await prisma.$connect();
+  await prisma.conversation.count();
+}
+
 export async function closeDb(): Promise<void> {
   await prisma.$disconnect();
 }

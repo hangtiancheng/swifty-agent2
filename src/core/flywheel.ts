@@ -66,30 +66,40 @@ export async function processPending(limit = 50): Promise<ProcessStats> {
       continue;
     }
     const matchedId = result.matched_question_id;
-    let reviewId: number;
-    if (matchedId !== null) {
-      if (!candidates.some((c) => c.id === matchedId)) {
-        log.warn(
-          { matched_id: matchedId, lcq: row.id },
-          "flywheel hallucinated id; retrying next round",
-        );
-        stats.skipped += 1;
-        continue;
-      }
-      await repository.incrementOccurrence(matchedId);
-      reviewId = matchedId;
-      stats.merged += 1;
-    } else {
-      reviewId = await repository.insertReviewItem(
-        result.normalized_question,
-        result.ai_suggested_answer || null,
+    if (
+      matchedId !== null &&
+      !candidates.some((candidate) => candidate.id === matchedId)
+    ) {
+      log.warn(
+        { matched_id: matchedId, lcq: row.id },
+        "flywheel hallucinated id; retrying next round",
       );
-      stats.created += 1;
+      stats.skipped += 1;
+      continue;
     }
-    await repository.setMatchedReview(row.id, reviewId);
+    const match = await repository.matchLowConfidence(
+      row.id,
+      result.normalized_question,
+      result.ai_suggested_answer || null,
+      matchedId,
+    );
+    if (match === null) {
+      stats.skipped += 1;
+      continue;
+    }
+    if (match.created) {
+      stats.created += 1;
+    } else {
+      stats.merged += 1;
+    }
     stats.processed += 1;
     log.info(
-      { lcq: row.id, review: reviewId, merged: matchedId !== null, truncated },
+      {
+        lcq: row.id,
+        review: match.reviewId,
+        merged: !match.created,
+        truncated,
+      },
       "flywheel item processed",
     );
   }

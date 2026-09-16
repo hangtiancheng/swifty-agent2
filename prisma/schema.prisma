@@ -11,14 +11,17 @@ datasource db {
 }
 
 model Conversation {
-  id                Int      @id @default(autoincrement())
-  userId            String
-  status            String   @default("active")
-  summary           String?
-  summaryUptoMsgId  Int?
-  layer1FromMsgId   Int?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                     Int                     @id @default(autoincrement())
+  userId                 String
+  status                 String                  @default("active")
+  summary                String?
+  summaryUptoMsgId       Int?
+  layer1FromMsgId        Int?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  messages               Message[]
+  tickets                Ticket[]
+  lowConfidenceQuestions LowConfidenceQuestion[]
 
   @@index([userId])
 }
@@ -32,17 +35,19 @@ model ConversationSummary {
   content        String
   createdAt      DateTime @default(now())
 
-  @@index([conversationId])
+  @@unique([conversationId, seq])
+  @@index([conversationId, uptoMsgId])
 }
 
 model Message {
-  id             Int      @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   conversationId Int
   role           String
   content        String?
   toolCalls      String?
   toolCallId     String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
 }
@@ -59,12 +64,13 @@ model Faq {
 }
 
 model Ticket {
-  ticketNo       String   @id
+  ticketNo       String       @id
   conversationId Int
   description    String
   ticketType     String
-  status         String   @default("pending")
-  createdAt      DateTime @default(now())
+  status         String       @default("pending")
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
 }
@@ -83,6 +89,7 @@ model KnowledgeChunk {
   vectorizeStatus String   @default("pending")
   // Dense embedding (JSON array of floats) written by the vectorize step.
   embedding       String?
+  embeddingModel  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -114,17 +121,20 @@ model ToolAuditLog {
 }
 
 model LowConfidenceQuestion {
-  id               Int      @id @default(autoincrement())
-  conversationId   Int?
-  rawQuestion      String
-  source           String
-  reason           String?
-  retrievedChunks  String?
-  matchedReviewId  Int?
-  createdAt        DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  conversationId  Int?
+  rawQuestion     String
+  source          String
+  reason          String?
+  retrievedChunks String?
+  matchedReviewId Int?
+  createdAt       DateTime @default(now())
 
+  conversation         Conversation?         @relation(fields: [conversationId], references: [id])
   matchedReview        ReviewQueue?          @relation(fields: [matchedReviewId], references: [id])
   topicClassifications TopicClassification[]
+
+  @@index([conversationId])
 }
 
 model ReviewQueue {
@@ -149,30 +159,28 @@ model EvalRun {
 }
 
 model FaithCase {
-  id            Int       @id @default(autoincrement())
-  evalId        String    @unique
-  bucket        String
-  query         String
-  strategy      String    @default("hybrid_rerank")
-  answer        String
-  reason        String
-  citations     String?
-  judgeModel    String?
-  status        String    @default("unresolved")
-  seenCount     Int       @default(1)
-  firstSeenAt   DateTime  @default(now())
-  lastSeenAt    DateTime  @default(now())
-  resolution    String?
-  resolvedAt    DateTime?
+  id          Int       @id @default(autoincrement())
+  evalId      String    @unique
+  bucket      String
+  query       String
+  strategy    String    @default("hybrid_rerank")
+  answer      String
+  reason      String
+  citations   String?
+  judgeModel  String?
+  status      String    @default("unresolved")
+  seenCount   Int       @default(1)
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  resolution  String?
+  resolvedAt  DateTime?
 }
 
 model TopicClassification {
   id           Int      @id @default(autoincrement())
-  questionId   Int
+  questionId   Int      @unique
   labels       String
   classifiedAt DateTime @default(now())
 
   question LowConfidenceQuestion @relation(fields: [questionId], references: [id])
-
-  @@index([questionId])
 }

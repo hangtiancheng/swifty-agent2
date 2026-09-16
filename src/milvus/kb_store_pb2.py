@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ekb_store.proto\x12\nkbstorerpc\"\x80\x01\n\x03Row\x12\n\n\x02id\x18\x01 \x01(\x03\x12\r\n\x05\x64\x65nse\x18\x02 \x03(\x02\x12\x10\n\x08question\x18\x03 \x01(\t\x12\x0e\n\x06\x61nswer\x18\x04 \x01(\t\x12\x14\n\x0csection_path\x18\x05 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x06 \x01(\t\x12\x10\n\x08\x63\x61tegory\x18\x07 \x01(\t\".\n\rUpsertRequest\x12\x1d\n\x04rows\x18\x01 \x03(\x0b\x32\x0f.kbstorerpc.Row\"\x1f\n\x0eUpsertResponse\x12\r\n\x05\x63ount\x18\x01 \x01(\x05\"@\n\rSearchRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\r\n\x05top_k\x18\x02 \x01(\x05\x12\x10\n\x08\x63\x61tegory\x18\x03 \x01(\t\"\x80\x01\n\x03Hit\x12\n\n\x02id\x18\x01 \x01(\x03\x12\r\n\x05score\x18\x02 \x01(\x02\x12\x10\n\x08question\x18\x03 \x01(\t\x12\x0e\n\x06\x61nswer\x18\x04 \x01(\t\x12\x14\n\x0csection_path\x18\x05 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x06 \x01(\t\x12\x10\n\x08\x63\x61tegory\x18\x07 \x01(\t\"/\n\x0eSearchResponse\x12\x1d\n\x04hits\x18\x01 \x03(\x0b\x32\x0f.kbstorerpc.Hit\"\x0e\n\x0c\x43ountRequest\"\x1e\n\rCountResponse\x12\r\n\x05\x63ount\x18\x01 \x01(\x03\"\r\n\x0b\x44ropRequest\"\x0e\n\x0c\x44ropResponse\"\x0e\n\x0c\x46lushRequest\"\x0f\n\rFlushResponse2\xc2\x02\n\x07KbStore\x12?\n\x06Upsert\x12\x19.kbstorerpc.UpsertRequest\x1a\x1a.kbstorerpc.UpsertResponse\x12?\n\x06Search\x12\x19.kbstorerpc.SearchRequest\x1a\x1a.kbstorerpc.SearchResponse\x12<\n\x05\x43ount\x12\x18.kbstorerpc.CountRequest\x1a\x19.kbstorerpc.CountResponse\x12\x39\n\x04\x44rop\x12\x17.kbstorerpc.DropRequest\x1a\x18.kbstorerpc.DropResponse\x12<\n\x05\x46lush\x12\x18.kbstorerpc.FlushRequest\x1a\x19.kbstorerpc.FlushResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ekb_store.proto\x12\nkbstorerpc\"\x80\x01\n\x03Row\x12\n\n\x02id\x18\x01 \x01(\x03\x12\r\n\x05\x64\x65nse\x18\x02 \x03(\x02\x12\x10\n\x08question\x18\x03 \x01(\t\x12\x0e\n\x06\x61nswer\x18\x04 \x01(\t\x12\x14\n\x0csection_path\x18\x05 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x06 \x01(\t\x12\x10\n\x08\x63\x61tegory\x18\x07 \x01(\t\".\n\rUpsertRequest\x12\x1d\n\x04rows\x18\x01 \x03(\x0b\x32\x0f.kbstorerpc.Row\"\x1f\n\x0eUpsertResponse\x12\r\n\x05\x63ount\x18\x01 \x01(\x05\"@\n\rSearchRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\r\n\x05top_k\x18\x02 \x01(\x05\x12\x10\n\x08\x63\x61tegory\x18\x03 \x01(\t\"\x80\x01\n\x03Hit\x12\n\n\x02id\x18\x01 \x01(\x03\x12\r\n\x05score\x18\x02 \x01(\x02\x12\x10\n\x08question\x18\x03 \x01(\t\x12\x0e\n\x06\x61nswer\x18\x04 \x01(\t\x12\x14\n\x0csection_path\x18\x05 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x06 \x01(\t\x12\x10\n\x08\x63\x61tegory\x18\x07 \x01(\t\"/\n\x0eSearchResponse\x12\x1d\n\x04hits\x18\x01 \x03(\x0b\x32\x0f.kbstorerpc.Hit\"\x0e\n\x0c\x43ountRequest\"\x1e\n\rCountResponse\x12\r\n\x05\x63ount\x18\x01 \x01(\x03\"\x1c\n\rDeleteRequest\x12\x0b\n\x03ids\x18\x01 \x03(\x03\"\x1f\n\x0e\x44\x65leteResponse\x12\r\n\x05\x63ount\x18\x01 \x01(\x05\"\r\n\x0b\x44ropRequest\"\x0e\n\x0c\x44ropResponse\"\x0e\n\x0c\x46lushRequest\"\x0f\n\rFlushResponse2\x83\x03\n\x07KbStore\x12?\n\x06Upsert\x12\x19.kbstorerpc.UpsertRequest\x1a\x1a.kbstorerpc.UpsertResponse\x12?\n\x06Search\x12\x19.kbstorerpc.SearchRequest\x1a\x1a.kbstorerpc.SearchResponse\x12<\n\x05\x43ount\x12\x18.kbstorerpc.CountRequest\x1a\x19.kbstorerpc.CountResponse\x12?\n\x06\x44\x65lete\x12\x19.kbstorerpc.DeleteRequest\x1a\x1a.kbstorerpc.DeleteResponse\x12\x39\n\x04\x44rop\x12\x17.kbstorerpc.DropRequest\x1a\x18.kbstorerpc.DropResponse\x12<\n\x05\x46lush\x12\x18.kbstorerpc.FlushRequest\x1a\x19.kbstorerpc.FlushResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,14 +47,18 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_COUNTREQUEST']._serialized_end=502
   _globals['_COUNTRESPONSE']._serialized_start=504
   _globals['_COUNTRESPONSE']._serialized_end=534
-  _globals['_DROPREQUEST']._serialized_start=536
-  _globals['_DROPREQUEST']._serialized_end=549
-  _globals['_DROPRESPONSE']._serialized_start=551
-  _globals['_DROPRESPONSE']._serialized_end=565
-  _globals['_FLUSHREQUEST']._serialized_start=567
-  _globals['_FLUSHREQUEST']._serialized_end=581
-  _globals['_FLUSHRESPONSE']._serialized_start=583
-  _globals['_FLUSHRESPONSE']._serialized_end=598
-  _globals['_KBSTORE']._serialized_start=601
-  _globals['_KBSTORE']._serialized_end=923
+  _globals['_DELETEREQUEST']._serialized_start=536
+  _globals['_DELETEREQUEST']._serialized_end=564
+  _globals['_DELETERESPONSE']._serialized_start=566
+  _globals['_DELETERESPONSE']._serialized_end=597
+  _globals['_DROPREQUEST']._serialized_start=599
+  _globals['_DROPREQUEST']._serialized_end=612
+  _globals['_DROPRESPONSE']._serialized_start=614
+  _globals['_DROPRESPONSE']._serialized_end=628
+  _globals['_FLUSHREQUEST']._serialized_start=630
+  _globals['_FLUSHREQUEST']._serialized_end=644
+  _globals['_FLUSHRESPONSE']._serialized_start=646
+  _globals['_FLUSHRESPONSE']._serialized_end=661
+  _globals['_KBSTORE']._serialized_start=664
+  _globals['_KBSTORE']._serialized_end=1051
 # @@protoc_insertion_point(module_scope)

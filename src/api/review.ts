@@ -7,8 +7,7 @@ import { approveRequestSchema } from "./schemas.ts";
 
 import { parseJson } from "#/db/json.ts";
 import * as repository from "#/db/repository.ts";
-import { isKey } from "#/kb/documents.ts";
-import type { Chunk } from "#/kb/documents.ts";
+import { approvedReviewChunk } from "#/kb/documents.ts";
 import * as dualwrite from "#/kb/dualwrite.ts";
 import { childLogger } from "#/logger.ts";
 
@@ -75,14 +74,10 @@ reviewRouter.post("/api/review/:review_id/approve", async (c) => {
     });
   }
 
-  const chunk: Chunk = {
-    category: "flywheel_review",
-    questions: item.normalizedQuestion,
-    answer: req.approved_answer,
-    sectionPath: `flywheel_review / ${item.normalizedQuestion}`,
-    contentType: "faq",
-    isKeyClause: isKey(item.normalizedQuestion, req.approved_answer),
-  };
+  const chunk = approvedReviewChunk(
+    item.normalizedQuestion,
+    req.approved_answer,
+  );
   let chunkIds: number[] = [];
   try {
     chunkIds = await dualwrite.writePending([chunk]);
@@ -94,11 +89,11 @@ reviewRouter.post("/api/review/:review_id/approve", async (c) => {
     );
     if (chunkIds.length > 0) {
       try {
-        await repository.deleteKnowledgeChunks(chunkIds);
+        await dualwrite.deleteChunks(chunkIds);
       } catch (rollbackError) {
         log.error(
           { err: rollbackError, ids: chunkIds },
-          "pending chunk rollback failed (manual cleanup needed)",
+          "knowledge chunk rollback failed (manual cleanup needed)",
         );
       }
     }

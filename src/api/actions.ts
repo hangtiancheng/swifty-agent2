@@ -17,8 +17,15 @@ import { childLogger } from "#/logger.ts";
 const log = childLogger("api.actions");
 export const actionsRouter = new Hono();
 
+async function requireConversation(conversationId: number): Promise<void> {
+  if ((await repository.getConversation(conversationId)) === null) {
+    throw new HTTPException(404, { message: "Conversation not found" });
+  }
+}
+
 actionsRouter.post("/api/actions/create-ticket", async (c) => {
   const req = await parseJsonBody(c, createTicketRequestSchema);
+  await requireConversation(req.conversation_id);
   try {
     const ticketNo = await repository.createTicket(
       req.conversation_id,
@@ -40,6 +47,7 @@ actionsRouter.post("/api/actions/create-ticket", async (c) => {
 
 actionsRouter.post("/api/actions/create-refund", async (c) => {
   const req = await parseJsonBody(c, createRefundRequestSchema);
+  await requireConversation(req.conversation_id);
   const description = `Refund request order_id=${req.order_id} reason=${req.reason}`;
   try {
     const ticketNo = await repository.createTicket(

@@ -18,7 +18,10 @@ import { z } from "zod";
 import { parseJsonBody } from "#/api/http.ts";
 import { settings } from "#/config.ts";
 import { TOPIC_NAMES } from "#/core/taxonomy.ts";
-import { applyThreshold } from "#/train/inference-lib.ts";
+import {
+  applyThreshold,
+  truncateWithTerminalToken,
+} from "#/train/inference-lib.ts";
 
 const DIR = path.join(settings.root, "data/train/onnx");
 const MAX_LENGTH = 128;
@@ -72,10 +75,13 @@ function encodeOne(text: string): Encoded {
     add_special_tokens: true,
     return_token_type_ids: true,
   });
-  const ids = enc.ids.slice(0, MAX_LENGTH);
-  const attentionMask = enc.attention_mask.slice(0, MAX_LENGTH);
-  const tokenTypeIds = (enc.token_type_ids ?? enc.ids.map(() => 0)).slice(
-    0,
+  const ids = truncateWithTerminalToken(enc.ids, MAX_LENGTH);
+  const attentionMask = truncateWithTerminalToken(
+    enc.attention_mask,
+    MAX_LENGTH,
+  );
+  const tokenTypeIds = truncateWithTerminalToken(
+    enc.token_type_ids ?? enc.ids.map(() => 0),
     MAX_LENGTH,
   );
   return { ids, attentionMask, tokenTypeIds };

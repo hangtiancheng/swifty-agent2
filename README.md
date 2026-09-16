@@ -20,10 +20,10 @@ Jina/Cohere shaped). Intent and summary slots fall back to the chat group unless
 
 ## Storage
 
-The Python project used MySQL + Milvus Standalone. This server uses a single SQLite database:
+The Python project used MySQL + Milvus Standalone. This server uses SQLite for relational data:
 
-- relational tables live in `data/swifty-agent2.db` (Prisma schema in `prisma/schema.prisma`);
-- dense embeddings are stored on `knowledge_chunks` and scored in-process;
+- relational tables live in `data/swifty-agent2.db` (Prisma schema in `prisma/schema.prisma`); run `pnpm db:migrate` before the first start;
+- by default, dense embeddings are stored on `knowledge_chunks` and scored in-process;
 - BM25 is computed in-process with CJK bigram tokenization, so the four retrieval
   strategies (`vector` / `bm25` / `hybrid` / `hybrid_rerank`) keep working without a
   vector database;
@@ -57,9 +57,9 @@ Full-parameter transformer train has no JavaScript equivalent, so the train pipe
 - **TypeScript** (`scripts/train/*.ts`, `src/train/`): corpus building, dataset split/augmentation,
   golden-sample gate, threshold-scan replay, bypass batch classification, and the ONNX inference
   service (`scripts/train/serve.ts`, `onnxruntime-node` + `@huggingface/tokenizers`, port `:8110`).
-- **Python** (`scripts/train/py/*.py`, run via `uv run --group ml`): the three torch-dependent steps —
+- **Python** (`scripts/train/py/*.py`, run via `uv run python`): the three torch-dependent steps —
   `train.py` (fine-tune), `evaluate.py` (per-class P/R/F1 + confusion matrix + red lines),
-  `export_onnx.py` (torch → ONNX with a consistency check). See `pyproject.toml`'s `ml` group.
+  and `export_onnx.py` (torch → ONNX with a consistency check).
 
 The authoritative 17-class taxonomy lives in `src/core/taxonomy.ts`. The corpus step exports it to
 `data/train/taxonomy.json`, which the Python side reads (`scripts/train/py/taxonomy.py`), so label

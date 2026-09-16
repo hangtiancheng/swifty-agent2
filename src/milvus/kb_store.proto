@@ -14,6 +14,7 @@ service KbStore {
   rpc Upsert(UpsertRequest) returns (UpsertResponse);
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Count(CountRequest) returns (CountResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc Drop(DropRequest) returns (DropResponse);
   rpc Flush(FlushRequest) returns (FlushResponse);
 }
@@ -62,6 +63,14 @@ message CountRequest {}
 
 message CountResponse {
   int64 count = 1;
+}
+
+message DeleteRequest {
+  repeated int64 ids = 1;
+}
+
+message DeleteResponse {
+  int32 count = 1;
 }
 
 message DropRequest {}

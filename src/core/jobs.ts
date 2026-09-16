@@ -26,8 +26,8 @@ const script = (name: string): string[] => [
   process.execPath,
   path.join("scripts", `${name}.ts`),
 ];
-// train TS scripts live under scripts/train/; the three torch-dependent steps stay in Python and run
-// through uv's ml dependency group; classifier-up/down are daemon management, so they go through make.
+// Train TS scripts live under scripts/train/; the torch-dependent steps stay in Python.
+// Classifier process management goes through make so PID-file handling stays in one place.
 const trainScript = (name: string, ...args: string[]): string[] => [
   process.execPath,
   path.join("scripts", "train", `${name}.ts`),
@@ -36,8 +36,6 @@ const trainScript = (name: string, ...args: string[]): string[] => [
 const pyScript = (name: string): string[] => [
   "uv",
   "run",
-  "--group",
-  "ml",
   "python",
   path.join("scripts", "train", "py", `${name}.py`),
 ];
@@ -286,6 +284,12 @@ export function start(name: string): JobRun {
   run.finishedAt = null;
   run.returncode = null;
   run.proc = child;
+  child.once("error", (error) => {
+    run.status = "failed";
+    run.finishedAt = nowIso();
+    run.proc = null;
+    log.error({ err: error, job: name }, "job failed to start");
+  });
   child.once("exit", (code) => {
     run.returncode = code;
     run.finishedAt = nowIso();
@@ -305,9 +309,10 @@ export async function stop(name: string): Promise<void> {
   if (run.status !== "running" || child?.pid === undefined) {
     throw new Error("This job is not currently running");
   }
+  const pid = child.pid;
   run.status = "stopped";
   try {
-    process.kill(-child.pid, "SIGTERM");
+    process.kill(-pid, "SIGTERM");
   } catch {
     // already gone
   }
@@ -322,7 +327,7 @@ export async function stop(name: string): Promise<void> {
   });
   const timer = setTimeout(() => {
     try {
-      process.kill(-(child.pid ?? 0), "SIGKILL");
+      process.kill(-pid, "SIGKILL");
     } catch {
       // already gone
     }

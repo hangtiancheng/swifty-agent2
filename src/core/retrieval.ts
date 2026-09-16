@@ -104,10 +104,12 @@ export async function searchKnowledge(
   }
 
   const vector = await embedQuery(query);
+  const candidateCount =
+    strategy === "hybrid" ? k : Math.max(k, settings.recallTopK);
   const hits = await store.hybridSearch(
     vector,
     bm25Query,
-    k,
+    candidateCount,
     settings.recallTopK,
     category,
   );

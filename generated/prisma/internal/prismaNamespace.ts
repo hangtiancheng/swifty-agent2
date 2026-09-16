@@ -1504,6 +1504,7 @@ export const KnowledgeChunkScalarFieldEnum = {
   vectorId: 'vectorId',
   vectorizeStatus: 'vectorizeStatus',
   embedding: 'embedding',
+  embeddingModel: 'embeddingModel',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

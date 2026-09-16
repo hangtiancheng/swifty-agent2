@@ -5,36 +5,46 @@
 // id + status on the row (the embedding column stays null). See src/kb/milvus-rpc.ts.
 import type { Chunk } from "./documents.ts";
 import * as milvus from "./milvus-rpc.ts";
-import { invalidateVectorCache } from "./store.ts";
 
+import { settings } from "#/config.ts";
 import { embedTexts } from "#/core/embeddings.ts";
 import {
-  insertKnowledgeChunk,
-  listPendingChunks,
+  deleteKnowledgeChunks,
+  insertKnowledgeChunks,
+  listChunksForVectorization,
   markChunkVectorized,
   markChunkVectorizedExternal,
-  setChunkNeighbors,
+  rependChunkTexts,
 } from "#/db/repository.ts";
 
 export async function writePending(chunks: Chunk[]): Promise<number[]> {
-  const ids: number[] = [];
-  for (const c of chunks) {
-    const id = await insertKnowledgeChunk({
-      category: c.category,
-      questions: c.questions,
-      answer: c.answer,
-      sectionPath: c.sectionPath,
-      contentType: c.contentType,
-      isKeyClause: c.isKeyClause,
-    });
-    ids.push(id);
+  return insertKnowledgeChunks(chunks);
+}
+
+export async function deleteChunks(ids: number[]): Promise<void> {
+  if (ids.length === 0) {
+    return;
   }
-  for (let i = 0; i < ids.length; i += 1) {
-    const prevId = i > 0 ? ids[i - 1] : null;
-    const nextId = i < ids.length - 1 ? ids[i + 1] : null;
-    await setChunkNeighbors(ids[i], prevId, nextId);
+  if (milvus.milvusEnabled()) {
+    await milvus.deleteRows(ids);
   }
-  return ids;
+  await deleteKnowledgeChunks(ids);
+}
+
+export interface RependChunk {
+  id: number;
+  questions: string;
+  answer: string;
+}
+
+export async function rependChunks(chunks: RependChunk[]): Promise<void> {
+  if (chunks.length === 0) {
+    return;
+  }
+  if (milvus.milvusEnabled()) {
+    await milvus.deleteRows(chunks.map((chunk) => chunk.id));
+  }
+  await rependChunkTexts(chunks);
 }
 
 function* batches<T>(items: T[], size: number): Generator<T[]> {
@@ -44,46 +54,49 @@ function* batches<T>(items: T[], size: number): Generator<T[]> {
 }
 
 export async function vectorizePending(batchSize = 64): Promise<number> {
-  // Idempotent: read pending -> embed -> store dense vector -> mark done.
-  const pending = await listPendingChunks();
   const useMilvus = milvus.milvusEnabled();
+  const pending = await listChunksForVectorization(
+    useMilvus,
+    settings.embedModel,
+  );
+  const externalIds: number[] = [];
   let done = 0;
   for (const batch of batches(pending, batchSize)) {
     const texts = batch.map(
-      (r) => `${r.category}\n${r.questions}\n${r.answer}`,
+      (row) => `${row.category}\n${row.questions}\n${row.answer}`,
     );
     const vectors = await embedTexts(texts);
     if (useMilvus) {
-      // Milvus is authoritative: upsert the dense vector + scalars, then record only the
-      // vector id + status on the row (embedding column stays null).
-      const rows = batch.map((r, i): milvus.MilvusRow => ({
-        id: r.id,
-        dense: vectors[i],
-        question: r.questions,
-        answer: r.answer,
-        section_path: r.sectionPath ?? "",
-        content_type: r.contentType ?? "",
-        category: r.category ?? "",
+      const rows = batch.map((row, index): milvus.MilvusRow => ({
+        id: row.id,
+        dense: vectors[index],
+        question: row.questions,
+        answer: row.answer,
+        section_path: row.sectionPath ?? "",
+        content_type: row.contentType ?? "",
+        category: row.category ?? "",
       }));
       await milvus.upsert(rows);
-      for (const r of batch) {
-        await markChunkVectorizedExternal(r.id, String(r.id));
-        done += 1;
-      }
+      externalIds.push(...batch.map((row) => row.id));
     } else {
-      for (let i = 0; i < batch.length; i += 1) {
-        const row = batch[i];
-        await markChunkVectorized(row.id, String(row.id), vectors[i]);
+      for (let index = 0; index < batch.length; index += 1) {
+        const row = batch[index];
+        await markChunkVectorized(
+          row.id,
+          String(row.id),
+          vectors[index],
+          settings.embedModel,
+        );
         done += 1;
       }
     }
   }
-  if (done > 0) {
-    if (useMilvus) {
-      // Flush so the freshly upserted vectors are visible to search (matches the Python path).
-      await milvus.flush();
+  if (externalIds.length > 0) {
+    await milvus.flush();
+    for (const id of externalIds) {
+      await markChunkVectorizedExternal(id, String(id), settings.embedModel);
+      done += 1;
     }
-    invalidateVectorCache();
   }
   return done;
 }

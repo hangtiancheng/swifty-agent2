@@ -5,7 +5,7 @@ import path from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import { parseJsonBody } from "./http.ts";
+import { parseJsonBody, parseParamInt } from "./http.ts";
 import {
   ingestRequestSchema,
   previewRequestSchema,
@@ -404,7 +404,7 @@ kbRouter.post("/api/kb/search", async (c) => {
 });
 
 kbRouter.get("/api/kb/staging", async (c) => {
-  const limit = Math.max(1, Number(c.req.query("limit") ?? "30") || 30);
+  const limit = parseParamInt(c.req.query("limit") ?? "30", "limit");
   const stats = await repository.stagingStats();
   const rows: Record<string, unknown[]> = {};
   for (const st of ["extracted", "kept", "discarded", "approved", "rejected"]) {
@@ -430,14 +430,9 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
         "These rows are not in the pending-review state (they may have been processed already)",
     });
   }
-  const chunks: documents.Chunk[] = rows.map((r) => ({
-    category: "conversation_history",
-    questions: r.question,
-    answer: r.answer,
-    sectionPath: "mined",
-    contentType: "mined",
-    isKeyClause: documents.isKey(r.question, r.answer),
-  }));
+  const chunks = rows.map((row) =>
+    documents.approvedStagingChunk(row.question, row.answer),
+  );
   let ids: number[] = [];
   try {
     ids = await dualwrite.writePending(chunks);
@@ -449,11 +444,11 @@ kbRouter.post("/api/kb/staging/approve", async (c) => {
     );
     if (ids.length > 0) {
       try {
-        await repository.deleteKnowledgeChunks(ids);
+        await dualwrite.deleteChunks(ids);
       } catch (rollbackError) {
         log.error(
           { err: rollbackError, ids },
-          "pending chunk rollback failed (manual cleanup needed)",
+          "knowledge chunk rollback failed (manual cleanup needed)",
         );
       }
     }

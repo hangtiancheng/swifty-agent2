@@ -49,6 +49,11 @@ class KbStoreStub:
                 request_serializer=kb__store__pb2.CountRequest.SerializeToString,
                 response_deserializer=kb__store__pb2.CountResponse.FromString,
                 _registered_method=True)
+        self.Delete = channel.unary_unary(
+                '/kbstorerpc.KbStore/Delete',
+                request_serializer=kb__store__pb2.DeleteRequest.SerializeToString,
+                response_deserializer=kb__store__pb2.DeleteResponse.FromString,
+                _registered_method=True)
         self.Drop = channel.unary_unary(
                 '/kbstorerpc.KbStore/Drop',
                 request_serializer=kb__store__pb2.DropRequest.SerializeToString,
@@ -77,6 +82,12 @@ class KbStoreServicer:
         raise NotImplementedError('Method not implemented!')
 
     def Count(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Delete(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -111,6 +122,11 @@ def add_KbStoreServicer_to_server(servicer, server):
                     servicer.Count,
                     request_deserializer=kb__store__pb2.CountRequest.FromString,
                     response_serializer=kb__store__pb2.CountResponse.SerializeToString,
+            ),
+            'Delete': grpc.unary_unary_rpc_method_handler(
+                    servicer.Delete,
+                    request_deserializer=kb__store__pb2.DeleteRequest.FromString,
+                    response_serializer=kb__store__pb2.DeleteResponse.SerializeToString,
             ),
             'Drop': grpc.unary_unary_rpc_method_handler(
                     servicer.Drop,
@@ -204,6 +220,33 @@ class KbStore:
             '/kbstorerpc.KbStore/Count',
             kb__store__pb2.CountRequest.SerializeToString,
             kb__store__pb2.CountResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Delete(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/kbstorerpc.KbStore/Delete',
+            kb__store__pb2.DeleteRequest.SerializeToString,
+            kb__store__pb2.DeleteResponse.FromString,
             options,
             channel_credentials,
             insecure,

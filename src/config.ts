@@ -15,20 +15,30 @@ if (fs.existsSync(ENV_FILE)) {
 
 const str = (name: string, fallback = ""): string =>
   (process.env[name] ?? fallback).trim();
-const num = (name: string, fallback: number): number => {
+export const num = (name: string, fallback: number): number => {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === "") {
     return fallback;
   }
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : fallback;
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${name} must be a finite number`);
+  }
+  return parsed;
 };
-const bool = (name: string, fallback: boolean): boolean => {
+export const bool = (name: string, fallback: boolean): boolean => {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === "") {
     return fallback;
   }
-  return ["1", "true", "yes", "on"].includes(raw.trim().toLowerCase());
+  const normalized = raw.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+  throw new Error(`${name} must be a boolean`);
 };
 
 export const settings = {
@@ -127,6 +137,7 @@ export const settings = {
   evidenceConfidenceThreshold: num("EVIDENCE_CONFIDENCE_THRESHOLD", 0.26),
 
   // --- server ---
+  host: str("HOST", "127.0.0.1"),
   port: num("PORT", 8000),
 };
 

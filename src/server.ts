@@ -25,9 +25,9 @@ import {
   initObservability,
   shutdownObservability,
 } from "./core/observability.ts";
-import { closeDb } from "./db/client.ts";
+import { assertDbReady, closeDb } from "./db/client.ts";
 import * as runtime from "./graph/runtime.ts";
-import { childLogger, logger } from "./logger.ts";
+import { childLogger, flushLogs, logger } from "./logger.ts";
 
 const log = childLogger("server");
 
@@ -83,7 +83,8 @@ function checkContextBudget(): void {
   }
 }
 
-export function startServer(): void {
+export async function startServer(): Promise<void> {
+  await assertDbReady();
   initObservability();
   checkContextBudget();
   runtime.initGraph();
@@ -91,21 +92,26 @@ export function startServer(): void {
   const server = serve({
     fetch: app.fetch,
     port: settings.port,
-    hostname: "0.0.0.0",
+    hostname: settings.host,
   });
 
   const shutdown = (signal: string): void => {
     log.info({ signal }, "shutting down");
     server.close(() => {
-      void shutdownObservability()
-        .then(() => closeDb())
-        .catch((error: unknown) => {
-          log.warn({ err: error }, "shutdown cleanup failed");
-        })
-        .finally(() => {
+      void (async () => {
+        try {
           runtime.closeGraph();
+          await shutdownObservability();
+          await closeDb();
+        } catch (error) {
+          log.warn({ err: error }, "shutdown cleanup failed");
+        }
+        try {
+          await flushLogs();
+        } finally {
           process.exit(0);
-        });
+        }
+      })();
     });
   };
   process.once("SIGINT", () => {

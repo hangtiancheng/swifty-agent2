@@ -17,4 +17,4 @@ if (missing.length > 0) {
 
 await scanBuiltin();
 log.info({ root: settings.root }, "starting swifty-agent2 server");
-startServer();
+await startServer();

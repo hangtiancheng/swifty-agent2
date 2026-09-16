@@ -53,6 +53,7 @@ export type KnowledgeChunkMinAggregateOutputType = {
   vectorId: string | null
   vectorizeStatus: string | null
   embedding: string | null
+  embeddingModel: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,6 +71,7 @@ export type KnowledgeChunkMaxAggregateOutputType = {
   vectorId: string | null
   vectorizeStatus: string | null
   embedding: string | null
+  embeddingModel: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -87,6 +89,7 @@ export type KnowledgeChunkCountAggregateOutputType = {
   vectorId: number
   vectorizeStatus: number
   embedding: number
+  embeddingModel: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -120,6 +123,7 @@ export type KnowledgeChunkMinAggregateInputType = {
   vectorId?: true
   vectorizeStatus?: true
   embedding?: true
+  embeddingModel?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -137,6 +141,7 @@ export type KnowledgeChunkMaxAggregateInputType = {
   vectorId?: true
   vectorizeStatus?: true
   embedding?: true
+  embeddingModel?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -154,6 +159,7 @@ export type KnowledgeChunkCountAggregateInputType = {
   vectorId?: true
   vectorizeStatus?: true
   embedding?: true
+  embeddingModel?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -258,6 +264,7 @@ export type KnowledgeChunkGroupByOutputType = {
   vectorId: string | null
   vectorizeStatus: string
   embedding: string | null
+  embeddingModel: string | null
   createdAt: Date
   updatedAt: Date
   _count: KnowledgeChunkCountAggregateOutputType | null
@@ -298,6 +305,7 @@ export type KnowledgeChunkWhereInput = {
   vectorId?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
   vectorizeStatus?: Prisma.StringFilter<"KnowledgeChunk"> | string
   embedding?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
+  embeddingModel?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
   createdAt?: Prisma.DateTimeFilter<"KnowledgeChunk"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"KnowledgeChunk"> | Date | string
 }
@@ -315,6 +323,7 @@ export type KnowledgeChunkOrderByWithRelationInput = {
   vectorId?: Prisma.SortOrderInput | Prisma.SortOrder
   vectorizeStatus?: Prisma.SortOrder
   embedding?: Prisma.SortOrderInput | Prisma.SortOrder
+  embeddingModel?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -335,6 +344,7 @@ export type KnowledgeChunkWhereUniqueInput = Prisma.AtLeast<{
   vectorId?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
   vectorizeStatus?: Prisma.StringFilter<"KnowledgeChunk"> | string
   embedding?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
+  embeddingModel?: Prisma.StringNullableFilter<"KnowledgeChunk"> | string | null
   createdAt?: Prisma.DateTimeFilter<"KnowledgeChunk"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"KnowledgeChunk"> | Date | string
 }, "id">
@@ -352,6 +362,7 @@ export type KnowledgeChunkOrderByWithAggregationInput = {
   vectorId?: Prisma.SortOrderInput | Prisma.SortOrder
   vectorizeStatus?: Prisma.SortOrder
   embedding?: Prisma.SortOrderInput | Prisma.SortOrder
+  embeddingModel?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.KnowledgeChunkCountOrderByAggregateInput
@@ -377,6 +388,7 @@ export type KnowledgeChunkScalarWhereWithAggregatesInput = {
   vectorId?: Prisma.StringNullableWithAggregatesFilter<"KnowledgeChunk"> | string | null
   vectorizeStatus?: Prisma.StringWithAggregatesFilter<"KnowledgeChunk"> | string
   embedding?: Prisma.StringNullableWithAggregatesFilter<"KnowledgeChunk"> | string | null
+  embeddingModel?: Prisma.StringNullableWithAggregatesFilter<"KnowledgeChunk"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"KnowledgeChunk"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"KnowledgeChunk"> | Date | string
 }
@@ -393,6 +405,7 @@ export type KnowledgeChunkCreateInput = {
   vectorId?: string | null
   vectorizeStatus?: string
   embedding?: string | null
+  embeddingModel?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -410,6 +423,7 @@ export type KnowledgeChunkUncheckedCreateInput = {
   vectorId?: string | null
   vectorizeStatus?: string
   embedding?: string | null
+  embeddingModel?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -426,6 +440,7 @@ export type KnowledgeChunkUpdateInput = {
   vectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vectorizeStatus?: Prisma.StringFieldUpdateOperationsInput | string
   embedding?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  embeddingModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -443,6 +458,7 @@ export type KnowledgeChunkUncheckedUpdateInput = {
   vectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vectorizeStatus?: Prisma.StringFieldUpdateOperationsInput | string
   embedding?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  embeddingModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -460,6 +476,7 @@ export type KnowledgeChunkCreateManyInput = {
   vectorId?: string | null
   vectorizeStatus?: string
   embedding?: string | null
+  embeddingModel?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -476,6 +493,7 @@ export type KnowledgeChunkUpdateManyMutationInput = {
   vectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vectorizeStatus?: Prisma.StringFieldUpdateOperationsInput | string
   embedding?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  embeddingModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -493,6 +511,7 @@ export type KnowledgeChunkUncheckedUpdateManyInput = {
   vectorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vectorizeStatus?: Prisma.StringFieldUpdateOperationsInput | string
   embedding?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  embeddingModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -510,6 +529,7 @@ export type KnowledgeChunkCountOrderByAggregateInput = {
   vectorId?: Prisma.SortOrder
   vectorizeStatus?: Prisma.SortOrder
   embedding?: Prisma.SortOrder
+  embeddingModel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -534,6 +554,7 @@ export type KnowledgeChunkMaxOrderByAggregateInput = {
   vectorId?: Prisma.SortOrder
   vectorizeStatus?: Prisma.SortOrder
   embedding?: Prisma.SortOrder
+  embeddingModel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -551,6 +572,7 @@ export type KnowledgeChunkMinOrderByAggregateInput = {
   vectorId?: Prisma.SortOrder
   vectorizeStatus?: Prisma.SortOrder
   embedding?: Prisma.SortOrder
+  embeddingModel?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -577,6 +599,7 @@ export type KnowledgeChunkSelect<ExtArgs extends runtime.Types.Extensions.Intern
   vectorId?: boolean
   vectorizeStatus?: boolean
   embedding?: boolean
+  embeddingModel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["knowledgeChunk"]>
@@ -594,6 +617,7 @@ export type KnowledgeChunkSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   vectorId?: boolean
   vectorizeStatus?: boolean
   embedding?: boolean
+  embeddingModel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["knowledgeChunk"]>
@@ -611,6 +635,7 @@ export type KnowledgeChunkSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   vectorId?: boolean
   vectorizeStatus?: boolean
   embedding?: boolean
+  embeddingModel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["knowledgeChunk"]>
@@ -628,11 +653,12 @@ export type KnowledgeChunkSelectScalar = {
   vectorId?: boolean
   vectorizeStatus?: boolean
   embedding?: boolean
+  embeddingModel?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type KnowledgeChunkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "category" | "questions" | "answer" | "sectionPath" | "contentType" | "isKeyClause" | "prevChunkId" | "nextChunkId" | "vectorId" | "vectorizeStatus" | "embedding" | "createdAt" | "updatedAt", ExtArgs["result"]["knowledgeChunk"]>
+export type KnowledgeChunkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "category" | "questions" | "answer" | "sectionPath" | "contentType" | "isKeyClause" | "prevChunkId" | "nextChunkId" | "vectorId" | "vectorizeStatus" | "embedding" | "embeddingModel" | "createdAt" | "updatedAt", ExtArgs["result"]["knowledgeChunk"]>
 
 export type $KnowledgeChunkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "KnowledgeChunk"
@@ -650,6 +676,7 @@ export type $KnowledgeChunkPayload<ExtArgs extends runtime.Types.Extensions.Inte
     vectorId: string | null
     vectorizeStatus: string
     embedding: string | null
+    embeddingModel: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["knowledgeChunk"]>
@@ -1087,6 +1114,7 @@ export interface KnowledgeChunkFieldRefs {
   readonly vectorId: Prisma.FieldRef<"KnowledgeChunk", 'String'>
   readonly vectorizeStatus: Prisma.FieldRef<"KnowledgeChunk", 'String'>
   readonly embedding: Prisma.FieldRef<"KnowledgeChunk", 'String'>
+  readonly embeddingModel: Prisma.FieldRef<"KnowledgeChunk", 'String'>
   readonly createdAt: Prisma.FieldRef<"KnowledgeChunk", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"KnowledgeChunk", 'DateTime'>
 }

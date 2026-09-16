@@ -1,6 +1,6 @@
 // Smoke the Milvus dense bridge end to end: spawn an isolated Python gRPC server (throwaway
 // Lite db + "smoke" collection), then drive the JS client (src/kb/milvus-rpc.ts) through
-// upsert -> search -> count -> drop. A failure is a red line: stop.
+// upsert -> search -> count -> delete -> drop. A failure is a red line: stop.
 //
 // This is the JS counterpart of the Python original's Milvus smoke, scoped to dense only: the
 // bridge wraps Milvus Lite, while BM25 stays in-process on the Node side (see src/kb/store.ts).
@@ -166,6 +166,11 @@ async function main(): Promise<void> {
     );
     if (filtered.some((h) => h.category !== "refund")) {
       throw new Error("category filter leaked rows from other categories");
+    }
+
+    const deleted = await milvus.deleteRows([2]);
+    if (deleted !== 1 || (await milvus.count()) !== 2) {
+      throw new Error("delete did not remove the requested row");
     }
 
     await milvus.drop();
