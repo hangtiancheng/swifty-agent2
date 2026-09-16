@@ -1,6 +1,6 @@
 // Graph nodes: reference resolution, intent routing, retrieval, the ReAct loop and the
 // deterministic exits (complaint / script / fallback) plus audit logging.
-import { AIMessage, HumanMessage, SystemMessage, ToolMessage, isAIMessage, isHumanMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import { interrupt } from "@langchain/langgraph";
 import type { LangGraphRunnableConfig } from "@langchain/langgraph";
@@ -40,7 +40,7 @@ export const FALLBACK_REPLY = FALLBACK_REPLY_TEXT;
 function userText(state: GraphState): string {
   for (let i = state.messages.length - 1; i >= 0; i -= 1) {
     const m = state.messages[i];
-    if (isHumanMessage(m)) {
+    if (HumanMessage.isInstance(m)) {
       return memory.contentToString(m.content);
     }
   }
@@ -56,7 +56,7 @@ function historyText(state: GraphState, maxTurns = 6): string {
   );
   const prior = msgs.slice(0, -1);
   const lines = prior.slice(-maxTurns).map((m) => {
-    const role = isHumanMessage(m) ? "User" : "Agent";
+    const role = HumanMessage.isInstance(m) ? "User" : "Agent";
     const text = memory.contentToString(m.content);
     return text ? `${role}: ${text}` : "";
   });
@@ -260,7 +260,7 @@ function withTurnContext(window: BaseMessage[], turnCtx: string): BaseMessage[] 
   // Insert after the last user message so the ReAct steps keep a stable cacheable prefix.
   const msg = new HumanMessage({ content: turnCtx, id: TURN_CTX_ID });
   for (let i = window.length - 1; i >= 0; i -= 1) {
-    if (isHumanMessage(window[i])) {
+    if (HumanMessage.isInstance(window[i])) {
       return [...window.slice(0, i + 1), msg, ...window.slice(i + 1)];
     }
   }
@@ -310,7 +310,7 @@ export async function mainAgent(state: GraphState, config: LangGraphRunnableConf
   const msgs = agentMessages(state);
   logModelContext(state, msgs);
   const ai = await model.invoke(msgs, config);
-  const usageParsed = isAIMessage(ai) ? usageSchema.safeParse(ai.usage_metadata) : undefined;
+  const usageParsed = AIMessage.isInstance(ai) ? usageSchema.safeParse(ai.usage_metadata) : undefined;
   const usage = usageParsed?.success === true ? usageParsed.data : undefined;
   const used = usage?.total_tokens ?? 0;
   const cached = usage?.input_token_details?.cache_read ?? 0;

@@ -1,11 +1,9 @@
 // Conversation memory: token counting, sliding-window anchors and layered compression.
 import {
   AIMessage,
+  HumanMessage,
   SystemMessage,
   ToolMessage,
-  isAIMessage,
-  isHumanMessage,
-  isToolMessage,
 } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 
@@ -42,7 +40,7 @@ export function countTokens(messages: BaseMessage[]): number {
   let chars = 0;
   for (const m of messages) {
     chars += contentToString(m.content).length;
-    if (isAIMessage(m) && m.tool_calls && m.tool_calls.length > 0) {
+    if (AIMessage.isInstance(m) && m.tool_calls && m.tool_calls.length > 0) {
       chars += JSON.stringify(m.tool_calls).length;
     }
   }
@@ -75,7 +73,7 @@ export function trimHistory(messages: BaseMessage[], maxTokens: number): BaseMes
   while (out.length > 0 && countTokens(out) > maxTokens) {
     out.shift();
   }
-  while (out.length > 0 && !isHumanMessage(out[0])) {
+  while (out.length > 0 && !HumanMessage.isInstance(out[0])) {
     out.shift();
   }
   return out;
@@ -101,7 +99,7 @@ function indexAfter(messages: BaseMessage[], msgId: number): number {
   }
   for (let i = 0; i < messages.length; i += 1) {
     const m = messages[i];
-    if (isHumanMessage(m)) {
+    if (HumanMessage.isInstance(m)) {
       const did = dbMsgId(m);
       if (did !== null && did > msgId) {
         return i;
@@ -195,9 +193,9 @@ export function compressToolResult(name: string, content: string): string {
 export function toLayer2(messages: BaseMessage[]): BaseMessage[] {
   const out: BaseMessage[] = [];
   for (const m of messages) {
-    if (isHumanMessage(m)) {
+    if (HumanMessage.isInstance(m)) {
       out.push(m);
-    } else if (isAIMessage(m)) {
+    } else if (AIMessage.isInstance(m)) {
       // tool_calls must survive: the following ToolMessage references its tool_call_id.
       const text = contentToString(m.content);
       out.push(
@@ -207,7 +205,7 @@ export function toLayer2(messages: BaseMessage[]): BaseMessage[] {
           tool_calls: (m.tool_calls ?? []).map((tc) => ({ ...tc })),
         }),
       );
-    } else if (isToolMessage(m)) {
+    } else if (ToolMessage.isInstance(m)) {
       const text = contentToString(m.content);
       out.push(
         new ToolMessage({

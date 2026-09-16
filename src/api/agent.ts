@@ -1,5 +1,5 @@
 // Non-streaming agent endpoint used by evaluations and tests.
-import { isAIMessage, isToolMessage } from "@langchain/core/messages";
+import { AIMessage, ToolMessage } from "@langchain/core/messages";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -32,11 +32,11 @@ function viewsFromState(state: GraphState): { calls: ToolCallView[]; results: To
   const calls: ToolCallView[] = [];
   const results: ToolResultView[] = [];
   for (const m of state.messages) {
-    if (isAIMessage(m) && m.tool_calls && m.tool_calls.length > 0) {
+    if (AIMessage.isInstance(m) && m.tool_calls && m.tool_calls.length > 0) {
       for (const tc of m.tool_calls) {
         calls.push({ id: tc.id ?? "", name: tc.name, args: tc.args ?? {} });
       }
-    } else if (isToolMessage(m)) {
+    } else if (ToolMessage.isInstance(m)) {
       results.push({
         tool_call_id: m.tool_call_id,
         name: m.name ?? "",

@@ -2,8 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { HumanMessage, isAIMessage, isBaseMessage, isHumanMessage, isToolMessage } from "@langchain/core/messages";
-import type { BaseMessage } from "@langchain/core/messages";
+import { AIMessage, BaseMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { Command, INTERRUPT, isInterrupted } from "@langchain/langgraph";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { z } from "zod";
@@ -85,7 +84,7 @@ function baseMessages(value: unknown): BaseMessage[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.filter((m): m is BaseMessage => isBaseMessage(m));
+  return value.filter((m): m is BaseMessage => BaseMessage.isInstance(m));
 }
 
 export async function getTurnSnapshot(conversationId: number): Promise<{ question: string; snapshot: unknown[] }> {
@@ -96,7 +95,7 @@ export async function getTurnSnapshot(conversationId: number): Promise<{ questio
   const messages = baseMessages(values.messages);
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
-    if (isHumanMessage(m)) {
+    if (HumanMessage.isInstance(m)) {
       question = memory.contentToString(m.content);
       break;
     }
@@ -202,7 +201,7 @@ function answerFromValues(values: StateValues): string {
   const messages = baseMessages(values.messages);
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
-    if (isAIMessage(m)) {
+    if (AIMessage.isInstance(m)) {
       return memory.contentToString(m.content);
     }
   }
@@ -324,7 +323,7 @@ async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<
         continue;
       }
       const [msg, meta] = messageChunk.data;
-      if (ANSWER_NODES.has(meta.langgraph_node ?? "") && isBaseMessage(msg)) {
+      if (ANSWER_NODES.has(meta.langgraph_node ?? "") && BaseMessage.isInstance(msg)) {
         const text = memory.contentToString(msg.content);
         if (text) {
           yield { type: "delta", text };
@@ -367,7 +366,7 @@ async function* streamEvents(cid: number, source: StreamSource): AsyncGenerator<
         }
         if (node === "agent_tools" && Array.isArray(fields.messages)) {
           for (const m of fields.messages) {
-            if (isToolMessage(m)) {
+            if (ToolMessage.isInstance(m)) {
               const name = m.name;
               // submit_refund is intercepted into a UI form; no tool frame for it.
               if (name && name !== "submit_refund") {
