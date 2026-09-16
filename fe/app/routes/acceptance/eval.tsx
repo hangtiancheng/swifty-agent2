@@ -31,11 +31,11 @@ import { fmtTime } from "~/lib/format";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 分类器评测详情:每类 P/R/F1 · 容错红线 · 混淆矩阵 · 阈值。 */
+/* Classifier eval detail: per-class P/R/F1, tolerance red lines, confusion matrix, threshold. */
 
 interface ClassMetric {
   name: string;
-  severity: string; // 严 | 中 | 宽
+  severity: string; // backend enum: 严 | 中 | 宽
   p: number;
   r: number;
   f1: number;
@@ -113,12 +113,23 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 分类器评测详情" },
-    { name: "description", content: "每类 P/R/F1 · 容错红线 · 混淆矩阵 · 阈值" },
+    { title: "MewMart · Acceptance Eval" },
+    { name: "description", content: "Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold" },
   ];
 }
 
-const SEV_TONE: Record<string, PillTone> = { 严: "sev-严", 中: "sev-中", 宽: "sev-宽" };
+// Keys are backend enum values and must stay Chinese; tones and labels are display-only.
+const SEV_TONE: Record<string, PillTone> = {
+  严: "sev-strict",
+  中: "sev-medium",
+  宽: "sev-lenient",
+};
+
+const SEV_LABEL: Record<string, string> = {
+  严: "Strict",
+  中: "Medium",
+  宽: "Lenient",
+};
 
 export default function AcceptanceEvalPage({
   loaderData,
@@ -126,7 +137,7 @@ export default function AcceptanceEvalPage({
   const { revalidate, state } = useRevalidator();
   const toast = useToast();
 
-  const [tryText, setTryText] = useState("买大了想退");
+  const [tryText, setTryText] = useState("Bought too big, want to return");
   const [tryResult, setTryResult] = useState<ClassifyResult | null>(null);
   const [trying, setTrying] = useState(false);
   const autoRan = useRef(false);
@@ -134,7 +145,7 @@ export default function AcceptanceEvalPage({
   const tryIt = async (text: string) => {
     const t = text.trim();
     if (!t) {
-      toast("先输入一句话", true);
+      toast("Type a sentence first", true);
       return;
     }
     setTrying(true);
@@ -146,14 +157,14 @@ export default function AcceptanceEvalPage({
         ),
       );
     } catch (e) {
-      toast("试分类失败:" + errMsg(e), true);
+      toast("Classify failed: " + errMsg(e), true);
       setTryResult(null);
     } finally {
       setTrying(false);
     }
   };
 
-  // 分类器在线时进页面自动来一发,让多标签机制当场可见
+  // Auto-run once when the classifier is online so the multi-label behavior is visible right away
   useEffect(() => {
     if (
       loaderData.ok &&
@@ -161,15 +172,15 @@ export default function AcceptanceEvalPage({
       !autoRan.current
     ) {
       autoRan.current = true;
-      void tryIt("买大了想退");
+      void tryIt("Bought too big, want to return");
     }
-    // 仅首次挂载执行一次;tryIt 只依赖稳定的 setState 与 api
+    // Runs once on mount only; tryIt depends solely on stable setState and api calls
   }, []); // eslint-disable-line
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="分类器评测详情" active="/acceptance/eval">
-        <MissingBox className="mt-4">加载失败:{loaderData.error}</MissingBox>
+      <PageShell title="Acceptance Eval" active="/acceptance/eval">
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       </PageShell>
     );
   }
@@ -185,8 +196,8 @@ export default function AcceptanceEvalPage({
 
   return (
     <PageShell
-      title="分类器评测详情"
-      sub="每类 P/R/F1 · 容错红线 · 混淆矩阵 · 阈值"
+      title="Acceptance Eval"
+      sub="Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold"
       active="/acceptance/eval"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -194,15 +205,15 @@ export default function AcceptanceEvalPage({
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <GateBar>
         {ev.present ? (
           <>
-            <Stat label="测试集" value={String(ev.test_size ?? 0) + " 条"} />
-            <Stat label="判定阈值" value={String(ev.threshold ?? "—")} />
+            <Stat label="Test set" value={String(ev.test_size ?? 0) + " rows"} />
+            <Stat label="Decision threshold" value={String(ev.threshold ?? "—")} />
             <Stat
               label="micro-F1"
               value={ev.micro?.f1.toFixed(3) ?? "—"}
@@ -210,25 +221,25 @@ export default function AcceptanceEvalPage({
             />
             <Stat label="macro-F1" value={ev.macro?.f1.toFixed(3) ?? "—"} />
             <Stat
-              label="容错红线"
-              value={ev.red_line_passed ? "全过" : "有不达标"}
+              label="Tolerance red line"
+              value={ev.red_line_passed ? "All pass" : "Some fail"}
               tone={ev.red_line_passed ? "pass" : "fail"}
             />
             <Stat
-              label="评测于"
+              label="Evaluated at"
               value={fmtTime(ev.ran_at).slice(5, 16)}
               small
             />
           </>
         ) : (
-          <Stat label="评测产物" value="未生成" tone="fail" />
+          <Stat label="Eval artifact" value="Not generated" tone="fail" />
         )}
       </GateBar>
 
       {/* ① micro vs macro */}
       <Panel
-        title="总分:micro 与 macro 一起看"
-        lede="micro 不分科——17 类的所有对错混进一个大桶算总分,量大的类目话语权大。macro 分科——先给 17 类各算一个 F1 再简单平均,小类目和大类目一样权重。两个数差不多,说明各类成绩均匀,没有小类目被大类目的好成绩盖住。"
+        title="Overall scores: micro and macro side by side"
+        lede="micro ignores classes — every right and wrong call across all 17 classes goes into one big bucket, so large classes dominate. macro scores per class — each of the 17 classes gets its own F1, then a plain average, so small classes weigh the same as large ones. When the two numbers are close, performance is even across classes and no small class is hidden by a big class's good score."
       >
         {!ev.present ? (
           <MissingBox>{ev.hint}</MissingBox>
@@ -236,8 +247,8 @@ export default function AcceptanceEvalPage({
           <>
             <div className="flex flex-wrap gap-3.5">
               {[
-                { key: "micro", way: "不分科:所有对错混一个桶", nums: ev.micro },
-                { key: "macro", way: "分科:17 类各算再平均", nums: ev.macro },
+                { key: "micro", way: "No per-class split: all calls in one bucket", nums: ev.micro },
+                { key: "macro", way: "Per class: F1 for each of the 17, then averaged", nums: ev.macro },
               ].map(({ key, way, nums }) => (
                 <div
                   key={key}
@@ -261,37 +272,37 @@ export default function AcceptanceEvalPage({
               ))}
             </div>
             <Tip>
-              两者相差 {gap.toFixed(3)}:
+              The two differ by {gap.toFixed(3)}:
               {gap <= 0.02
-                ? "各类成绩均匀,没有类目出问题被总分盖住。"
-                : "差距偏大,micro 高 macro 低说明有小类目被牺牲,去下面每类指标里找是哪个。"}
+                ? " scores are even across classes — no class is misbehaving behind the overall number."
+                : " the gap is large — micro high and macro low means some small class is being sacrificed; check the per-class table below to find which one."}
             </Tip>
           </>
         )}
-        {jobSpecs["ch10-eval"] ? (
+        {jobSpecs["train-eval"] ? (
           <JobRow
-            specs={[jobSpecs["ch10-eval"]]}
+            specs={[jobSpecs["train-eval"]]}
             onFinish={() => { void revalidate(); }}
             note={
-              "评测集 " + (ev.present ? String(ev.test_size ?? 0) + " 条" : "test.jsonl")
+              "Eval set: " + (ev.present ? String(ev.test_size ?? 0) + " rows" : "test.jsonl")
             }
           />
         ) : null}
       </Panel>
 
-      {/* ② 每类指标 + 容错红线 */}
+      {/* ② per-class metrics + tolerance red lines */}
       <Panel
-        title="每类指标与容错红线"
+        title="Per-class metrics and tolerance red lines"
         pill={
           ev.present ? (
             ev.red_line_passed ? (
-              <Pill tone="pass">红线全过</Pill>
+              <Pill tone="pass">All red lines passed</Pill>
             ) : (
-              <Pill tone="fail">有类目跌破红线</Pill>
+              <Pill tone="fail">Red line breached</Pill>
             )
           ) : undefined
         }
-        lede="容错红线不是每类一条,而是按档位设闸:17 类按「归错了会不会带偏补知识的优先级」分严/中/宽三档,严档 F1 ≥ 0.9、中档 ≥ 0.8,宽档归错影响小、不设线(画 — 而不是 ✅)。support 是这一类在测试集里有多少道题,与混淆矩阵对得上:support = TP + FN。"
+        lede="The red line is not one per class but set by severity tier: the 17 classes are ranked Strict/Medium/Lenient by how much a misroute would skew the priority of downstream knowledge work. Strict needs F1 ≥ 0.9, Medium ≥ 0.8; Lenient errors hurt little, so no line is set (shown as — instead of ✅). support is how many test questions the class has, and it matches the confusion matrix: support = TP + FN."
       >
         {!ev.present ? (
           <MissingBox>{ev.hint}</MissingBox>
@@ -300,13 +311,13 @@ export default function AcceptanceEvalPage({
             <Tbl>
               <thead>
                 <tr>
-                  <Th>类目</Th>
-                  <Th>档位</Th>
+                  <Th>Class</Th>
+                  <Th>Severity</Th>
                   <Th>P</Th>
                   <Th>R</Th>
                   <Th>F1</Th>
                   <Th>support</Th>
-                  <Th>红线</Th>
+                  <Th>Red line</Th>
                 </tr>
               </thead>
               <tbody>
@@ -315,7 +326,7 @@ export default function AcceptanceEvalPage({
                     <Td>{c.name}</Td>
                     <Td>
                       <Pill tone={SEV_TONE[c.severity] ?? "plain"}>
-                        {c.severity}
+                        {SEV_LABEL[c.severity] ?? c.severity}
                       </Pill>
                     </Td>
                     <ScoreCell v={c.p} />
@@ -327,7 +338,7 @@ export default function AcceptanceEvalPage({
                         "—"
                       ) : (
                         <Pill tone={c.passed ? "pass" : "fail"}>
-                          {String(c.red_line) + (c.passed ? " ✅" : " 🔴 回头搞数据")}
+                          {String(c.red_line) + (c.passed ? " ✅" : " 🔴 needs data work")}
                         </Pill>
                       )}
                     </Td>
@@ -339,19 +350,19 @@ export default function AcceptanceEvalPage({
         )}
       </Panel>
 
-      {/* ③ 阈值扫描九候选线 */}
+      {/* ③ threshold scan: nine candidate lines */}
       <Panel
-        title="判定阈值:九候选线扫描重演"
+        title="Decision threshold: nine-candidate scan replay"
         pill={
           scan.present ? (
             scan.consistent ? (
-              <Pill tone="pass">与在用阈值一致</Pill>
+              <Pill tone="pass">Matches threshold in use</Pill>
             ) : (
-              <Pill tone="fail">与在用阈值不一致</Pill>
+              <Pill tone="fail">Differs from threshold in use</Pill>
             )
           ) : undefined
         }
-        lede="模型对每句话给 17 个类各打一个 0~1 的分,过线的类才算命中,这条线就是判定阈值。定太低会冤枉、定太高会放跑。验证集打分一次、分数表固定,九个候选线(0.30~0.70 步进 0.05)套同一张表各算一遍 micro-F1,谁高谁当选;打平时先到的留任,所以 0.45 压住 0.50。"
+        lede="The model scores each sentence against all 17 classes from 0 to 1; a class only counts as a hit above the line — that line is the decision threshold. Too low and labels get wrongly added; too high and real ones get missed. The validation set is scored once and the score table is fixed; nine candidates (0.30–0.70 in steps of 0.05) each replay the same table and the highest micro-F1 wins. On a tie the earlier candidate stays, so 0.45 beats 0.50."
       >
         {!scan.present ? (
           <MissingBox>{scan.hint}</MissingBox>
@@ -384,7 +395,7 @@ export default function AcceptanceEvalPage({
                         )}
                         initial={{ width: 0 }}
                         animate={{
-                          // 九条分数挤在小数第三位,按 min~max 拉伸才看得出高低
+                          // Scores cluster in the third decimal; stretch across min~max so differences are visible
                           width: `${hi > lo ? 8 + (92 * (s.micro_f1 - lo)) / (hi - lo) : 100}%`,
                         }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -394,11 +405,11 @@ export default function AcceptanceEvalPage({
                       {s.micro_f1.toFixed(4)}
                     </span>
                     <span className="w-40 text-[11px] text-muted">
-                      {(win ? "当选" : "") +
+                      {(win ? "winner" : "") +
                         (inuse
                           ? win
-                            ? " · threshold.json 在用"
-                            : "threshold.json 在用"
+                            ? " · threshold.json in use"
+                            : "threshold.json in use"
                           : "")}
                     </span>
                   </div>
@@ -406,42 +417,42 @@ export default function AcceptanceEvalPage({
               })}
             </div>
             <Tip>
-              重演当选 {scan.best_threshold?.toFixed(2)}(验证集 micro-F1{" "}
-              {scan.best_micro_f1?.toFixed(4)}),threshold.json 在用{" "}
+              The replay picks {scan.best_threshold?.toFixed(2)} (validation micro-F1{" "}
+              {scan.best_micro_f1?.toFixed(4)}); threshold.json in use:{" "}
               {scan.in_use_threshold}
               {scan.consistent
-                ? ",两者一致 ✅——扫描可复算,不是拍的。"
-                : ",两者不一致 🔴——重新导出或重跑扫描。"}
-              验证集 {scan.val_size} 条,跑于 {fmtTime(scan.ran_at)}。
+                ? " — they match ✅, so the scan is reproducible, not hand-picked."
+                : " — mismatch 🔴: re-export or re-run the scan."}
+              {" "}Validation set: {scan.val_size} rows, run at {fmtTime(scan.ran_at)}.
             </Tip>
           </>
         )}
-        {jobSpecs["ch10-threshold-scan"] ? (
+        {jobSpecs["train-threshold-scan"] ? (
           <JobRow
-            specs={[jobSpecs["ch10-threshold-scan"]]}
+            specs={[jobSpecs["train-threshold-scan"]]}
             onFinish={() => { void revalidate(); }}
             note={
               d.classifier.online
-                ? ":8110 在线"
-                : ":8110 离线,先去总览页拉起服务"
+                ? ":8110 online"
+                : ":8110 offline — start the service from the overview page first"
             }
           />
         ) : null}
       </Panel>
 
-      {/* ④ 混淆矩阵 */}
+      {/* ④ confusion matrix */}
       <Panel
-        title="每类混淆矩阵:错题本"
-        lede="P/R/F1 是分数,混淆矩阵是错题本——分数说考得好不好,错题本说错在哪个方向、该回头改什么。TP 该打打对了、TN 不该打也没打、FP 冤枉(不该打却打了)、FN 放跑(该打却没打)。要紧的不是错几个,是错的方向性。"
+        title="Per-class confusion matrix: the mistake book"
+        lede="P/R/F1 are the scores; the confusion matrix is the mistake book — scores say how well the test went, the mistake book says which direction the errors lean and what to fix. TP: should label, labeled correctly. TN: should not label, not labeled. FP: false alarm (labeled when it should not be). FN: missed (should have been labeled but was not). What matters is not how many errors there are, but which way they lean."
       >
         {!ev.present ? (
           <MissingBox>{ev.hint}</MissingBox>
         ) : (
           <>
             <Tip className="mt-0">
-              全表 {ev.total_cells} 道是非题({ev.test_size} 条 × 17 类)错{" "}
-              {String((ev.total_fp ?? 0) + (ev.total_fn ?? 0))} 道:冤枉{" "}
-              {ev.total_fp} 次、放跑 {ev.total_fn} 次。
+              The full table has {ev.total_cells} yes/no questions ({ev.test_size} rows × 17 classes) with{" "}
+              {String((ev.total_fp ?? 0) + (ev.total_fn ?? 0))} wrong:{" "}
+              {ev.total_fp} false alarms and {ev.total_fn} misses.
             </Tip>
             <div className="mt-3 grid gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(158px,1fr))]">
               {(ev.classes ?? []).map((c) => (
@@ -455,16 +466,16 @@ export default function AcceptanceEvalPage({
                     {c.name}
                     <span className="flex-1" />
                     <Pill tone={SEV_TONE[c.severity] ?? "plain"}>
-                      {c.severity}
+                      {SEV_LABEL[c.severity] ?? c.severity}
                     </Pill>
                   </div>
                   <div className="grid grid-cols-2">
                     {(
                       [
-                        { k: "tn", label: "TN 不该打", cls: "text-muted" },
-                        { k: "fp", label: "FP 冤枉", cls: "text-error" },
-                        { k: "fn", label: "FN 放跑", cls: "text-error" },
-                        { k: "tp", label: "TP 打对", cls: "text-online-deep" },
+                        { k: "tn", label: "TN correctly skipped", cls: "text-muted" },
+                        { k: "fp", label: "FP false alarm", cls: "text-error" },
+                        { k: "fn", label: "FN missed", cls: "text-error" },
+                        { k: "tp", label: "TP correctly labeled", cls: "text-online-deep" },
                       ] satisfies {
                         k: keyof ClassMetric;
                         label: string;
@@ -487,30 +498,30 @@ export default function AcceptanceEvalPage({
             </div>
             <div className="mt-3">
               <BtnLink to="/acceptance/errors" size="sm">
-                去错例复核页看这些错具体错在哪 →
+                See the Error Analysis page for what exactly went wrong →
               </BtnLink>
             </div>
           </>
         )}
       </Panel>
 
-      {/* ⑤ 单句试分类 */}
+      {/* ⑤ single-sentence classify demo */}
       <Panel
-        title="单句试分类:多标签机制现场看"
+        title="Try a sentence: multi-label labeling live"
         pill={
           d.classifier.online ? (
-            <Pill tone="pass">:8110 在线</Pill>
+            <Pill tone="pass">:8110 online</Pill>
           ) : (
-            <Pill tone="missing">:8110 离线</Pill>
+            <Pill tone="missing">:8110 offline</Pill>
           )
         }
-        lede="17 个类各自独立过线,过几个打几个——这就是多标签的机制来源。要是 17 个分全都不过线,取分数最高的那个类兜底,保证每道题至少有一个标签。"
+        lede="Each of the 17 classes clears the line on its own — however many pass, that many labels get applied. That is where multi-label comes from. If none of the 17 scores passes, the highest-scoring class is used as a fallback so every question gets at least one label."
       >
         <div className="flex flex-wrap gap-2">
           <input
             type="text"
             className="min-w-60 flex-1 border-3 border-ink bg-paper px-2.5 py-1.5 text-[13px] outline-none focus:bg-cream"
-            placeholder="输入一句用户问题,比如:买大了想退"
+            placeholder="Type a user question, e.g. Bought too big, want to return"
             value={tryText}
             onChange={(e) => { setTryText(e.target.value); }}
             onKeyDown={(e) => {
@@ -526,15 +537,15 @@ export default function AcceptanceEvalPage({
               void tryIt(tryText);
             }}
           >
-            {trying ? "打分中…" : "试分类"}
+            {trying ? "Scoring…" : "Classify"}
           </Btn>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {[
-            "买大了想退",
-            "猫粮颗粒大不大,牙口不好的猫嚼得动吗",
-            "积分可以拿来抵运费吗,要是退货运费又是谁承担",
-            "旧猫笼你们回收吗",
+            "Bought too big, want to return",
+            "Are the kibble pieces big — can a cat with bad teeth chew them?",
+            "Can points cover shipping? And who pays return shipping?",
+            "Do you take back old cat cages?",
           ].map((t) => (
             <Btn
               key={t}
@@ -553,13 +564,13 @@ export default function AcceptanceEvalPage({
           <div>
             <div className="mt-3 border-2 border-ink bg-paper px-2.5 py-2 text-[13px] leading-7">
               <b className="font-bold">
-                命中标签:{tryResult.labels.join(" + ") || "(无)"}
+                Matched labels: {tryResult.labels.join(" + ") || "(none)"}
               </b>
               <div>
-                判定阈值 {tryResult.threshold}
+                Decision threshold: {tryResult.threshold}
                 {tryResult.fallback
-                  ? ";17 类全部不过线,已走「取最高分兜底」"
-                  : ";过线的类全部打上"}
+                  ? "; no class cleared the line — fell back to the highest score"
+                  : "; every class above the line was labeled"}
               </div>
             </div>
             <div className="mt-3 flex flex-col gap-1">
@@ -593,7 +604,7 @@ export default function AcceptanceEvalPage({
                       <span
                         className="absolute -top-0.75 -bottom-0.75 w-0.75 bg-coral"
                         style={{ left: (tryResult.threshold * 100).toFixed(1) + "%" }}
-                        title={"判定阈值 " + String(tryResult.threshold)}
+                        title={"Decision threshold " + String(tryResult.threshold)}
                       />
                     ) : null}
                   </span>

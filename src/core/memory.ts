@@ -79,7 +79,7 @@ export function trimHistory(messages: BaseMessage[], maxTokens: number): BaseMes
   return out;
 }
 
-// ---- anchor-based window slicing + summary injection (ch07) ----
+// ---- anchor-based window slicing + summary injection ----
 
 const DB_ID_PREFIX = "db-";
 

@@ -1047,7 +1047,7 @@ function LedgerPanel() {
     >
       {err ? (
         <div className="border-3 border-ink bg-error-bg p-2.5 text-[12.5px]">
-          台账取数失败:{err}(这张表要先应用 sql/ch04-faith-ddl.sql)
+          台账取数失败:{err}(这张表要先应用 sql/rag-faith-ddl.sql)
         </div>
       ) : null}
       {h ? <HallucBox h={h} /> : null}

@@ -1,4 +1,4 @@
-// Four-strategy RAG evaluation (vector / bm25 / hybrid / hybrid+rerank) over the ch04 dataset.
+// Four-strategy RAG evaluation (vector / bm25 / hybrid / hybrid+rerank) over the rag dataset.
 // Deterministic retrieval metrics always run; the generation segment can be skipped with --skip-gen.
 import fs from "node:fs";
 import path from "node:path";
@@ -20,7 +20,7 @@ import * as store from "@/kb/store.ts";
 import { queryFaq } from "@/tools/builtin/faq.ts";
 
 const ROOT = settings.root;
-const OUT_DIR = path.join(ROOT, "data/ch04/reports");
+const OUT_DIR = path.join(ROOT, "data/rag/reports");
 const OUT_JSON = path.join(OUT_DIR, "rag_eval.json");
 const OUT_TXT = path.join(OUT_DIR, "rag_eval.txt");
 
@@ -727,7 +727,7 @@ async function main(): Promise<void> {
   };
   fs.writeFileSync(OUT_JSON, `${JSON.stringify(report, null, 1)}\n`, "utf8");
   logLine(
-    `\nGenerated: data/ch04/reports/rag_eval.json · data/ch04/reports/rag_eval.txt`,
+    `\nGenerated: data/rag/reports/rag_eval.json · data/rag/reports/rag_eval.txt`,
   );
   logLine(
     generationData !== null

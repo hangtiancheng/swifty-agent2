@@ -13,7 +13,7 @@ import * as repository from "@/db/repository.ts";
 
 export const observabilityRouter = new Hono();
 
-const REPORT_DIR = path.join(settings.root, "data/ch09/reports");
+const REPORT_DIR = path.join(settings.root, "data/eval/reports");
 const COST = path.join(REPORT_DIR, "cost_by_intent.json");
 const CALIB = path.join(REPORT_DIR, "confidence_calibration.json");
 const TREND_NOTE = path.join(REPORT_DIR, "eval_trend_note.json");
@@ -98,7 +98,7 @@ async function trendBlock(): Promise<Record<string, unknown>> {
 }
 
 function calibrationBlock(): Record<string, unknown> {
-  const base = block(CALIB_JOB, "make calibrate-confidence", "No calibration yet. Press \"Re-run confidence threshold calibration\" to scan the ch04 eval set, so the threshold is no longer a guess.");
+  const base = block(CALIB_JOB, "make calibrate-confidence", "No calibration yet. Press \"Re-run confidence threshold calibration\" to scan the rag eval set, so the threshold is no longer a guess.");
   const withSettings = {
     ...base,
     in_use: settings.evidenceConfidenceThreshold,

@@ -212,3 +212,5 @@ dist-rollup/
 
 dist-tsup/
 **/dist-tsup/
+
+data/swifty-agent2.db

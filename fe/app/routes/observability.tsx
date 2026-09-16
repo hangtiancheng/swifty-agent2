@@ -26,18 +26,19 @@ import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 三块报表各自只画 /api/observability/overview 端出来的那一份:
-   成本与校准来自 make 落的产物,趋势来自 eval_runs 表,页面一个数都不重算。
-   涨跌箭头是拿同一批行两两相减画出来的,不是另一份数据。 */
+/* Each of the three reports renders exactly what /api/observability/overview
+   serves: cost and calibration come from make-produced artifacts, trends from
+   the eval_runs table — the page never recomputes a single number. Delta
+   arrows are pairwise diffs over the same rows, not a separate dataset. */
 
 const METRIC_LABEL: Record<string, string> = {
   recall_at_5: "Recall@5",
   recall_at_10: "Recall@10",
   mrr: "MRR",
   faithfulness: "Faithfulness",
-  refusal_rate: "拒答率",
+  refusal_rate: "Refusal rate",
 };
-const DELTA_EPS = 0.005; // 和终端趋势表同一条判定线:动静小于它算持平
+const DELTA_EPS = 0.005; // Same cutoff as the terminal trend table: movement below it counts as flat
 
 interface CostRow {
   intent: string;
@@ -136,10 +137,11 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 观测与成本" },
+    { title: "MewMart · Observability" },
     {
       name: "description",
-      content: "钱花在哪类问题上 · 指标有没有劣化 · 兜底阈值怎么定的",
+      content:
+        "Where spend goes by question type · whether metrics are regressing · how the fallback threshold is set",
     },
   ];
 }
@@ -182,10 +184,10 @@ function NoteBox({ title, children }: { title: string; children: ReactNode }) {
 export default function ObservabilityPage({ loaderData }: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
 
-  /** 三块共用的收尾:重跑按钮 + 日志窗口,按的就是终端那条 make */
+  /** Footer shared by all three panels: re-run button + log output, invoking the same make as the terminal */
   const jobFoot = (block: { job: JobSpec; make: string }) => (
     <>
-      <SectionHead>在页面上重跑</SectionHead>
+      <SectionHead>Re-run from this page</SectionHead>
       <JobRow
         specs={[block.job]}
         onFinish={() => { void revalidate(); }}
@@ -206,34 +208,33 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           key="k"
           items={[
             {
-              label: "最烧钱意图",
+              label: "Most expensive intent",
               val: top?.intent ?? "—",
               sub: top
-                ? "占 " +
-                  pctFmt(top.share) +
-                  " · 单均 " +
+                ? pctFmt(top.share) +
+                  " of spend · avg " +
                   thousands(top.avg_tokens) +
-                  " token"
+                  " tokens/request"
                 : "—",
             },
             {
-              label: "总 token",
+              label: "Total tokens",
               val: thousands(d.total_tokens),
               sub:
                 String(d.total_requests ?? 0) +
-                " 次提问 · 近 " +
+                " questions · last " +
                 String(m.days ?? "—") +
-                " 天",
+                " days",
             },
             {
-              label: "意图路数",
+              label: "Intent routes",
               val: String(d.rows.length),
-              sub: "窗口内有 trace 的意图",
+              sub: "Intents with traces in the window",
             },
             {
-              label: "上次跑于",
+              label: "Last run",
               val: (m.generated_at ?? "—").slice(5),
-              sub: "页面只读产物,不查 Langfuse",
+              sub: "Page reads artifacts only; never queries Langfuse",
             },
           ]}
         />,
@@ -246,7 +247,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
                 <div>
                   <b className="font-bold">{r.intent}</b>
                   <span className="ml-2 text-[11px] text-muted">
-                    {r.count} 次 · 单均 {thousands(r.avg_tokens)} token
+                    {r.count} requests · avg {thousands(r.avg_tokens)} tokens
                   </span>
                 </div>
                 <div className="font-bold tabular-nums">
@@ -268,17 +269,17 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           ))}
         </div>,
       );
-      body.push(<SectionHead key="h">明细</SectionHead>);
+      body.push(<SectionHead key="h">Details</SectionHead>);
       body.push(
         <TableScroll key="t">
           <Tbl>
             <thead>
               <tr>
-                <Th>意图</Th>
-                <Th>请求数</Th>
-                <Th>总 token</Th>
-                <Th>单均 token</Th>
-                <Th>占比</Th>
+                <Th>Intent</Th>
+                <Th>Requests</Th>
+                <Th>Total tokens</Th>
+                <Th>Avg tokens</Th>
+                <Th>Share</Th>
               </tr>
             </thead>
             <tbody>
@@ -306,13 +307,15 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
             note={d.read_note}
             fallback={
               <>
-                总账里 <b>{top.intent}</b> 占 <b>{pctFmt(top.share)}</b>
-                ,要瘦成本先瘦它的 prompt 或给它换小模型。单均最高的是{" "}
+                <b>{top.intent}</b> accounts for <b>{pctFmt(top.share)}</b> of
+                total spend — to cut cost, trim its prompt or move it to a
+                smaller model first. The highest per-request average is{" "}
                 <b>
                   {most.intent} {thousands(most.avg_tokens)}
                 </b>{" "}
-                token,单均高说明一次提问背后是多次模型调用(ReAct
-                那类多步工具链就是这样),看的是链路长短,不是问题多。
+                tokens; a high average means one question triggers multiple
+                model calls (multi-step ReAct tool chains do this), so it
+                reflects chain length, not question volume.
               </>
             }
           />,
@@ -322,13 +325,13 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
     body.push(<div key="j">{jobFoot(d)}</div>);
     return (
       <Panel
-        title="意图成本账"
+        title="Intent cost ledger"
         pill={
           <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
-            数据源 Langfuse
+            Source: Langfuse
           </span>
         }
-        lede="意图分类节点跑完会给 trace 打一个 intent 标签,按这个标签把 token 分堆一算,哪类问题最烧钱就现形了。优化成本先动最贵那条路,不必全局换模型。"
+        lede="The intent-classification node tags every trace with an intent label; grouping tokens by that label shows which question types cost the most. To cut spend, target the most expensive route first — no need to swap models globally."
       >
         {body}
       </Panel>
@@ -339,7 +342,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
     const body: ReactNode[] = [];
     if (d.status === "error") {
       body.push(
-        <MissingBox key="m">趋势读不到:{d.note ?? ""}</MissingBox>,
+        <MissingBox key="m">Failed to load trend: {d.note ?? ""}</MissingBox>,
       );
     } else if (!d.present) {
       body.push(<MissingBox key="m">{d.hint}</MissingBox>);
@@ -358,17 +361,17 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           key="k"
           items={[
             {
-              label: "已跑轮次",
+              label: "Runs recorded",
               val: String(runs.length),
-              sub: "最多留最近十轮",
+              sub: "Keeps the last ten runs",
             },
             {
-              label: "最近一轮",
+              label: "Latest run",
               val: fmt3(latest.metrics.faithfulness),
-              sub: "Faithfulness · 生成段有没有编",
+              sub: "Faithfulness · whether answers fabricate content",
             },
             {
-              label: "检索 MRR",
+              label: "Retrieval MRR",
               val: fmt3(latest.metrics.mrr),
               sub:
                 latest.metrics.recall_at_5 !== undefined
@@ -376,19 +379,19 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
                   : "Recall@10 " + fmt3(latest.metrics.recall_at_10),
             },
             {
-              label: "对比上轮",
+              label: "Vs. previous run",
               val: drops.length ? String(drops.length) : "0",
-              unit: " 项下滑",
+              unit: " metrics down",
               sub: drops.length
-                ? drops.map((n) => METRIC_LABEL[n] ?? n).join("、") + " 掉了"
-                : "持平或上涨",
+                ? drops.map((n) => METRIC_LABEL[n] ?? n).join(", ") + " dropped"
+                : "Flat or up",
             },
           ]}
         />,
       );
       body.push(
-        <SectionHead key="h" unit="新在上">
-          最近十轮
+        <SectionHead key="h" unit="newest first">
+          Last ten runs
         </SectionHead>,
       );
       body.push(
@@ -396,10 +399,10 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           <Tbl>
             <thead>
               <tr>
-                <Th>轮次</Th>
-                <Th>时间</Th>
-                <Th>触发</Th>
-                <Th>评估集</Th>
+                <Th>Run</Th>
+                <Th>Time</Th>
+                <Th>Trigger</Th>
+                <Th>Eval set</Th>
                 {d.metric_names.map((n) => (
                   <Th key={n}>{METRIC_LABEL[n] ?? n}</Th>
                 ))}
@@ -460,14 +463,18 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           fallback={
             drops.length ? (
               <>
-                对比上一轮,
-                <b>{drops.map((n) => METRIC_LABEL[n] ?? n).join("、")}</b>
-                在下滑。先去待审队列翻最近通过的那几条,脏知识进库最常见的表现就是忠实度掉。
+                Versus the previous run,{" "}
+                <b>{drops.map((n) => METRIC_LABEL[n] ?? n).join(", ")}</b> are
+                declining. Check the recently approved items in the review
+                queue first — a faithfulness drop is the classic sign of dirty
+                knowledge entering the base.
               </>
             ) : (
               <>
-                四个指标对上一轮都没退步。趋势的价值不在单轮的绝对分,而在
-                <b>下一轮别掉</b>——定时跑起来(cron 每天一轮),劣化才有人看见。
+                No metric regressed versus the previous run. The value of
+                trends is not the absolute score of one run but{" "}
+                <b>keeping the next run from dropping</b> — schedule it (cron,
+                one run a day) so regressions get seen.
               </>
             )
           }
@@ -477,13 +484,13 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
     body.push(<div key="j">{jobFoot(d)}</div>);
     return (
       <Panel
-        title="评估趋势"
+        title="Evaluation trends"
         pill={
           <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
-            数据源 eval_runs 表
+            Source: eval_runs table
           </span>
         }
-        lede="飞轮持续往知识库写东西,评估流水线就是拿来防劣化的。每轮复用 ch04 那套评估集,分数落一行,连起来就是趋势。哪天审核放进脏知识把忠实度拉下来,这张表第一时间标出来。"
+        lede="The flywheel keeps writing into the Knowledge Base; the eval pipeline exists to prevent regressions. Each run reuses the rag eval set, scores land as one row, and the rows form the trend. If a review ever lets dirty knowledge in and drags faithfulness down, this table flags it first."
       >
         {body}
       </Panel>
@@ -493,10 +500,11 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
   const calibrationPanel = (d: CalibrationBlock) => {
     const w = d.weights;
     const wnote = (
-      <NoteBox title="置信度怎么算出来的">
-        四信号加权:Top1 精排分 {w.top1} / 有效证据数 {w.valid_count} /
-        Top1-Top2 分差 {w.margin} / 关键条款命中 {w.key_clause}
-        。权重是代码里的常量,校准校的是这条线该划在哪。
+      <NoteBox title="How confidence is computed">
+        Weighted from four signals: Top1 rerank score {w.top1} / valid
+        evidence count {w.valid_count} / Top1–Top2 margin {w.margin} /
+        key-clause hit {w.key_clause}. The weights are constants in code;
+        calibration decides where to draw the line.
       </NoteBox>
     );
     const body: ReactNode[] = [];
@@ -511,52 +519,52 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           key="k"
           items={[
             {
-              label: "推荐阈值",
+              label: "Recommended threshold",
               val: rec.threshold.toFixed(2),
               sub:
                 "Youden J " +
                 fmt3(rec.youden_j) +
-                " · 两拨分得最开的那条线",
+                " · the line that best separates the two groups",
             },
             {
-              label: "在用阈值",
+              label: "Threshold in use",
               val: Number(d.in_use).toFixed(2),
               sub: d.in_sync
-                ? "与推荐一致"
-                : "与推荐不一致,该回填 app/config.py",
+                ? "Matches the recommendation"
+                : "Out of sync with the recommendation — backfill app/config.py",
             },
             {
-              label: "可答通过率",
+              label: "Answerable pass rate",
               val: pctFmt(rec.pass_rate),
-              sub: "库里有答案且这次召回够硬的占比",
+              sub: "Share the base can answer whose recall was strong enough",
             },
             {
-              label: "应拒放行率",
+              label: "Should-refuse leak rate",
               val: pctFmt(rec.leak_rate),
-              sub: "库外问题被放进来答的占比",
+              sub: "Share of out-of-scope questions let through to be answered",
             },
           ]}
         />,
       );
-      body.push(<SectionHead key="h">证据置信度分布</SectionHead>);
+      body.push(<SectionHead key="h">Evidence confidence distribution</SectionHead>);
       body.push(
         <TableScroll key="t">
           <Tbl>
             <thead>
               <tr>
-                <Th>题型</Th>
-                <Th>题数</Th>
-                <Th>最低</Th>
+                <Th>Question type</Th>
+                <Th>Count</Th>
+                <Th>Min</Th>
                 <Th>p25</Th>
-                <Th>中位</Th>
+                <Th>Median</Th>
                 <Th>p75</Th>
-                <Th>最高</Th>
+                <Th>Max</Th>
               </tr>
             </thead>
             <tbody>
               {[
-                { name: "可答(A/B/C 桶)", s: dist.answerable },
-                { name: "应拒(D 桶)", s: dist.absent },
+                { name: "Answerable (buckets A/B/C)", s: dist.answerable },
+                { name: "Should-refuse (bucket D)", s: dist.absent },
               ].map(({ name, s }) => (
                 <Tr key={name}>
                   <Td>{name}</Td>
@@ -573,17 +581,17 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
         </TableScroll>,
       );
       body.push(
-        <SectionHead key="sh" unit="0.05 → 0.95,步进 0.01">
-          阈值扫描
+        <SectionHead key="sh" unit="0.05 → 0.95, step 0.01">
+          Threshold scan
         </SectionHead>,
       );
       body.push(
         <div key="lg" className="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
           {[
-            { label: "可答通过率", color: "bg-online" },
-            { label: "应拒放行率", color: "bg-error" },
-            { label: "选定阈值", color: "bg-ink" },
-            { label: "在用阈值", color: "bg-violet" },
+            { label: "Answerable pass rate", color: "bg-online" },
+            { label: "Should-refuse leak rate", color: "bg-error" },
+            { label: "Selected threshold", color: "bg-ink" },
+            { label: "Threshold in use", color: "bg-violet" },
           ].map(({ label, color }) => (
             <span key={label} className="inline-flex items-center gap-1.5">
               <i className={cn("h-3 w-3 border-2 border-ink", color)} />
@@ -607,10 +615,14 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           note={d.read_note}
           fallback={
             <>
-              红线先陡降后贴地:阈值抬到{" "}
-              <b>{rec.threshold.toFixed(2)}</b> 时应拒放行率归零,库外问题一条都进不来,代价是{" "}
-              <b>{pctFmt(1 - rec.pass_rate)}</b>{" "}
-              的可答被误拦。误拦的那些走兜底进问题池,恰好是飞轮的燃料,所以这笔账划得来。要更宽松就把线往左挪,得先接受有库外问题被硬答。
+              The red line drops steeply, then flattens: raising the threshold
+              to <b>{rec.threshold.toFixed(2)}</b> drives the should-refuse
+              leak rate to zero — no out-of-scope question gets through — at
+              the cost of <b>{pctFmt(1 - rec.pass_rate)}</b> of answerable
+              questions wrongly blocked. Blocked ones fall back into the
+              low-confidence pool, which is exactly flywheel fuel, so the trade
+              pays off. To loosen it, move the line left — but accept that some
+              out-of-scope questions will get answered anyway.
             </>
           }
         />,
@@ -618,8 +630,15 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
       body.push(
         <div key="sp" className="mt-3.5 grid gap-3.5 md:grid-cols-2">
           {wnote}
-          <NoteBox title="什么是「可答被误拦」">
-            库里其实有答案,但那一次召回的证据太散(库里写「猫窝清洗保养说明」,用户问「能扔洗衣机里洗吗」),精排分上不去,置信度算出来低于线。闸只看证据分,不知道「库里有」,于是当成答不上处理。这条问题落池、归并、审核补进知识库,下次同样问法就召回得动了。
+          <NoteBox title='What "wrongly blocked answerable" means'>
+            The base actually has the answer, but the evidence recalled that
+            one time was too scattered (the base says "cat bed cleaning & care
+            instructions" while the user asks "can I toss it in the washing
+            machine?"), so the rerank score stays low and computed confidence
+            falls under the line. The gate only sees evidence scores, not that
+            the base has an answer, so it treats the question as unanswerable.
+            The question lands in the pool, gets merged, reviewed, and added
+            to the Knowledge Base — next time the same phrasing recalls fine.
           </NoteBox>
         </div>,
       );
@@ -627,13 +646,13 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
     body.push(<div key="j">{jobFoot(d)}</div>);
     return (
       <Panel
-        title="置信度阈值校准"
+        title="Confidence threshold calibration"
         pill={
           <span className="inline-block border-2.5 border-ink bg-sky px-2 py-px text-[11.5px] font-bold whitespace-nowrap">
-            ch04 评估集实跑
+            Live run on rag eval set
           </span>
         }
-        lede="兜底那道闸卡在什么分上,不是拍脑袋定的。拿评估集里可答的和该拒的两拨题各算一遍证据置信度,再扫一遍阈值,看哪条线把两拨分得最开。"
+        lede="Where the fallback gate draws the line is not guesswork. Evidence confidence is computed for both the answerable and should-refuse groups in the eval set, then thresholds are scanned to find the line that separates the two best."
       >
         {body}
       </Panel>
@@ -642,8 +661,8 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
 
   return (
     <PageShell
-      title="观测与成本"
-      sub="钱花在哪类问题上 · 指标有没有劣化 · 兜底阈值怎么定的"
+      title="Observability"
+      sub="Where spend goes by question type · whether metrics are regressing · how the fallback threshold is set"
       active="/observability"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -651,7 +670,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
@@ -662,7 +681,7 @@ export default function ObservabilityPage({ loaderData }: Route.ComponentProps) 
           {calibrationPanel(loaderData.d.calibration)}
         </>
       ) : (
-        <MissingBox className="mt-4">取数失败:{loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       )}
     </PageShell>
   );

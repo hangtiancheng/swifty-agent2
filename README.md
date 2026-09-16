@@ -1,7 +1,7 @@
 # swifty-agent2 server
 
 Node.js/TypeScript backend for the swifty-agent2 e-commerce customer-service agent. This is the
-migrated backend of the Python project in `../python` (static pages and the ch10
+migrated backend of the Python project in `../python` (static pages and the train
 training/export pipeline are out of scope). It is not wire-compatible with the Python
 service; capabilities are aligned, response shapes are kept close.
 
@@ -60,7 +60,7 @@ pnpm seed:conv         # seed historical conversations
 ## Evaluation / operations
 
 ```bash
-pnpm eval:rag          # four-strategy RAG report (data/ch04/reports)
+pnpm eval:rag          # four-strategy RAG report (data/rag/reports)
 pnpm eval:flywheel     # eval pipeline run -> eval_runs trend
 pnpm eval:retrieval    # vector recall acceptance
 pnpm eval:judge        # faithfulness judge regression over reviewed cases

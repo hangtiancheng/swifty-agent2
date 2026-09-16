@@ -185,10 +185,10 @@ export default function AcceptanceErrorsPage({
       {!d.eval.present ? (
         <Panel title="错例复核">
           <MissingBox>
-            {d.eval.hint ?? "评测产物还没生成,先跑 make ch10-eval"}
+            {d.eval.hint ?? "评测产物还没生成,先跑 make train-eval"}
           </MissingBox>
-          {jobSpecs["ch10-eval"] ? (
-            <JobRow specs={[jobSpecs["ch10-eval"]]} onFinish={() => { void revalidate(); }} />
+          {jobSpecs["train-eval"] ? (
+            <JobRow specs={[jobSpecs["train-eval"]]} onFinish={() => { void revalidate(); }} />
           ) : null}
         </Panel>
       ) : (
@@ -328,9 +328,9 @@ export default function AcceptanceErrorsPage({
                 </motion.div>
               );
             })}
-            {jobSpecs["ch10-eval"] ? (
+            {jobSpecs["train-eval"] ? (
               <JobRow
-                specs={[jobSpecs["ch10-eval"]]}
+                specs={[jobSpecs["train-eval"]]}
                 onFinish={() => { void revalidate(); }}
                 note="重跑评测会刷新这份错例清单"
               />

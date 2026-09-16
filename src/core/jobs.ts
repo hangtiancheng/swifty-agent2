@@ -39,7 +39,7 @@ export const JOBS: Record<string, JobSpec> = Object.fromEntries(
     spec("seed-conv", "Seed historical conversations", script("seed-conv"), "Requires the local DB"),
     spec("kb-reset", "Wipe & rebuild (clear both tables + clear vectors)", script("kb-reset"), "Requires the local DB; empties the knowledge base", true),
     // RAG evaluation / flywheel / cost reports
-    spec("eval-rag", "RAG evaluation (four-strategy comparison)", script("eval-ch04"), "Requires the local vector store + a built KB + chat upstream; takes minutes", true),
+    spec("eval-rag", "RAG evaluation (four-strategy comparison)", script("eval-rag"), "Requires the local vector store + a built KB + chat upstream; takes minutes", true),
     spec("cost-report", "Cost ledger by intent", script("cost-by-intent"), "Requires Langfuse running with traces inside the window"),
     spec("eval-flywheel", "Evaluation pipeline (records one trend round)", script("eval-flywheel"), "Requires the local DB + a built KB + chat upstream; takes minutes", true),
     spec("calibrate-confidence", "Confidence threshold calibration", script("calibrate-confidence"), "Requires the local vector store + a built KB + rerank upstream; takes minutes", true),

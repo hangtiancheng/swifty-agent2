@@ -21,8 +21,9 @@ import { cn } from "~/lib/cn";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 分类器验收总览:九项实证全在页面上跑,不用回终端。
-   页面上的数与终端 make 跑出来的是同一份产物,不在接口里重算,避免出现第二个真相。 */
+/* Classifier acceptance overview: all nine evidence checks run on this page — no terminal needed.
+   The numbers here come from the same artifacts as `make` in the terminal; the API never
+   recomputes them, so there is no second source of truth. */
 
 interface Block {
   key: string;
@@ -56,15 +57,15 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 分类器验收总览" },
-    { name: "description", content: "九项实证全在页面上跑,不用回终端" },
+    { title: "MewMart · Acceptance Overview" },
+    { name: "description", content: "All nine evidence checks run on the page — no terminal needed" },
   ];
 }
 
 const PILL: Record<Block["status"], [PillTone, string]> = {
-  pass: ["pass", "通过"],
-  fail: ["fail", "不达标"],
-  missing: ["missing", "缺产物"],
+  pass: ["pass", "Pass"],
+  fail: ["fail", "Fail"],
+  missing: ["missing", "No artifact"],
 };
 
 export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
@@ -72,8 +73,8 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="分类器验收总览" active="/acceptance">
-        <MissingBox className="mt-4">加载失败:{loaderData.error}</MissingBox>
+      <PageShell title="Acceptance Overview" active="/acceptance">
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       </PageShell>
     );
   }
@@ -83,8 +84,8 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
 
   return (
     <PageShell
-      title="分类器验收总览"
-      sub="九项实证全在页面上跑,不用回终端"
+      title="Acceptance Overview"
+      sub="All nine evidence checks run on the page — no terminal needed"
       active="/acceptance"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -92,23 +93,23 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <GateBar>
         <Stat
-          label="闸门"
+          label="Gates"
           value={String(d.passed) + " / " + String(d.total)}
           tone={d.all_pass ? "pass" : "fail"}
         />
         <Stat
-          label="分类器 :8110"
-          value={d.classifier.online ? "在线" : "离线"}
+          label="Classifier :8110"
+          value={d.classifier.online ? "Online" : "Offline"}
           tone={d.classifier.online ? "pass" : "fail"}
         />
         <Stat
-          label="评测结论"
+          label="Eval verdict"
           value={
             !evalBlock || evalBlock.status === "missing"
               ? "—"
@@ -119,9 +120,11 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
       </GateBar>
 
       <Tip>
-        口径:<b>通过</b>产物已生成且过线;<b>不达标</b>跑过但没过线,回头搞数据;
-        <b>缺产物</b>还没跑过,点卡片里的按钮现场跑。页面上的数与终端 make
-        跑出来的是同一份产物,不在接口里重算,避免出现第二个真相。
+        How to read this: <b>Pass</b> means the artifact exists and clears its bar;{" "}
+        <b>Fail</b> means it ran but missed the bar — go fix the data;{" "}
+        <b>No artifact</b> means it has not run yet — use the buttons on the card to run
+        it now. The numbers here come from the same artifacts as terminal make — the API
+        never recomputes them, so there is no second source of truth.
       </Tip>
 
       <div className="mt-4 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))]">
@@ -153,7 +156,7 @@ export default function AcceptancePage({ loaderData }: Route.ComponentProps) {
                 <span className="flex-1" />
                 {blk.page ? (
                   <BtnLink to={blk.page} size="sm">
-                    详情 →
+                    Details →
                   </BtnLink>
                 ) : null}
               </div>

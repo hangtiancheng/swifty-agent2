@@ -10,7 +10,7 @@ import * as readNotes from "@/core/read-notes.ts";
 import * as retrieval from "@/core/retrieval.ts";
 
 const ROOT = settings.root;
-const OUT_DIR = path.join(ROOT, "data/ch09/reports");
+const OUT_DIR = path.join(ROOT, "data/eval/reports");
 const OUT = path.join(OUT_DIR, "confidence_calibration.txt");
 const OUT_JSON = path.join(OUT_DIR, "confidence_calibration.json");
 const ANSWERABLE = new Set(["A_policy", "B_model", "C_colloquial"]);
@@ -219,7 +219,7 @@ async function main(): Promise<void> {
     )}\n`,
     "utf8",
   );
-  logLine("Report written to data/ch09/reports/confidence_calibration.txt and .json");
+  logLine("Report written to data/eval/reports/confidence_calibration.txt and .json");
 }
 
 await main();

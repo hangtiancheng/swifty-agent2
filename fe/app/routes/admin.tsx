@@ -39,19 +39,20 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 后台管理" },
+    { title: "MewMart · Admin Console" },
     {
       name: "description",
-      content: "知识库、检索评估、飞轮、分类器,几块后台都在这里",
+      content:
+        "Knowledge Base, retrieval evals, flywheel, classifier — every backend module in one place",
     },
   ];
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  ok: "正常",
-  attention: "要干活",
-  missing: "没数据",
-  error: "读数失败",
+  ok: "Healthy",
+  attention: "Needs work",
+  missing: "No data",
+  error: "Read failed",
 };
 const STATUS_TONE: Record<string, PillTone> = {
   ok: "pass",
@@ -101,7 +102,7 @@ function ModuleCard({ m, i }: { m: AdminModule; i: number }) {
       ) : null}
       <div className="mt-auto pt-3">
         <BtnLink to={m.page} variant="go" size="sm">
-          进入 {m.title} →
+          Open {m.title} →
         </BtnLink>
       </div>
     </motion.div>
@@ -112,8 +113,8 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
   return (
     <PageShell
-      title="后台管理"
-      sub="知识库、检索评估、飞轮、分类器,几块后台都在这里,不用回终端"
+      title="Admin Console"
+      sub="Knowledge Base, retrieval evals, flywheel, classifier — every backend module in one place, no terminal needed"
       active="/admin"
       actions={
         <Btn
@@ -124,15 +125,17 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <Tip>
-        口径:<b>正常</b>这块是活的且没有待办;<b>要干活</b>
-        有待办或两边数对不上;<b>没数据</b>还没跑过,进去按一下就有;
-        <b>读数失败</b>这块的依赖没起(mysql / Milvus / 嵌入上游 / 分类器
-        :8110),只影响它自己那张卡。
+        How to read statuses: <b>Healthy</b> — the module is live with nothing
+        pending; <b>Needs work</b> — something is pending or the two sides
+        disagree; <b>No data</b> — never run yet; open it and press once;{" "}
+        <b>Read failed</b> — a dependency of that module is down (mysql /
+        Milvus / embedding upstream / classifier :8110); only its own card is
+        affected.
       </Tip>
       {loaderData.ok ? (
         <div className="mt-4 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))]">
@@ -142,7 +145,7 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <MissingBox className="mt-4">
-          取数失败:{loaderData.error}
+          Failed to load data: {loaderData.error}
         </MissingBox>
       )}
     </PageShell>

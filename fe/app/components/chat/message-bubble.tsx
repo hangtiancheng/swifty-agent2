@@ -109,7 +109,7 @@ function FeedbackBar({
   );
 }
 
-/* ---------- 订单选择器卡片(interrupt 缺订单号 → 聊天流点选;ch08 拒绝后点选重问) ---------- */
+/* ---------- 订单选择器卡片(interrupt 缺订单号 → 聊天流点选; 拒绝后点选重问) ---------- */
 
 export function OrderCards({
   orders,
@@ -210,7 +210,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
   const extras: React.ReactNode[] = [];
   for (const a of msg.actions) {
     if (a.type === "select_order") {
-      // ch08:报了不属于自己的订单号被拒,把他名下的单列出来点选。拒绝之后得给条出路,
+      // 报了不属于自己的订单号被拒,把他名下的单列出来点选。拒绝之后得给条出路,
       // 否则用户既查不到,也不知道自己的单号是多少
       extras.push(
         <OrderCards

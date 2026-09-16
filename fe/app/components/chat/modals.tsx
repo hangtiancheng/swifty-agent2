@@ -5,7 +5,7 @@ import { useToast } from "~/components/toast";
 import { Btn } from "~/components/ui";
 import { api, jsonPost } from "~/lib/api";
 
-/* 建工单 / 退款两个表单弹窗(原 index.html ch05/ch06)。
+/* 建工单 / 退款两个表单弹窗(原 index.html)。
    提交成功回调 onSuccess(工单号),由页面置灰触发按钮并追加系统消息。 */
 
 const FIELD_LABEL = "mb-1.5 block text-[12.5px] font-bold";

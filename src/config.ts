@@ -58,7 +58,7 @@ export const settings = {
   databaseUrl: str("DATABASE_URL", "file:./data/swifty-agent2.db"),
   checkpointerDbPath: str(
     "CHECKPOINTER_DB_PATH",
-    "data/ch05_checkpoints.sqlite",
+    "data/checkpoints.sqlite",
   ),
 
   // --- retrieval ---

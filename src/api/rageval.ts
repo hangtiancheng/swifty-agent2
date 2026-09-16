@@ -17,8 +17,8 @@ import * as repository from "@/db/repository.ts";
 
 export const ragevalRouter = new Hono();
 
-const REPORT = path.join(settings.root, "data/ch04/reports/rag_eval.json");
-const TEXT_LOG = path.join(settings.root, "data/ch04/reports/rag_eval.txt");
+const REPORT = path.join(settings.root, "data/rag/reports/rag_eval.json");
+const TEXT_LOG = path.join(settings.root, "data/rag/reports/rag_eval.txt");
 const JOB = "eval-rag";
 const STRATEGIES = ["vector", "bm25", "hybrid", "hybrid_rerank"];
 const BUCKETS = ["A_policy", "B_model", "C_colloquial", "E_multi"];
@@ -146,8 +146,8 @@ export function overview(): Record<string, unknown> {
   const job = {
     specs: [jobStatus(JOB)],
     artifacts: {
-      json: { ...stat(REPORT), path: "data/ch04/reports/rag_eval.json" },
-      text: { ...stat(TEXT_LOG), path: "data/ch04/reports/rag_eval.txt" },
+      json: { ...stat(REPORT), path: "data/rag/reports/rag_eval.json" },
+      text: { ...stat(TEXT_LOG), path: "data/rag/reports/rag_eval.txt" },
     },
   };
   if (report === null) {

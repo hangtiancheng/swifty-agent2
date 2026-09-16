@@ -1,4 +1,4 @@
-// Evaluation pipeline: run the ch04 dataset once, store a row in eval_runs, print the trend.
+// Evaluation pipeline: run the rag dataset once, store a row in eval_runs, print the trend.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -15,8 +15,8 @@ import * as repository from "@/db/repository.ts";
 import { queryFaq } from "@/tools/builtin/faq.ts";
 
 const ROOT = settings.root;
-const OUT = path.join(ROOT, "data/ch09/reports/eval_trend.txt");
-const NOTE = path.join(ROOT, "data/ch09/reports/eval_trend_note.json");
+const OUT = path.join(ROOT, "data/eval/reports/eval_trend.txt");
+const NOTE = path.join(ROOT, "data/eval/reports/eval_trend_note.json");
 const GRADED_BUCKETS = ["A_policy", "B_model", "C_colloquial", "E_multi"];
 const RECALL_K = 5;
 const METRICS = ["recall_at_5", "mrr", "faithfulness", "refusal_rate"] as const;
@@ -276,7 +276,7 @@ async function main(): Promise<void> {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   await trendNote(runs);
   fs.writeFileSync(OUT, `${lines.join("\n")}\n`, "utf8");
-  logLine("\nTrend report written to data/ch09/reports/eval_trend.txt");
+  logLine("\nTrend report written to data/eval/reports/eval_trend.txt");
 }
 
 try {

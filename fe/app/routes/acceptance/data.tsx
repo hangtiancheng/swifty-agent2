@@ -233,7 +233,7 @@ export default function AcceptanceDataPage({
               训练 / 验证 / 测试;训练集另做增强与定向补数
             </div>
             <div className="mt-1 text-[11px] break-all text-muted">
-              data/ch10/dataset/*.jsonl
+              data/train/dataset/*.jsonl
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function AcceptanceDataPage({
           5),看到错标就直接改语料,不许改考卷去凑分。
         </Tip>
         <JobRow
-          specs={pick(["ch10-corpus", "ch10-dataset"])}
+          specs={pick(["train-corpus", "train-dataset"])}
           onFinish={() => { void revalidate(); }}
         />
       </Panel>
@@ -354,7 +354,7 @@ export default function AcceptanceDataPage({
           {fmtBytes(d.model.threshold_file.bytes)}。
         </Tip>
         <JobRow
-          specs={pick(["ch10-train"])}
+          specs={pick(["train-train"])}
           onFinish={() => { void revalidate(); }}
           note="训练是分钟级重活,会覆盖现有权重"
         />
@@ -386,7 +386,7 @@ export default function AcceptanceDataPage({
           <MissingBox className="mt-2.5">{ex.hint}</MissingBox>
         )}
         <JobRow
-          specs={pick(["ch10-export", "classifier-up", "classifier-down"])}
+          specs={pick(["train-export", "classifier-up", "classifier-down"])}
           onFinish={() => { void revalidate(); }}
         />
       </Panel>

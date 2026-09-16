@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { cn } from "~/lib/cn";
 import type { ConversationItem } from "~/lib/types";
 
-/* 会话侧栏(ch07):桌面端固定一列,移动端抽屉。列表项 = #id + 已摘要徽标 + 预览。 */
+/* 会话侧栏:桌面端固定一列,移动端抽屉。列表项 = #id + 已摘要徽标 + 预览。 */
 
 function ConvList({
   items,

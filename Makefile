@@ -35,7 +35,7 @@ eval-judge:
 	node scripts/eval-judge.ts
 
 calibrate:
-	node scripts/calibrate.ts
+	node scripts/calibrate-confidence.ts
 
 cost-report:
 	node scripts/cost-report.ts
