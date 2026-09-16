@@ -29,12 +29,15 @@
  *   paths are still renamed.
  * - Renames run through `git mv` (destinations are mkdir-ed first) so the index
  *   stays consistent; directories left empty by renames are pruned afterwards.
- * - Any rename whose destination already exists (on disk, or as another
- *   rename's destination) aborts the whole run before anything is modified.
+ * - Destination collisions are resolved, never fatal and never overwriting: a
+ *   hash of the source file's content is inserted before the extension, e.g.
+ *   `scripts/eval-ch06.ts` -> `scripts/eval-intent-3f9a1c2b.ts` when
+ *   `scripts/eval-intent.ts` is already taken by a different file.
  * - This script never rewrites itself, even if it later becomes tracked.
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -58,8 +61,21 @@ const TOPIC_BY_CHAPTER =
 /** Matches ch01..ch10 with any casing of the two-letter prefix. */
 const CHAPTER_PATTERN = /[cC][hH](?:0[1-9]|10)/g;
 
+/** Hash prefix lengths tried, shortest first, before falling back to a counter. */
+const HASH_LENGTHS = /** @type {readonly number[]} */ ([8, 16, 32, 64]);
+
+/** Ceiling for the counter fallback; reaching it means the plan is broken. */
+const MAX_COUNTER = 1000;
+
 /** @typedef {{ src: string, dst: string }} Rename Repo-relative old/new path. */
 /** @typedef {{ file: string, bytes: Buffer }} ContentWrite Final path + new bytes. */
+/**
+ * @typedef {object} PlannedFile A tracked file plus everything the plan needs.
+ * @property {string} src Repo-relative tracked path.
+ * @property {string} dst Path after the chapter rename, before collision resolution.
+ * @property {string} digest sha256 hex of the original bytes, used for collision suffixes.
+ * @property {Buffer | null} content Rewritten bytes, or null when unchanged or binary.
+ */
 
 const REPO_ROOT = execFileSync("git", ["rev-parse", "--show-toplevel"], {
   encoding: "utf8",
@@ -105,6 +121,35 @@ function replaceChapters(text) {
  */
 function looksBinary(bytes) {
   return bytes.subarray(0, 8192).includes(0);
+}
+
+/**
+ * Build a collision-free destination by inserting a content-hash suffix before
+ * the file extension: `scripts/eval-intent.ts` -> `scripts/eval-intent-3f9a1c2b.ts`.
+ * The hash prefix is lengthened step by step, then a counter is appended, until
+ * `isTaken` reports the candidate as free. Returns null only if every candidate
+ * up to MAX_COUNTER is somehow still taken.
+ * @param {string} dst desired destination, repo-relative
+ * @param {string} digest sha256 hex of the source file's original bytes
+ * @param {(candidate: string) => boolean} isTaken
+ * @returns {string | null}
+ */
+function uniqueDestination(dst, digest, isTaken) {
+  const ext = path.extname(dst);
+  const stem = dst.slice(0, dst.length - ext.length);
+  for (const length of HASH_LENGTHS) {
+    const candidate = `${stem}-${digest.slice(0, length)}${ext}`;
+    if (!isTaken(candidate)) {
+      return candidate;
+    }
+  }
+  for (let counter = 2; counter <= MAX_COUNTER; counter += 1) {
+    const candidate = `${stem}-${digest}-${counter}${ext}`;
+    if (!isTaken(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 /**

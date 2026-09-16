@@ -34,6 +34,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
     "@hono/node-server": "^2.1.1",
     "@hono/zod-validator": "^0.9.1",
     "@huggingface/tokenizers": "^0.2.0",

@@ -1,0 +1,73 @@
+// Dense-only vector-store bridge.
+//
+// The Node server (src/kb/store.ts) calls this Python gRPC service, which wraps pymilvus
+// (Milvus Lite) for dense ANN retrieval. This is a deliberate capability subset of the
+// Python original (~/Downloads/python app/kb/milvus_client.py): that project ran Milvus
+// Standalone and pushed dense + sparse(BM25 Function) + hybrid(RRFRanker) all into Milvus.
+// Here only dense lives in Milvus; BM25 stays in-process on the Node side (SQLite text)
+// and hybrid is fused with the existing reciprocal-rank-fusion code. See src/kb/store.ts.
+syntax = "proto3";
+
+package kbstorerpc;
+
+service KbStore {
+  rpc Upsert(UpsertRequest) returns (UpsertResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Count(CountRequest) returns (CountResponse);
+  rpc Drop(DropRequest) returns (DropResponse);
+  rpc Flush(FlushRequest) returns (FlushResponse);
+}
+
+// A single knowledge chunk row as stored in Milvus. The dense vector is the only indexed
+// field; the scalar fields are carried so Search can return full hits without a SQLite join.
+message Row {
+  int64 id = 1;
+  repeated float dense = 2;
+  string question = 3;
+  string answer = 4;
+  string section_path = 5;
+  string content_type = 6;
+  string category = 7;
+}
+
+message UpsertRequest {
+  repeated Row rows = 1;
+}
+
+message UpsertResponse {
+  int32 count = 1;
+}
+
+message SearchRequest {
+  repeated float vector = 1;
+  int32 top_k = 2;
+  string category = 3; // empty = no category filter
+}
+
+message Hit {
+  int64 id = 1;
+  float score = 2; // COSINE similarity: higher = more similar
+  string question = 3;
+  string answer = 4;
+  string section_path = 5;
+  string content_type = 6;
+  string category = 7;
+}
+
+message SearchResponse {
+  repeated Hit hits = 1;
+}
+
+message CountRequest {}
+
+message CountResponse {
+  int64 count = 1;
+}
+
+message DropRequest {}
+
+message DropResponse {}
+
+message FlushRequest {}
+
+message FlushResponse {}

@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "accelerate>=1.15.0",
+    "grpcio-tools>=1.84.0",
+    "milvus-lite>=3.2.1",
     "numpy>=2.5.3",
     "onnx>=1.22.0",
     "onnxruntime>=1.30.0",
