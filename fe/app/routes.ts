@@ -5,10 +5,10 @@ import {
   route,
 } from "@react-router/dev/routes";
 
-// 与原 FastAPI 工程的页面路由一一对应:
-// / 聊天页;/admin 后台首页;/kb 知识库;/rag-eval RAG 评估;/review 飞轮待审;
-// /observability 观测与成本;/topics 主题分布;/topics/questions 类目问题列表;
-// /acceptance{,/eval,/data,/errors} 分类器验收四页
+// One-to-one with the page routes of the original FastAPI app:
+// / chat; /admin admin console; /kb knowledge base; /rag-eval RAG eval; /review review queue;
+// /observability observability; /topics topic distribution; /topics/questions topic question list;
+// /acceptance{,/eval,/data,/errors} the four acceptance pages
 export default [
   index("routes/chat.tsx"),
   route("admin", "routes/admin.tsx"),

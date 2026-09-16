@@ -3,10 +3,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { closeDb } from "@/db/client.ts";
-import * as repository from "@/db/repository.ts";
-import * as documents from "@/kb/documents.ts";
-import { KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
+import { closeDb } from "#/db/client.ts";
+import * as repository from "#/db/repository.ts";
+import * as documents from "#/kb/documents.ts";
+import { KB_DIR, SOURCE_TYPES } from "#/kb/sources.ts";
 
 function norm(s: string): string {
   return (s ?? "")

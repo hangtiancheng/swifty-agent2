@@ -1,4 +1,4 @@
-/** 与终端产物同一套格式化口径(原 acceptance.js) */
+/** Same formatting conventions as the terminal artifacts (from the original acceptance.js) */
 export const fmtTime = (iso?: string | null): string =>
   iso ? String(iso).replace("T", " ").slice(0, 19) : "—";
 

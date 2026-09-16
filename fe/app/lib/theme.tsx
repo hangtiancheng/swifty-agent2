@@ -25,7 +25,7 @@ export function setTheme(theme: Theme) {
   try {
     localStorage.setItem(KEY, theme);
   } catch {
-    /* 隐私模式等场景存不上,忽略:本次会话内仍生效 */
+    /* Storage may fail (e.g. private mode); ignore — it still applies this session */
   }
   emit();
 }
@@ -47,5 +47,6 @@ export function useTheme(): Theme {
   );
 }
 
-/** 注入 <head> 的内联脚本:首帧前按偏好或系统设置打上 .dark,避免闪一下亮色 */
+/** Inline script injected into <head>: applies .dark per stored preference or system
+    setting before first paint, avoiding a light-mode flash. */
 export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("${KEY}");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");}}catch(e){}})();`;

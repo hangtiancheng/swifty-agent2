@@ -1,11 +1,11 @@
 // Faithfulness judge regression: replay human-reviewed fabrication cases and compare verdicts.
 import { z } from "zod";
 
-import { structured } from "@/core/llm.ts";
-import { FAITHFULNESS_PROMPT } from "@/core/prompts.ts";
-import { closeDb } from "@/db/client.ts";
-import { citationSchema, parseWith } from "@/db/json.ts";
-import * as repository from "@/db/repository.ts";
+import { structured } from "#/core/llm.ts";
+import { FAITHFULNESS_PROMPT } from "#/core/prompts.ts";
+import { closeDb } from "#/db/client.ts";
+import { citationSchema, parseWith } from "#/db/json.ts";
+import * as repository from "#/db/repository.ts";
 
 const CONCURRENCY = 5;
 

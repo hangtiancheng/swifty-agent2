@@ -5,12 +5,12 @@ import { HTTPException } from "hono/http-exception";
 import { parseJsonBody, parseParamInt } from "./http.ts";
 import { approveRequestSchema } from "./schemas.ts";
 
-import { parseJson } from "@/db/json.ts";
-import * as repository from "@/db/repository.ts";
-import { isKey } from "@/kb/documents.ts";
-import type { Chunk } from "@/kb/documents.ts";
-import * as dualwrite from "@/kb/dualwrite.ts";
-import { childLogger } from "@/logger.ts";
+import { parseJson } from "#/db/json.ts";
+import * as repository from "#/db/repository.ts";
+import { isKey } from "#/kb/documents.ts";
+import type { Chunk } from "#/kb/documents.ts";
+import * as dualwrite from "#/kb/dualwrite.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("api.review");

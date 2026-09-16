@@ -4,8 +4,8 @@
 //   valid_count     evidence above VALID_SCORE_FLOOR
 //   margin          top1 - top2 (focus of the evidence)
 //   key_clause_hit  any of the top-3 hits contains a key-clause term
-import { KEY_TERMS } from "@/kb/documents.ts";
-import type { KnowledgeHit } from "@/kb/store.ts";
+import { KEY_TERMS } from "#/kb/documents.ts";
+import type { KnowledgeHit } from "#/kb/store.ts";
 
 export const VALID_SCORE_FLOOR = 0.3;
 export const VALID_COUNT_CAP = 3;

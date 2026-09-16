@@ -7,7 +7,7 @@ import {
   parseWith,
   stringArraySchema,
   toJson,
-} from "@/db/json.ts";
+} from "#/db/json.ts";
 
 describe("json helpers", () => {
   it("serializes undefined and null to null", () => {

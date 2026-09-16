@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "description": "swifty-agent2 customer-service agent backend",
   "main": "src/index.ts",
+  "imports": {
+    "#/*": "./src/*",
+    "#generated/*": "./generated/*",
+    "#scripts/*": "./scripts/*",
+    "#tests/*": "./tests/*"
+  },
   "scripts": {
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
@@ -30,6 +36,7 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@hono/zod-validator": "^0.9.1",
+    "@huggingface/tokenizers": "^0.2.0",
     "@langchain/anthropic": "^1.5.10",
     "@langchain/classic": "^1.0.48",
     "@langchain/community": "^1.1.29",
@@ -50,6 +57,7 @@
     "hono": "^4.13.7",
     "hono-pino": "^0.10.3",
     "langchain": "^1.5.11",
+    "onnxruntime-node": "^1.30.0",
     "openai": "^7.15.0",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { structured } from "./llm.ts";
 import { EXPAND_QUERIES_PROMPT, QUERY_REWRITE_PROMPT } from "./prompts.ts";
 
-import { childLogger } from "@/logger.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("query-understanding");
 

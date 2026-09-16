@@ -5,8 +5,8 @@ import { z } from "zod";
 
 import { parseQuery } from "./http.ts";
 
-import { TOPIC_NAMES } from "@/core/taxonomy.ts";
-import * as repository from "@/db/repository.ts";
+import { TOPIC_NAMES } from "#/core/taxonomy.ts";
+import * as repository from "#/db/repository.ts";
 
 
 export const topicsRouter = new Hono();

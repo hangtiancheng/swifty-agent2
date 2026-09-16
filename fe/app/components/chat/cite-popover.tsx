@@ -7,8 +7,9 @@ export interface CiteTarget {
   rect: DOMRect;
 }
 
-/** 引用来源浮层:点角标 [n] 弹出 section_path + 原文。
-    定位在角标下方,超出视口右/下边则回收;点外面 / Esc / 滚动 / 缩放关闭。 */
+/** Citation popover: clicking a [n] marker shows its section_path + source text.
+    Positioned below the marker and pulled back inside if it overflows the viewport's
+    right/bottom edge; closes on outside click / Esc / scroll / resize. */
 export function CitePopover({
   target,
   onClose,
@@ -23,10 +24,11 @@ export function CitePopover({
     width: number;
   } | null>(null);
 
-  // 先渲染后测量再定位(浮层高度取决于内容),布局副作用是这类浮层的标准做法
+  // Render first, then measure and position (height depends on content); a layout side
+  // effect is standard practice for this kind of popover
   useLayoutEffect(() => {
     if (!target) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 测量 DOM 后回填位置
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- position is set only after measuring the DOM
       setPos(null);
       return;
     }
@@ -83,12 +85,12 @@ export function CitePopover({
       }
     >
       <div className="mb-1.5 border-b-2 border-dashed border-muted pb-1.5 text-xs font-bold break-words text-coral">
-        {c.section_path ?? "来源"}
+        {c.section_path ?? "Source"}
       </div>
       {c.question ? <div className="mb-1 font-bold">{c.question}</div> : null}
-      <div className="whitespace-pre-wrap break-words">{c.answer ?? ""}</div>
+      <div className="whitespace-pre-wrap wrap-break-word">{c.answer ?? ""}</div>
       <div className="mt-2 text-[11px] text-muted">
-        {"来源编号 [" + String(c.n) + "]"}
+        {"Source [" + String(c.n) + "]"}
         {c.content_type ? " · " + c.content_type : ""}
       </div>
     </div>

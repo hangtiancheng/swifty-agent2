@@ -5,8 +5,8 @@ import type { ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import { settings } from "@/config.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("jobs");
 
@@ -31,16 +31,16 @@ function spec(name: string, title: string, argv: string[], needs: string, heavy 
 export const JOBS: Record<string, JobSpec> = Object.fromEntries(
   [
     // knowledge base build pipeline
-    spec("kb-preview", "Material list & chunk preview", script("show-kb"), "Runs locally; writes nothing to the DB"),
-    spec("kb-build", "Offline KB build (document chunking → pending)", script("build-kb"), "Requires the local DB"),
-    spec("kb-mine", "Conversation knowledge mining (extract QA → dedup → pending)", script("mine-knowledge"), "Requires the local DB + chat upstream", true),
-    spec("kb-vectorize", "Vectorization (embeddings → local vector store → mark done)", script("vectorize-kb"), "Requires the local DB + embedding upstream"),
+    spec("kb-preview", "Material list & chunk preview", script("kb-preview"), "Runs locally; writes nothing to the DB"),
+    spec("kb-build", "Offline KB build (document chunking → pending)", script("kb-build"), "Requires the local DB"),
+    spec("kb-mine", "Conversation knowledge mining (extract QA → dedup → pending)", script("kb-mine"), "Requires the local DB + chat upstream", true),
+    spec("kb-vectorize", "Vectorization (embeddings → local vector store → mark done)", script("kb-vectorize"), "Requires the local DB + embedding upstream"),
     spec("kb-repatch", "Patch-style re-embed (md changes → update text in place)", script("kb-repatch"), "Requires the local DB; afterwards run \"Vectorize pending chunks\""),
     spec("seed-conv", "Seed historical conversations", script("seed-conv"), "Requires the local DB"),
     spec("kb-reset", "Wipe & rebuild (clear both tables + clear vectors)", script("kb-reset"), "Requires the local DB; empties the knowledge base", true),
     // RAG evaluation / flywheel / cost reports
     spec("eval-rag", "RAG evaluation (four-strategy comparison)", script("eval-rag"), "Requires the local vector store + a built KB + chat upstream; takes minutes", true),
-    spec("cost-report", "Cost ledger by intent", script("cost-by-intent"), "Requires Langfuse running with traces inside the window"),
+    spec("cost-report", "Cost ledger by intent", script("cost-report"), "Requires Langfuse running with traces inside the window"),
     spec("eval-flywheel", "Evaluation pipeline (records one trend round)", script("eval-flywheel"), "Requires the local DB + a built KB + chat upstream; takes minutes", true),
     spec("calibrate-confidence", "Confidence threshold calibration", script("calibrate-confidence"), "Requires the local vector store + a built KB + rerank upstream; takes minutes", true),
   ].map((s) => [s.name, s]),

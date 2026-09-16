@@ -9,12 +9,12 @@ import { z } from "zod";
 import { INTENT_TO_ROUTE } from "./routing.ts";
 import type { Citation, GraphState, GraphUpdate, OrderData, SuggestedAction } from "./state.ts";
 
-import { settings } from "@/config.ts";
-import { computeEvidenceConfidence, snapshotFromHits } from "@/core/confidence.ts";
-import * as coref from "@/core/coref.ts";
-import * as intentMod from "@/core/intent.ts";
-import { getChatModel } from "@/core/llm.ts";
-import * as memory from "@/core/memory.ts";
+import { settings } from "#/config.ts";
+import { computeEvidenceConfidence, snapshotFromHits } from "#/core/confidence.ts";
+import * as coref from "#/core/coref.ts";
+import * as intentMod from "#/core/intent.ts";
+import { getChatModel } from "#/core/llm.ts";
+import * as memory from "#/core/memory.ts";
 import {
   AGENT_SYSTEM,
   COMPLAINT_REPLY_TEXT,
@@ -22,15 +22,15 @@ import {
   REFUND_JUDGE_HINT,
   SCRIPT_REPLY_CHITCHAT,
   SCRIPT_REPLY_OTHER,
-} from "@/core/prompts.ts";
-import * as queryUnderstanding from "@/core/query-understanding.ts";
-import * as retrieval from "@/core/retrieval.ts";
-import * as selfcheck from "@/core/selfcheck.ts";
-import * as repository from "@/db/repository.ts";
-import { childLogger } from "@/logger.ts";
-import * as business from "@/tools/business.ts";
-import * as engine from "@/tools/engine.ts";
-import * as registry from "@/tools/registry.ts";
+} from "#/core/prompts.ts";
+import * as queryUnderstanding from "#/core/query-understanding.ts";
+import * as retrieval from "#/core/retrieval.ts";
+import * as selfcheck from "#/core/selfcheck.ts";
+import * as repository from "#/db/repository.ts";
+import { childLogger } from "#/logger.ts";
+import * as business from "#/tools/business.ts";
+import * as engine from "#/tools/engine.ts";
+import * as registry from "#/tools/registry.ts";
 
 const log = childLogger("graph.nodes");
 

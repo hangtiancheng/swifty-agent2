@@ -3,16 +3,16 @@ import { z } from "zod";
 
 import { dedupe, normalizeQuestion } from "./dedup.ts";
 
-import { structured } from "@/core/llm.ts";
-import { MINING_PROMPT } from "@/core/prompts.ts";
+import { structured } from "#/core/llm.ts";
+import { MINING_PROMPT } from "#/core/prompts.ts";
 import {
   insertStaging,
   listAllQuestions,
   listConversationsWithMessages,
   listStagingByStatus,
   setStagingStatus,
-} from "@/db/repository.ts";
-import { childLogger } from "@/logger.ts";
+} from "#/db/repository.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("kb.mining");

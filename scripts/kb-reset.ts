@@ -1,6 +1,6 @@
 // Reset the knowledge base: clear chunks + staging and drop stored vectors.
-import { closeDb, prisma } from "@/db/client.ts";
-import * as store from "@/kb/store.ts";
+import { closeDb, prisma } from "#/db/client.ts";
+import * as store from "#/kb/store.ts";
 
 await prisma.knowledgeChunk.deleteMany();
 await prisma.qaExtractionStaging.deleteMany();

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
-import { childLogger } from "@/logger.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("tools.registry");
 

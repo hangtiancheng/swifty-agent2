@@ -21,7 +21,7 @@ interface ReviewItem {
   normalized_question: string;
   ai_suggested_answer: string | null;
   occurrence_count: number;
-  review_status: string; // Backend values: 待审 (pending) | 通过 (approved) | 驳回 (rejected)
+  review_status: string; // Backend values: pending_review | approved | rejected
   created_at: string | null;
 }
 
@@ -53,7 +53,7 @@ export async function clientLoader({
   request,
 }: Route.ClientLoaderArgs): Promise<LoaderData> {
   const url = new URL(request.url);
-  const status = url.searchParams.get("status") ?? "待审";
+  const status = url.searchParams.get("status") ?? "pending_review";
   const qs = status ? "?status=" + encodeURIComponent(status) : "";
   try {
     const d = await api<{ items: ReviewItem[] }>("/api/review/queue" + qs);
@@ -65,7 +65,7 @@ export async function clientLoader({
 
 export function meta() {
   return [
-    { title: "MewMart · Review Queue" },
+    { title: "MeowMeow Select · Review Queue" },
     {
       name: "description",
       content:
@@ -87,22 +87,22 @@ const SRC_CLS: Record<string, string> = {
 };
 
 const ST_CLS: Record<string, string> = {
-  待审: "bg-fur",
-  通过: "bg-online",
-  驳回: "bg-error text-white",
+  pending_review: "bg-fur",
+  approved: "bg-online",
+  rejected: "bg-error text-white",
 };
 
 // Display labels for backend status values (keys are contract strings)
 const ST_LABEL: Record<string, string> = {
-  待审: "Pending",
-  通过: "Approved",
-  驳回: "Rejected",
+  pending_review: "Pending",
+  approved: "Approved",
+  rejected: "Rejected",
 };
 
 const TABS: [string, string][] = [
-  ["待审", "Pending"],
-  ["通过", "Approved"],
-  ["驳回", "Rejected"],
+  ["pending_review", "Pending"],
+  ["approved", "Approved"],
+  ["rejected", "Rejected"],
   ["", "All"],
 ];
 
@@ -153,7 +153,7 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
 export default function ReviewPage({ loaderData }: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
   const [params, setParams] = useSearchParams();
-  const curStatus = params.get("status") ?? "待审";
+  const curStatus = params.get("status") ?? "pending_review";
   const toast = useToast();
 
   const [openId, setOpenId] = useState<number | null>(null);
@@ -317,7 +317,7 @@ export default function ReviewPage({ loaderData }: Route.ComponentProps) {
                   >
                     {ST_LABEL[it.review_status] ?? it.review_status}
                   </span>
-                  {it.review_status === "待审" ? (
+                  {it.review_status === "pending_review" ? (
                     <div className="flex gap-2" onClick={(e) => { e.stopPropagation(); }}>
                       <Btn
                         size="sm"

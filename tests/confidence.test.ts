@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   computeEvidenceConfidence,
   snapshotFromHits,
-} from "@/core/confidence.ts";
-import type { KnowledgeHit } from "@/kb/store.ts";
+} from "#/core/confidence.ts";
+import type { KnowledgeHit } from "#/kb/store.ts";
 
 function hit(
   score: number,

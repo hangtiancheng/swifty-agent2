@@ -26,7 +26,7 @@ import { fmtBytes, fmtTime } from "~/lib/format";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 分类器数据产物:语料血缘 · 三份考卷 · 训练与 ONNX 产物盘点。 */
+/* Acceptance Data: corpus lineage · the three exam papers · training and ONNX artifact inventory. */
 
 interface FileStat {
   path: string;
@@ -98,16 +98,16 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 分类器数据产物" },
-    { name: "description", content: "语料血缘 · 三份考卷 · 训练与 ONNX 产物盘点" },
+    { title: "MeowMeow Select · Acceptance Data" },
+    { name: "description", content: "Corpus lineage · the three exam papers · training and ONNX artifact inventory" },
   ];
 }
 
 const SPLIT_KEYS = ["train", "val", "test"] as const;
 const SPLIT_LABEL: Record<string, string> = {
-  train: "训练集",
-  val: "验证集",
-  test: "测试集",
+  train: "Training set",
+  val: "Validation set",
+  test: "Test set",
 };
 
 function FileTable({ rows }: { rows: FileStat[] }) {
@@ -116,17 +116,17 @@ function FileTable({ rows }: { rows: FileStat[] }) {
       <Tbl>
         <thead>
           <tr>
-            <Th>产物</Th>
-            <Th>条数</Th>
-            <Th>大小</Th>
-            <Th>最后写入</Th>
+            <Th>Artifact</Th>
+            <Th>Rows</Th>
+            <Th>Size</Th>
+            <Th>Last written</Th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <Tr key={r.path} bad={!r.present}>
               <Td className="break-all">{r.path}</Td>
-              <Td num>{r.present ? String(r.lines ?? "—") : "缺失"}</Td>
+              <Td num>{r.present ? String(r.lines ?? "—") : "Missing"}</Td>
               <Td num>{r.present ? fmtBytes(r.bytes) : "—"}</Td>
               <Td>{r.present ? fmtTime(r.mtime) : "—"}</Td>
             </Tr>
@@ -144,8 +144,8 @@ export default function AcceptanceDataPage({
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="分类器数据产物" active="/acceptance/data">
-        <MissingBox className="mt-4">加载失败:{loaderData.error}</MissingBox>
+      <PageShell title="Acceptance Data" active="/acceptance/data">
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       </PageShell>
     );
   }
@@ -160,8 +160,8 @@ export default function AcceptanceDataPage({
 
   return (
     <PageShell
-      title="分类器数据产物"
-      sub="语料血缘 · 三份考卷 · 训练与 ONNX 产物盘点"
+      title="Acceptance Data"
+      sub="Corpus lineage · the three exam papers · training and ONNX artifact inventory"
       active="/acceptance/data"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -169,33 +169,33 @@ export default function AcceptanceDataPage({
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <GateBar>
         <Stat
-          label="语料总量"
+          label="Corpus total"
           value={
             (labeled?.present ? String(labeled.lines ?? "—") : "—") +
-            " 条"
+            " rows"
           }
         />
         {SPLIT_KEYS.map((k) => (
-          <Stat key={k} label={SPLIT_LABEL[k]} value={String(sp[k].size) + " 条"} />
+          <Stat key={k} label={SPLIT_LABEL[k]} value={String(sp[k].size) + " rows"} />
         ))}
         <Stat
-          label="考卷泄漏"
-          value={ds.clean ? "0 条" : "有"}
+          label="Exam leaks"
+          value={ds.clean ? "0 rows" : "found"}
           tone={ds.clean ? "pass" : "fail"}
         />
-        <Stat label="在用阈值" value={String(d.model.threshold ?? "—")} />
+        <Stat label="Threshold in use" value={String(d.model.threshold ?? "—")} />
       </GateBar>
 
-      {/* ① 语料血缘 */}
+      {/* ① Corpus lineage */}
       <Panel
-        title="语料血缘:一条问题从池子走到考卷"
-        lede="每一段都能对上一个产物文件,数不是口述的。捞池拿的是数据飞轮归并阶段产出的标准化问法,不是用户原话——分类器接手的必须是一句语义完整的话。"
+        title="Corpus lineage: a question's walk from pool to exam paper"
+        lede="Every stage maps to a real artifact file — the numbers are not hearsay. The pool draw takes normalized phrasings produced by the data flywheel's merge stage, not raw user words — the classifier must receive a semantically complete sentence."
       >
         <div className="flex flex-wrap items-stretch gap-1.5">
           {d.lineage.map((s, i) => (
@@ -214,7 +214,7 @@ export default function AcceptanceDataPage({
               >
                 <div className="text-[11.5px] text-muted">{s.stage}</div>
                 <b className="block text-2xl leading-tight tabular-nums">
-                  {s.present ? String(s.lines ?? "—") : "缺失"}
+                  {s.present ? String(s.lines ?? "—") : "Missing"}
                 </b>
                 <div className="mt-0.5 text-[11.5px] leading-5">{s.desc}</div>
                 <div className="mt-1 text-[11px] break-all text-muted">
@@ -225,12 +225,12 @@ export default function AcceptanceDataPage({
             </motion.div>
           ))}
           <div className="min-w-36 flex-1 border-3 border-ink bg-cream px-3 py-2">
-            <div className="text-[11.5px] text-muted">分层切卷 80/10/10</div>
+            <div className="text-[11.5px] text-muted">Stratified split 80/10/10</div>
             <b className="block text-2xl leading-tight tabular-nums">
               {SPLIT_KEYS.map((k) => String(sp[k].size)).join(" / ")}
             </b>
             <div className="mt-0.5 text-[11.5px] leading-5">
-              训练 / 验证 / 测试;训练集另做增强与定向补数
+              Train / validation / test; the training set also gets augmentation and targeted additions
             </div>
             <div className="mt-1 text-[11px] break-all text-muted">
               data/train/dataset/*.jsonl
@@ -239,8 +239,9 @@ export default function AcceptanceDataPage({
         </div>
         <FileTable rows={[...d.lineage, d.sample_review]} />
         <Tip>
-          人工抽审文件 sample_review.md 是给人读的那一份(真实池全量 + 每类模拟抽
-          5),看到错标就直接改语料,不许改考卷去凑分。
+          The manual spot-check file sample_review.md is the human-readable copy (full real
+          pool + 5 simulated samples per class). If you spot a wrong label, fix the corpus —
+          never edit the exam papers to game the score.
         </Tip>
         <JobRow
           specs={pick(["train-corpus", "train-dataset"])}
@@ -248,38 +249,38 @@ export default function AcceptanceDataPage({
         />
       </Panel>
 
-      {/* ② 三份考卷 + 泄漏自检 */}
+      {/* ② Three exam papers + leak self-check */}
       <Panel
-        title="三份考卷与泄漏自检"
+        title="The three exam papers and the leak self-check"
         pill={
           ds.clean ? (
-            <Pill tone="pass">零重叠</Pill>
+            <Pill tone="pass">Zero overlap</Pill>
           ) : (
-            <Pill tone="fail">有重叠,分数不作数</Pill>
+            <Pill tone="fail">Overlap found — scores void</Pill>
           )
         }
-        lede="增强只扩训练集——验证/测试是考题,不许照练习题变。重叠必须是 0:考题一旦被训练集见过,后面所有分数都不作数,所以这一栏是硬闸,不是提示。"
+        lede="Augmentation only expands the training set — validation/test are exam questions and must never change to match the practice material. Overlap must be 0: once the training set has seen an exam question, every score afterwards is void, so this check is a hard gate, not a hint."
       >
         <div className="flex flex-wrap gap-3">
           {(
             [
-              { k: "train_val", label: "训练 ∩ 验证" },
-              { k: "train_test", label: "训练 ∩ 测试" },
-              { k: "val_test", label: "验证 ∩ 测试" },
+              { k: "train_val", label: "Train ∩ validation" },
+              { k: "train_test", label: "Train ∩ test" },
+              { k: "val_test", label: "Validation ∩ test" },
             ] satisfies { k: keyof typeof ds.leaks; label: string }[]
           ).map(({ k, label }) => (
             <Stat
               key={k}
               label={label}
-              value={String(ds.leaks[k]) + " 条"}
+              value={String(ds.leaks[k]) + " rows"}
               tone={ds.leaks[k] === 0 ? "pass" : "fail"}
             />
           ))}
           {SPLIT_KEYS.map((k) => (
             <Stat
               key={k}
-              label={SPLIT_LABEL[k] + " 多标签"}
-              value={String(sp[k].multi_label) + " 条"}
+              label={SPLIT_LABEL[k] + " multi-label"}
+              value={String(sp[k].multi_label) + " rows"}
             />
           ))}
         </div>
@@ -287,7 +288,7 @@ export default function AcceptanceDataPage({
           <Tbl>
             <thead>
               <tr>
-                <Th>类目</Th>
+                <Th>Class</Th>
                 {SPLIT_KEYS.map((k) => (
                   <Th key={k}>
                     {SPLIT_LABEL[k]}({sp[k].size})
@@ -331,56 +332,58 @@ export default function AcceptanceDataPage({
           </Tbl>
         </TableScroll>
         <Tip>
-          标签计数按「命中即计」算,多标签句给命中的每类各记一次,所以各列合计会大于条数。
+          Label counts are hit-based: a multi-label sentence counts once for each class it
+          hits, so column totals can exceed the row count.
         </Tip>
       </Panel>
 
-      {/* ③ 训练产物 */}
+      {/* ③ Training artifacts */}
       <Panel
-        title="训练产物三件套"
+        title="The training artifact trio"
         pill={
           d.model.trio_ok ? (
-            <Pill tone="pass">三件套齐全</Pill>
+            <Pill tone="pass">Trio complete</Pill>
           ) : (
-            <Pill tone="fail">三件套不全</Pill>
+            <Pill tone="fail">Trio incomplete</Pill>
           )
         }
-        lede="权重 + tokenizer + threshold.json。阈值和验证集成绩就落在那个几十字节的小文件里,评测和服务启动都读它——它才是「上线的完整分类器」的另一半。"
+        lede="Weights + tokenizer + threshold.json. The threshold and the validation-set score live in that few-dozen-byte file; both eval and service startup read it — it is the other half of the shipped classifier."
       >
         <FileTable rows={d.model.files} />
         <Tip>
-          <b>threshold.json</b> 在用判定阈值 {String(d.model.threshold)};写入于{" "}
-          {fmtTime(d.model.threshold_file.mtime)},{" "}
-          {fmtBytes(d.model.threshold_file.bytes)}。
+          <b>threshold.json</b> holds the decision threshold in use: {String(d.model.threshold)};{" "}
+          written at {fmtTime(d.model.threshold_file.mtime)},{" "}
+          {fmtBytes(d.model.threshold_file.bytes)}.
         </Tip>
         <JobRow
           specs={pick(["train-train"])}
           onFinish={() => { void revalidate(); }}
-          note="训练是分钟级重活,会覆盖现有权重"
+          note="Training is a minutes-long heavy job and overwrites the current weights"
         />
       </Panel>
 
-      {/* ④ ONNX 产物 */}
+      {/* ④ ONNX artifacts */}
       <Panel
-        title="ONNX 导出产物与一致性校验"
+        title="ONNX export artifacts and consistency check"
         pill={
           ex.present ? (
             ex.passed ? (
-              <Pill tone="pass">预测完全一致</Pill>
+              <Pill tone="pass">Predictions fully match</Pill>
             ) : (
-              <Pill tone="fail">有不一致</Pill>
+              <Pill tone="fail">Mismatches found</Pill>
             )
           ) : (
-            <Pill tone="missing">未导出</Pill>
+            <Pill tone="missing">Not exported</Pill>
           )
         }
-        lede="导出后拿测试集全量逐条对齐 torch,过线标签必须完全一致才放行;服务侧只背 onnxruntime + tokenizers,不背 torch。"
+        lede="After export, the full test set is replayed row by row against torch; labels above the line must match exactly to pass. The serving side carries only onnxruntime + tokenizers, not torch."
       >
         <FileTable rows={d.onnx.files} />
         {ex.present ? (
           <Tip>
-            校验 {ex.checked} 条,不一致 {ex.mismatch} 条;opset {ex.opset}
-            ,model.onnx {fmtBytes(ex.onnx_bytes)},导出于 {fmtTime(ex.ran_at)}。
+            Checked {ex.checked} rows, {ex.mismatch} mismatches; opset{" "}
+            {ex.opset}, model.onnx {fmtBytes(ex.onnx_bytes)}, exported at{" "}
+            {fmtTime(ex.ran_at)}.
           </Tip>
         ) : (
           <MissingBox className="mt-2.5">{ex.hint}</MissingBox>

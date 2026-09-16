@@ -3,6 +3,7 @@ allowBuilds:
   protobufjs: true
   prisma: true
   '@prisma/engines': true
+  onnxruntime-node: true
 
 packages:
   - fe

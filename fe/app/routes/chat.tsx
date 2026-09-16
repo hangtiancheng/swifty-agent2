@@ -1,8 +1,7 @@
-import { Menu, Plus, Send } from "lucide-react";
+import { Cat, Menu, Plus, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CatIcon } from "~/components/cat-icon";
 import { CitePopover, type CiteTarget } from "~/components/chat/cite-popover";
 import {
   MessageBubble,
@@ -16,10 +15,10 @@ import { ThemeToggle } from "~/components/theme-toggle";
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 智能客服" },
+    { title: "MeowMeow Select · AI Assistant" },
     {
       name: "description",
-      content: "喵喵优选智能客服小喵:商品、订单、售后都能问",
+      content: "MeowMeow Select AI Assistant Meow: ask about products, orders, and after-sales support",
     },
   ];
 }
@@ -28,11 +27,11 @@ function EmptyState({ onChip }: { onChip: (s: string) => void }) {
   return (
     <div className="m-auto flex animate-pop-in flex-col items-center gap-1.5 px-3 py-5 text-center">
       <div className="mb-3 border-4 border-ink bg-paper p-2.5 shadow-hard">
-        <CatIcon className="h-24 w-24" />
+        <Cat className="h-24 w-24" strokeWidth={1.5} />
       </div>
-      <h1 className="text-lg font-bold tracking-widest">你好,我是小喵</h1>
+      <h1 className="text-lg font-bold tracking-widest">Hi, I'm Meow</h1>
       <p className="text-[13px] text-muted">
-        喵喵优选的智能客服,商品、订单、售后都能问~
+        MeowMeow Select's AI Assistant — ask me about products, orders, and after-sales support.
       </p>
       <div className="mt-4 flex max-w-110 flex-wrap justify-center gap-2.5">
         {SUGGESTIONS.map((s, i) => (
@@ -81,7 +80,7 @@ export default function ChatPage() {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // 每帧后滚到底
+  // Scroll to the bottom after every update
   useEffect(() => {
     const el = listRef.current;
     if (el) {
@@ -89,14 +88,14 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  // 不忙时聚焦输入框(发完/切会话/新对话后)
+  // Focus the input when idle (after sending, switching conversations, or starting a new chat)
   useEffect(() => {
     if (!busy) {
       inputRef.current?.focus();
     }
   }, [busy]);
 
-  // 输入框自适应高度
+  // Auto-grow the textarea to fit its content
   useEffect(() => {
     const el = inputRef.current;
     if (!el) {
@@ -127,15 +126,15 @@ export default function ChatPage() {
       onRefund: (msgId, draft) => { setRefundFor({ msgId, order: draft.order_id ?? "" }); },
       onPickOrderResume: (msgId, o) => {
         markDecided(msgId);
-        void resume("选择订单 " + o.order_id, { order_id: o.order_id });
+        void resume("I choose order " + o.order_id, { order_id: o.order_id });
       },
       onPickOrderAsk: (msgId, o) => {
         markDecided(msgId);
-        void send("查一下订单 " + o.order_id);
+        void send("Look up order " + o.order_id);
       },
       onConfirmTicket: (msgId, confirmed) => {
         markDecided(msgId);
-        void resume(confirmed ? "确认提交工单" : "取消建单", { confirmed });
+        void resume(confirmed ? "Confirm ticket submission" : "Cancel ticket creation", { confirmed });
       },
     }),
     [giveFeedback, transferHuman, markDecided, resume, send],
@@ -159,20 +158,20 @@ export default function ChatPage() {
               type="button"
               className="press-sm grid h-9 w-9 shrink-0 cursor-pointer place-items-center border-3 border-ink bg-paper shadow-hard-xs md:hidden"
               onClick={() => { setDrawer(true); }}
-              aria-label="打开会话列表"
+              aria-label="Open conversation list"
             >
               <Menu className="h-4 w-4" aria-hidden />
             </button>
             <div className="shrink-0 border-3 border-ink bg-paper p-1 shadow-hard-sm">
-              <CatIcon className="h-[38px] w-[38px] sm:h-[46px] sm:w-[46px]" />
+              <Cat className="h-[38px] w-[38px] sm:h-[46px] sm:w-[46px]" strokeWidth={1.5} />
             </div>
             <div className="flex min-w-0 flex-col leading-tight">
               <span className="truncate text-[15px] font-bold tracking-wide">
-                小喵 · 智能客服
+                Meow · AI Assistant
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-[#6b5b48]">
                 <span className="h-2 w-2 border-2 border-ink bg-online" />
-                ONLINE · 喵喵优选
+                ONLINE · MeowMeow Select
               </span>
             </div>
             <div className="flex-1" />
@@ -183,7 +182,7 @@ export default function ChatPage() {
               onClick={newChat}
             >
               <Plus className="h-4 w-4" aria-hidden />
-              新对话
+              New chat
             </button>
           </header>
 
@@ -211,7 +210,7 @@ export default function ChatPage() {
                 rows={1}
                 value={input}
                 disabled={busy}
-                placeholder="输入消息,和小喵聊聊吧~(回车发送 / Shift+回车换行)"
+                placeholder="Type a message… (Enter to send, Shift+Enter for a new line)"
                 onChange={(e) => { setInput(e.target.value); }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -223,7 +222,7 @@ export default function ChatPage() {
               />
               <button
                 type="button"
-                aria-label="发送"
+                aria-label="Send"
                 disabled={busy}
                 onClick={() => { submit(); }}
                 className="press grid h-11 w-11 shrink-0 cursor-pointer place-items-center border-3 border-ink bg-coral text-white shadow-hard-sm hover:bg-coral-hover disabled:cursor-not-allowed disabled:bg-track disabled:text-muted disabled:shadow-none"
@@ -232,7 +231,7 @@ export default function ChatPage() {
               </button>
             </div>
             <p className="mt-2.5 text-center text-[11px] tracking-wide text-muted">
-              小喵是 AI 助手,涉及具体订单会为你转接人工核实
+              Meow is an AI assistant. For questions about specific orders, we'll transfer you to a human agent to verify.
             </p>
           </footer>
         </div>
@@ -259,7 +258,7 @@ export default function ChatPage() {
             markActed(ticketFor);
           }
           setTicketFor(null);
-          pushSystem("工单已创建:" + no);
+          pushSystem("Ticket created: " + no);
         }}
       />
       <RefundModal
@@ -272,7 +271,7 @@ export default function ChatPage() {
             markActed(refundFor.msgId);
           }
           setRefundFor(null);
-          pushSystem("退款申请已提交:" + no);
+          pushSystem("Refund request submitted: " + no);
         }}
       />
     </div>

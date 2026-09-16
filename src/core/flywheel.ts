@@ -7,8 +7,8 @@ import { z } from "zod";
 import { structured } from "./llm.ts";
 import { FLYWHEEL_NORMALIZE_PROMPT } from "./prompts.ts";
 
-import * as repository from "@/db/repository.ts";
-import { childLogger } from "@/logger.ts";
+import * as repository from "#/db/repository.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("flywheel");

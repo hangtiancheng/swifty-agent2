@@ -10,26 +10,31 @@ import type {
   InterruptFrame,
 } from "~/lib/types";
 
-const SESSION_KEY = "mewhelp_session_id"; // 稳定用户标识,作 user_id
-const CONV_KEY = "mewhelp_conversation_id"; // 当前会话 id,由后端 done 帧回传
+const SESSION_KEY = "mewhelp_session_id"; // Stable identifier used as user_id
+const CONV_KEY = "mewhelp_conversation_id"; // Current conversation id, returned by the backend done frame
 
 export const SUGGESTIONS = [
-  "退换货政策是怎样的?",
-  "怎么查我的物流进度?",
-  "猫粮怎么选?",
-  "会员有什么权益?",
+  "What is the return & exchange policy?",
+  "How do I track my order?",
+  "How do I choose cat food?",
+  "What membership benefits are there?",
 ];
 
-/** 历史回载时补挂按钮:suggested_actions 不落库,但这两句话术是固定文案,
-    且转人工/建工单按钮不依赖当轮上下文(转人工纯前端模拟,建工单表单用户现填),
-    按文案精确匹配重建即可。话术改了这里要跟着改(单一来源在后端 prompts.py)。 */
+/** Re-attach buttons when replaying history: suggested_actions are not persisted,
+    but these two replies are fixed copy, and the transfer/ticket buttons don't depend
+    on the current turn (transfer is simulated client-side; the ticket form is filled
+    in fresh), so rebuilding them by exact copy match is enough. If the wording changes,
+    update here too (single source of truth lives in backend src/core/prompts.ts).
+    NOTE: the `text` values below are matched byte-for-byte against backend history
+    content (m.content.trim() === ra.text), so they must equal FALLBACK_REPLY_TEXT and
+    COMPLAINT_REPLY_TEXT in prompts.ts exactly. */
 const REPLAY_ACTIONS: { text: string; actions: ActionItem[] }[] = [
   {
-    text: "抱歉,这个问题我暂时没有查到确切信息,不敢乱答。建议您联系人工客服进一步确认,以免给您错误的指引。",
+    text: "Sorry, I couldn't find definitive information on this question for now, so I don't dare answer blindly. We suggest contacting human customer service to confirm further, so you don't get wrong guidance.",
     actions: [{ type: "transfer_human" }],
   },
   {
-    text: "非常抱歉给您带来了不好的体验,我理解您的心情。您可以选择转接人工客服,或让我为您登记一张工单跟进处理。",
+    text: "We're very sorry for the bad experience, and we understand how you feel. You can choose to be transferred to human customer service, or let me register a ticket to follow up for you.",
     actions: [{ type: "transfer_human" }, { type: "create_ticket", draft: {} }],
   },
 ];
@@ -43,22 +48,22 @@ export interface UserMsg {
 export interface BotMsg {
   id: number;
   role: "bot";
-  /** 累积的 markdown 原文(plain 消息为纯文本) */
+  /** Accumulated markdown source (plain text for plain messages) */
   raw: string;
   tools: string[];
   citations: Citation[];
   actions: ActionItem[];
   interrupt?: InterruptFrame;
   error?: string;
-  /** 仍在接收 SSE 帧 */
+  /** Still receiving SSE frames */
   streaming: boolean;
-  /** 本条已点过 👍/👎 */
+  /** 👍/👎 already given on this message */
   feedback?: "up" | "down";
-  /** 中断卡/订单卡已点过,置灰 */
+  /** Interrupt/order card already answered; grey it out */
   decided?: boolean;
-  /** 建工单/退款提交成功,对应按钮置灰 */
+  /** Ticket/refund submitted successfully; grey out the matching button */
   acted?: boolean;
-  /** 纯文本系统消息(转人工模拟、工单已创建等):不走 markdown、无反馈条 */
+  /** Plain-text system message (simulated transfer, ticket created, etc.): no markdown, no feedback bar */
   plain?: boolean;
 }
 
@@ -77,7 +82,7 @@ export function useChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [busy, setBusy] = useState(false);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  // 聊天页只在客户端渲染(SPA),初始值直接从 localStorage 恢复当前会话号
+  // Chat page renders client-side only (SPA); restore the current conversation id from localStorage
   const [conversationId, setConvId] = useState<number | null>(() => {
     if (typeof window === "undefined") {
       return null;
@@ -110,11 +115,11 @@ export function useChat() {
       );
       setConversations(d.items ?? []);
     } catch {
-      /* 侧栏失败不影响聊天 */
+      /* A sidebar failure should not break the chat */
     }
   }, []);
 
-  // 进页面:确保 user_id 存在、先拉会话列表
+  // On mount: make sure user_id exists, then load the conversation list
   useEffect(() => {
     getUserId();
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -139,7 +144,7 @@ export function useChat() {
     };
   }, []);
 
-  /** 把一次 SSE 流渲染进指定 bot 消息;遇 interrupt 记下会话号供续跑 */
+  /** Render one SSE stream into the given bot message; on interrupt, store the conversation id so it can be resumed */
   const streamInto = useCallback(
     async (botId: number, doFetch: () => Promise<Response>) => {
       try {
@@ -150,7 +155,7 @@ export function useChat() {
           citations: (items) => { updateBot(botId, (m) => ({ ...m, citations: items })); },
           actions: (items) => { updateBot(botId, (m) => ({ ...m, actions: items })); },
           interrupt: (data) => {
-            // 中断无 done 帧,靠这里记会话号供续跑
+            // Interrupts send no done frame, so capture the conversation id here for resume
             if (data.conversation_id) {
               persistConvId(data.conversation_id);
             }
@@ -167,7 +172,7 @@ export function useChat() {
         updateBot(botId, (m) => ({
           ...m,
           streaming: false,
-          error: "回复失败,请稍后重试",
+          error: "Reply failed, please try again",
           raw: "",
           tools: [],
         }));
@@ -176,7 +181,7 @@ export function useChat() {
     [persistConvId, updateBot],
   );
 
-  /** 发一条消息,流式接收回复 */
+  /** Send a message and stream the reply */
   const send = useCallback(
     async (text: string) => {
       const message = text.trim();
@@ -207,13 +212,13 @@ export function useChat() {
       } finally {
         busyRef.current = false;
         setBusy(false);
-        void loadConversations(); // 每轮后刷新侧栏(新会话入列/摘要标记更新)
+        void loadConversations(); // Refresh the sidebar after each turn (new conversations listed / summary badges updated)
       }
     },
     [loadConversations, mkBot, streamInto],
   );
 
-  /** 续跑被 interrupt 挂起的图(选订单 / 确认工单) */
+  /** Resume the graph suspended by an interrupt (pick order / confirm ticket) */
   const resume = useCallback(
     async (userText: string, payload: Record<string, unknown>) => {
       if (busyRef.current) {
@@ -247,12 +252,12 @@ export function useChat() {
     [mkBot, streamInto],
   );
 
-  /** 纯前端模拟转人工:显示已转接 + 客服小猫问候(不接真人系统) */
+  /** Client-side simulation of transferring to a human agent: shows a transferred notice + a greeting from Meow (no real agent system) */
   const transferHuman = useCallback(() => {
     const sys: BotMsg = {
       id: nextId.current++,
       role: "bot",
-      raw: "已转接人工客服",
+      raw: "Transferred to a human agent",
       tools: [],
       citations: [],
       actions: [],
@@ -262,7 +267,7 @@ export function useChat() {
     const greet: BotMsg = {
       id: nextId.current++,
       role: "bot",
-      raw: "您好,我是客服小猫,请问有什么可以帮您的",
+      raw: "Hi, I'm Meow from customer support. How can I help you?",
       tools: [],
       citations: [],
       actions: [],
@@ -272,7 +277,7 @@ export function useChat() {
     setMessages((xs) => [...xs, sys, greet]);
   }, []);
 
-  /** 纯文本系统消息(工单已创建 / 退款已提交) */
+  /** Plain-text system message (ticket created / refund submitted) */
   const pushSystem = useCallback((text: string) => {
     const sys: BotMsg = {
       id: nextId.current++,
@@ -287,7 +292,7 @@ export function useChat() {
     setMessages((xs) => [...xs, sys]);
   }, []);
 
-  /** 👍/👎 一次性反馈:👎 落低置信度问题池进飞轮,👍 后端只记日志;失败静默 */
+  /** One-shot 👍/👎 feedback: 👎 sends the question to the low-confidence pool for the flywheel, 👍 is only logged by the backend; fail silently */
   const giveFeedback = useCallback(
     (botId: number, rating: "up" | "down") => {
       const xs = messagesRef.current;
@@ -296,7 +301,7 @@ export function useChat() {
       if (target?.role !== "bot" || target.feedback) {
         return;
       }
-      // 向上找这条回答之前最近的用户气泡,把该轮用户原话带给后端(👎 落池要用)
+      // Find the nearest user bubble above this reply and pass that turn's original question to the backend (needed for the 👎 pool)
       let question = "";
       for (let i = idx - 1; i >= 0; i--) {
         const m = xs[i];
@@ -332,7 +337,7 @@ export function useChat() {
       if (busyRef.current) {
         return;
       }
-      // 已是当前会话且聊天区有内容才跳过;页面刚刷新时聊天区是空的,点当前会话也要回载
+      // Skip only when this is already the current conversation with content loaded; right after a refresh the list is empty, so clicking the current conversation must still reload it
       if (cid === conversationIdRef.current && messagesRef.current.length > 0) {
         return;
       }
@@ -366,17 +371,17 @@ export function useChat() {
         }
         setMessages(msgs);
       } catch {
-        /* 历史加载失败仍可继续聊 */
+        /* The chat can continue even if history fails to load */
       }
-      void loadConversations(); // 刷新 active 高亮
+      void loadConversations(); // Refresh the active highlight
     },
     [loadConversations, persistConvId],
   );
 
   const newChat = useCallback(() => {
-    persistConvId(null); // 开新会话:丢弃当前 conversation_id(旧会话仍在侧栏可切回)
+    persistConvId(null); // Start a new chat: drop the current conversation_id (the old one remains reachable in the sidebar)
     setMessages([]);
-    void loadConversations(); // 清 active 高亮
+    void loadConversations(); // Clear the active highlight
   }, [loadConversations, persistConvId]);
 
   return {

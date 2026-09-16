@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 import { cn } from "./cn";
 import type { Citation } from "./types";
 
-/** 轻量 markdown → React 节点(零依赖,原 index.html 渲染器的移植)。
- *  文本经 JSX 输出天然转义,不存在原字符串拼 HTML 的注入面;链接仅放行 http(s)。
- *  citations 给了时,正文里的 [n] 渲染成可点角标,点击回调 onCite(带角标元素用于定位浮层)。 */
+/** Lightweight markdown → React nodes (zero-dependency, ported from the original
+ *  index.html renderer). Text goes through JSX so it is escaped naturally — none of
+ *  the original string-concatenated-HTML injection surface; links only allow http(s).
+ *  When citations are provided, [n] in the body renders as a clickable superscript and
+ *  clicking calls onCite (with the superscript element for positioning the popover). */
 
 export interface MarkdownOptions {
   citations?: Map<string, Citation>;
@@ -66,7 +68,7 @@ function renderInline(s: string, opts: MarkdownOptions, kp: string): ReactNode[]
             key={key}
             role="button"
             tabIndex={0}
-            title={c.section_path ?? "查看来源"}
+            title={c.section_path ?? "View source"}
             className={CITE_CLS}
             onClick={(e) => {
               e.stopPropagation();
@@ -83,7 +85,7 @@ function renderInline(s: string, opts: MarkdownOptions, kp: string): ReactNode[]
           </sup>,
         );
       } else {
-        out.push(m[0]); // 非有效编号,保留原文
+        out.push(m[0]); // Not a valid citation number; keep the original text
       }
     }
     last = m.index + m[0].length;
@@ -126,7 +128,7 @@ export function renderMarkdown(
   while (i < lines.length) {
     const line = lines[i] ?? "";
     if (line.startsWith("```")) {
-      // 代码块
+      // Code block
       const buf: string[] = [];
       i++;
       while (i < lines.length && !/^```\s*$/.test(lines[i] ?? "")) {
@@ -146,7 +148,7 @@ export function renderMarkdown(
     }
     const hm = /^(#{1,6})\s+(.*)$/.exec(line);
     if (hm) {
-      // 标题
+      // Heading
       const cls = "mt-2.5 mb-1.5 text-[15px] font-bold";
       const inline = renderInline(hm[2] ?? "", opts, key());
       const level = hm[1]?.length ?? 1;
@@ -167,7 +169,7 @@ export function renderMarkdown(
       continue;
     }
     if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
-      // 分隔线
+      // Horizontal rule
       out.push(
         <hr key={key()} className="my-2.5 border-t-2 border-dashed border-muted" />,
       );
@@ -175,7 +177,7 @@ export function renderMarkdown(
       continue;
     }
     if (line.includes("|") && isTableSep(lines[i + 1])) {
-      // 表格
+      // Table
       const headers = splitRow(line);
       i += 2;
       const rows: string[][] = [];
@@ -217,7 +219,7 @@ export function renderMarkdown(
       continue;
     }
     if (/^\s*[-*+]\s+/.test(line)) {
-      // 无序列表
+      // Unordered list
       const items: ReactNode[] = [];
       while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i] ?? "")) {
         items.push(
@@ -239,7 +241,7 @@ export function renderMarkdown(
       continue;
     }
     if (/^\s*\d+\.\s+/.test(line)) {
-      // 有序列表
+      // Ordered list
       const items: ReactNode[] = [];
       while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? "")) {
         items.push(
@@ -261,7 +263,7 @@ export function renderMarkdown(
       continue;
     }
     if (/^\s*>\s?/.test(line)) {
-      // 引用
+      // Blockquote
       const buf: string[] = [];
       while (i < lines.length && /^\s*>\s?/.test(lines[i] ?? "")) {
         buf.push((lines[i] ?? "").replace(/^\s*>\s?/, ""));
@@ -286,7 +288,7 @@ export function renderMarkdown(
       i++;
       continue;
     }
-    // 段落
+    // Paragraph
     const para: string[] = [];
     while (
       i < lines.length &&
@@ -310,7 +312,7 @@ export function renderMarkdown(
   return out;
 }
 
-/** bot 气泡正文:markdown 渲染 + 可选引用角标 */
+/** Bot bubble body: markdown rendering + optional citation superscripts */
 export function Markdown({
   text,
   citations,

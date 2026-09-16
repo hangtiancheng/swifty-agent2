@@ -8,9 +8,9 @@ import { structured } from "./llm.ts";
 import * as memory from "./memory.ts";
 import { SUMMARY_PROMPT } from "./prompts.ts";
 
-import { settings } from "@/config.ts";
-import * as repository from "@/db/repository.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import * as repository from "#/db/repository.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("summarizer");
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { modelsIn, repairHint, unsupportedModels } from "@/core/model-guard.ts";
+import { modelsIn, repairHint, unsupportedModels } from "#/core/model-guard.ts";
 
 describe("model guard", () => {
   it("extracts product model numbers in order", () => {

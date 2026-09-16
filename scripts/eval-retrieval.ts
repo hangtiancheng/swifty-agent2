@@ -4,8 +4,8 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import * as retrieval from "@/core/retrieval.ts";
+import { settings } from "#/config.ts";
+import * as retrieval from "#/core/retrieval.ts";
 
 const sampleSchema = z.object({
   query: z.string(),

@@ -11,7 +11,7 @@ import {
   summarySystem,
   toLayer2,
   tokensToChars,
-} from "@/core/memory.ts";
+} from "#/core/memory.ts";
 
 describe("memory", () => {
   it("converts between chars and tokens with the calibrated ratio", () => {

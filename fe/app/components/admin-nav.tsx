@@ -6,8 +6,9 @@ import { ThemeToggle } from "./theme-toggle";
 import { cn } from "~/lib/cn";
 
 
-/* 后台导航外壳:一份导航挂在所有后台页上(原 admin.js)。
-   模块入口都是各章原本的路径,导航只是把它们收到一处,不做跳转改写。 */
+/* Admin navigation shell: a single nav bar shared by every admin page (from the
+   original admin.js). Entries keep each module's own path; the nav only gathers
+   them in one place and does not rewrite any routes. */
 
 interface NavModule {
   href: string;
@@ -16,25 +17,26 @@ interface NavModule {
 }
 
 const NAV: NavModule[] = [
-  { href: "/admin", label: "后台首页" },
-  { href: "/kb", label: "知识库录入" },
-  { href: "/rag-eval", label: "RAG 评估" },
-  { href: "/review", label: "飞轮待审" },
-  { href: "/observability", label: "观测与成本" },
-  { href: "/topics", label: "主题分布" },
+  { href: "/admin", label: "Admin Console" },
+  { href: "/kb", label: "Knowledge Base" },
+  { href: "/rag-eval", label: "RAG Eval" },
+  { href: "/review", label: "Review Queue" },
+  { href: "/observability", label: "Observability" },
+  { href: "/topics", label: "Topics" },
   {
     href: "/acceptance",
-    label: "分类器验收",
+    label: "Acceptance",
     children: [
-      ["/acceptance", "总览"],
-      ["/acceptance/eval", "评测详情"],
-      ["/acceptance/data", "数据产物"],
-      ["/acceptance/errors", "错例复核"],
+      ["/acceptance", "Overview"],
+      ["/acceptance/eval", "Eval"],
+      ["/acceptance/data", "Data"],
+      ["/acceptance/errors", "Errors"],
     ],
   },
 ];
 
-/** 当前页归属哪个模块:精确命中优先,其次按前缀(/acceptance/eval 归 /acceptance) */
+/** Which module the current page belongs to: exact match first, then by prefix
+    (/acceptance/eval falls under /acceptance). */
 function moduleOf(active: string): NavModule | undefined {
   return (
     NAV.find((m) => m.href === active) ??
@@ -53,11 +55,11 @@ export function AdminNav({ active }: { active: string }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className="mt-3"
-      aria-label="后台导航"
+      aria-label="Admin navigation"
     >
       <div className="scroll-cat flex items-stretch overflow-x-auto border-3 border-ink bg-paper shadow-hard-sm">
         <span className="flex shrink-0 items-center bg-ink px-3 py-1.5 text-xs font-bold tracking-wider whitespace-nowrap text-cream">
-          后台管理
+          Admin
         </span>
         {NAV.map((m) => {
           const on = m === mod;
@@ -87,7 +89,7 @@ export function AdminNav({ active }: { active: string }) {
           to="/"
           className="flex shrink-0 items-center px-3 py-1.5 text-[13px] font-bold whitespace-nowrap no-underline text-ink hover:bg-fur-hover"
         >
-          聊天页 →
+          Chat →
         </Link>
         <span className="flex shrink-0 items-center border-l-3 border-ink px-2">
           <ThemeToggle className="h-7 w-7 border-2 shadow-none" />

@@ -5,9 +5,9 @@ import { HTTPException } from "hono/http-exception";
 import { parseJsonBody } from "./http.ts";
 import { afterSalesTicketSchema, extractRequestSchema, normalizeOrderId } from "./schemas.ts";
 
-import { structured } from "@/core/llm.ts";
-import { EXTRACT_PROMPT } from "@/core/prompts.ts";
-import { childLogger } from "@/logger.ts";
+import { structured } from "#/core/llm.ts";
+import { EXTRACT_PROMPT } from "#/core/prompts.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("api.extract");

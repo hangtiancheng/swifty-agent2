@@ -2,13 +2,13 @@
 import type { Chunk } from "./documents.ts";
 import { invalidateVectorCache } from "./store.ts";
 
-import { embedTexts } from "@/core/embeddings.ts";
+import { embedTexts } from "#/core/embeddings.ts";
 import {
   insertKnowledgeChunk,
   listPendingChunks,
   markChunkVectorized,
   setChunkNeighbors,
-} from "@/db/repository.ts";
+} from "#/db/repository.ts";
 
 
 export async function writePending(chunks: Chunk[]): Promise<number[]> {

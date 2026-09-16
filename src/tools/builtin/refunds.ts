@@ -1,8 +1,8 @@
 // submit_refund: marks an order as refundable; the actual submission happens in the UI form.
 import { z } from "zod";
 
-import { ownsOrder } from "@/tools/business.ts";
-import { defineTool, register } from "@/tools/registry.ts";
+import { ownsOrder } from "#/tools/business.ts";
+import { defineTool, register } from "#/tools/registry.ts";
 
 const NOT_OWNED = { error: "No such order was found for you", code: "order_not_owned" };
 

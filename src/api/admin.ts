@@ -6,8 +6,8 @@ import * as kb from "./kb.ts";
 import * as observability from "./observability.ts";
 import * as rageval from "./rageval.ts";
 
-import { statusAll } from "@/core/jobs.ts";
-import * as repository from "@/db/repository.ts";
+import { statusAll } from "#/core/jobs.ts";
+import * as repository from "#/db/repository.ts";
 
 export const adminRouter = new Hono();
 

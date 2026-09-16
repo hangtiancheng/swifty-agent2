@@ -39,7 +39,7 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "MewMart · Admin Console" },
+    { title: "MeowMeow Select · Admin Console" },
     {
       name: "description",
       content:

@@ -26,8 +26,9 @@ import { cn } from "~/lib/cn";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 知识库录入:贴一段文档就能进库——切块 → 双写 MySQL 与 Milvus → 现场检索自测。
-   页面读 /api/kb/overview 的产物;重跑走 /api/jobs 运行器。 */
+/* Knowledge Base entry: paste a document and it goes straight into the KB —
+   chunking → dual-write to MySQL and Milvus → search self-test on the spot.
+   The page reads the output of /api/kb/overview; re-runs go through the /api/jobs runner. */
 
 interface KbChunkStats {
   total: number | null;
@@ -140,20 +141,20 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 知识库录入" },
-    { name: "description", content: "贴一段文档就能进库:切块、双写、检索自测" },
+    { title: "MeowMeow Select · Knowledge Base Entry" },
+    { name: "description", content: "Paste a document to ingest it: chunking, dual-write, search self-test" },
   ];
 }
 
 const SAMPLE =
-  "# 会员权益\n\n## 运费与包邮\n\n满 99 元包邮,未满收 10 元运费。偏远地区(新疆、西藏、内蒙)运费 20 元,不参与包邮。\n\n## 会员等级\n\n| 等级 | 年消费 | 折扣 | 生日礼 |\n|---|---|---|---|\n| 喵铜 | 0 元起 | 无 | 无 |\n| 喵银 | 1000 元起 | 95 折 | 优惠券 |\n| 喵金 | 5000 元起 | 9 折 | 猫罐头礼盒 |\n";
+  "# Membership Benefits\n\n## Shipping & Free Shipping\n\nOrders of 99 yuan or more ship free; below that, a 10-yuan shipping fee is charged. Remote areas (Xinjiang, Tibet, Inner Mongolia) pay a 20-yuan fee and are excluded from free shipping.\n\n## Membership Tiers\n\n| Tier | Annual spend | Discount | Birthday gift |\n|---|---|---|---|\n| Regular | 0+ yuan | None | None |\n| Silver | 1,000+ yuan | 5% off | Coupon |\n| Gold | 5,000+ yuan | 10% off | Canned cat food gift box |\n";
 
 const STAGING_LABEL: Record<StagingKey, string> = {
-  kept: "待审(人工采纳才入库)",
-  extracted: "已抽出待去重",
-  discarded: "去重丢弃",
-  approved: "已采纳入库",
-  rejected: "已弃用",
+  kept: "Pending review (enters the KB only if approved)",
+  extracted: "Extracted, awaiting dedup",
+  discarded: "Discarded by dedup",
+  approved: "Approved into the KB",
+  rejected: "Rejected",
 };
 const STAGING_ORDER: StagingKey[] = [
   "kept",
@@ -191,8 +192,8 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="知识库录入" active="/kb">
-        <MissingBox className="mt-4">取数失败:{loaderData.error}</MissingBox>
+      <PageShell title="Knowledge Base Entry" active="/kb">
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       </PageShell>
     );
   }
@@ -209,7 +210,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
     try {
       setPreview(await api<KbPreview>("/api/kb/preview", jsonPost(payload)));
     } catch (e) {
-      toast("预览失败:" + errMsg(e), true);
+      toast("Preview failed: " + errMsg(e), true);
     } finally {
       setPreviewing(false);
     }
@@ -218,24 +219,24 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
   const doIngest = async () => {
     const body = text.trim();
     if (!body) {
-      toast("先贴一段正文", true);
+      toast("Paste some body text first", true);
       return;
     }
-    const n = preview?.source === "手工录入" ? preview.total : null;
+    const n = preview?.source === "manual entry" ? preview.total : null;
     if (
       !window.confirm(
-        "确认把这段正文录入知识库?" +
+        "Ingest this text into the Knowledge Base?" +
           (n
-            ? "\n预览切出 " +
+            ? "\nThe preview cut " +
               String(n) +
-              " 块" +
+              " chunks" +
               (preview?.duplicates
-                ? ",其中 " + String(preview.duplicates) + " 块库里已有会跳过"
+                ? ", " + String(preview.duplicates) + " already in the KB will be skipped"
                 : "")
             : "") +
           (vecAfter
-            ? "\n入库后立刻向量化(要调嵌入上游)"
-            : "\n只入库记 pending,稍后补向量"),
+            ? "\nVectorize right after ingest (calls the embedding upstream)"
+            : "\nStore as pending only; vectorize later"),
       )
     ) {
       return;
@@ -251,20 +252,20 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         jsonPost({ text: body, content_type: ct, vectorize: vecAfter }),
       );
       toast(
-        "入库 " +
+        "Ingested " +
           String(r.inserted) +
-          " 块" +
-          (r.skipped ? ",跳过重复 " + String(r.skipped) + " 块" : "") +
+          " chunks" +
+          (r.skipped ? ", skipped " + String(r.skipped) + " duplicates" : "") +
           (r.vectorized !== null
-            ? ",向量化 " + String(r.vectorized) + " 块"
-            : "(未向量化)"),
+            ? ", vectorized " + String(r.vectorized) + " chunks"
+            : "(not vectorized)"),
       );
       void revalidate();
       if (r.inserted) {
         void doPreview({ text: body, content_type: ct });
       }
     } catch (e) {
-      toast("录入失败:" + errMsg(e), true);
+      toast("Ingest failed: " + errMsg(e), true);
     } finally {
       setIngesting(false);
     }
@@ -275,13 +276,13 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
     try {
       setStagingRows(await api<KbStagingRows>("/api/kb/staging"));
     } catch (e) {
-      toast("暂存表取数失败:" + errMsg(e), true);
+      toast("Failed to load staging rows: " + errMsg(e), true);
     } finally {
       setStagingLoading(false);
     }
   };
 
-  /** 采纳 / 弃用:挖知识唯一的入库口,点了才写 knowledge_chunks */
+  /** Approve / reject: the only way mined knowledge enters the KB — writes knowledge_chunks on click */
   const reviewAction = async (kind: "approve" | "reject", id: number) => {
     try {
       const r = await api<{ approved?: number; rejected?: number }>(
@@ -290,13 +291,13 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       );
       toast(
         kind === "approve"
-          ? "已采纳入库 " + String(r.approved ?? 0) + " 条"
-          : "已弃用 " + String(r.rejected ?? 0) + " 条",
+          ? "Approved " + String(r.approved ?? 0) + " rows into the KB"
+          : "Rejected " + String(r.rejected ?? 0) + " rows",
       );
-      await loadStaging(); // 重拉:这一行会从待审挪到已采纳/已弃用
+      await loadStaging(); // Refetch: this row moves from pending review to approved/rejected
       void revalidate();
     } catch (e) {
-      toast((kind === "approve" ? "采纳" : "弃用") + "失败:" + errMsg(e), true);
+      toast((kind === "approve" ? "Approval" : "Rejection") + " failed: " + errMsg(e), true);
     }
   };
 
@@ -308,14 +309,14 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         chunk_stats: { pending: number | null };
       }>("/api/kb/vectorize", jsonPost());
       toast(
-        "本次向量化 " +
+        "Vectorized " +
           String(r.vectorized) +
-          " 块,剩余 pending " +
+          " chunks this run, pending left: " +
           String(r.chunk_stats.pending ?? "—"),
       );
       void revalidate();
     } catch (e) {
-      toast("向量化失败:" + errMsg(e), true);
+      toast("Vectorization failed: " + errMsg(e), true);
     } finally {
       setVectorizing(false);
     }
@@ -327,12 +328,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
     try {
       const r = await api<{ strategy: string; hits: KbHit[] }>(
         "/api/kb/search",
-        jsonPost({ q: query.trim() || "邮费是多少", strategy, top_k: topk }),
+        jsonPost({ q: query.trim() || "How much is postage?", strategy, top_k: topk }),
       );
       setHits(r.hits);
       setHitStrategy(r.strategy);
     } catch (e) {
-      toast("检索失败:" + errMsg(e), true);
+      toast("Search failed: " + errMsg(e), true);
     } finally {
       setSearching(false);
     }
@@ -346,8 +347,8 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <PageShell
-      title="知识库录入"
-      sub="贴一段文档就能进库:切块 → 双写 MySQL 与 Milvus → 现场检索自测"
+      title="Knowledge Base Entry"
+      sub="Paste a document to ingest it: chunking → dual-write to MySQL and Milvus → search self-test on the spot"
       active="/kb"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -355,28 +356,28 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
-      {/* 顶部闸条 */}
+      {/* Top gate bar */}
       <GateBar>
-        <Stat label="知识块(MySQL)" value={c.total ?? "—"} />
+        <Stat label="Chunks (MySQL)" value={c.total ?? "—"} />
         <Stat
-          label="待向量化"
+          label="Pending vectorization"
           value={c.pending ?? "—"}
           tone={c.pending ? "fail" : "pass"}
         />
         <Stat
-          label="Milvus 条数"
-          value={d.milvus.online ? (d.milvus.count ?? "—") : "离线"}
+          label="Milvus rows"
+          value={d.milvus.online ? (d.milvus.count ?? "—") : "Offline"}
           tone={d.milvus.online ? undefined : "fail"}
         />
-        <Stat label="关键条款" value={c.key_clause ?? "—"} />
+        <Stat label="Key clauses" value={c.key_clause ?? "—"} />
         <Stat
-          label="双写"
+          label="Dual-write"
           value={
-            d.consistent === null ? "读不到" : d.consistent ? "一致" : "对不上"
+            d.consistent === null ? "Can't read" : d.consistent ? "Consistent" : "Mismatched"
           }
           tone={
             d.consistent === null
@@ -392,23 +393,24 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
       </GateBar>
 
       <Tip>
-        两条路:<b>手工录入</b>正文贴在这一页上,预览什么样就入库什么样;
-        <b>离线建库</b>把 data/kb/ 那几份材料交给 make
-        目标跑,页面按的和终端敲的是同一条命令。
-        两条路共用一套切块逻辑与双写顺序——先写 MySQL 记「待向量化」,再进 Milvus
-        回标「已向量化」,中途挂了重跑捡 pending 就能补齐。
+        Two paths: <b>manual entry</b> — paste body text on this page and what you preview
+        is exactly what gets ingested; <b>offline build</b> — hand the materials in data/kb/
+        to the make target, and the page button runs the same command you would type in the
+        terminal. Both paths share one chunking logic and dual-write order — write to MySQL
+        first as "pending", then into Milvus and mark "done"; if it dies mid-way, re-run to
+        pick up the pending chunks and catch up.
       </Tip>
 
-      {/* ① 手工录入 */}
+      {/* ① Manual entry */}
       <Panel
-        title="① 手工录入"
-        pill={<Pill tone="info">正文贴这里</Pill>}
-        lede="按标题层级切、超长递归切、块间重叠裁到最近句号、大表格按行拆并复制表头——这四条在下面的预览里逐块标出来。查重按「问法 + 正文」的指纹,同一份正文重复录入会全跳过。"
+        title="① Manual entry"
+        pill={<Pill tone="info">Paste body text here</Pill>}
+        lede="Split by heading hierarchy, recursively split overlong chunks, trim cross-chunk overlap to the nearest sentence end, and split large tables row-wise with the header repeated — all four are flagged per chunk in the preview below. Dedup fingerprints the question + body, so re-ingesting the same text skips everything."
       >
         <div className="grid gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <label className="text-[12.5px] font-bold" htmlFor="ctype">
-              内容类型
+              Content type
             </label>
             <select
               id="ctype"
@@ -425,7 +427,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             <span className="text-[11.5px] text-ink-soft">{ctDesc}</span>
             <span className="flex-1" />
             <Btn size="sm" onClick={() => { setText(SAMPLE); }}>
-              填一段示例
+              Fill in a sample
             </Btn>
             <Btn
               size="sm"
@@ -434,12 +436,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 setPreview(null);
               }}
             >
-              清空
+              Clear
             </Btn>
           </div>
           <textarea
             className={cn(FIELD, "min-h-44 w-full resize-y leading-7")}
-            placeholder="贴 Markdown。带 # / ## 标题层级效果最好——政策手册这类没有天然问法的,questions 就落章节标题、category 落上级路径。"
+            placeholder="Paste Markdown. It works best with # / ## heading levels — for policy manuals without natural questions, questions fall back to section titles and category to the parent path."
             value={text}
             onChange={(e) => { setText(e.target.value); }}
           />
@@ -451,7 +453,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 void doPreview({ text, content_type: ct });
               }}
             >
-              {previewing ? "切块中…" : "切块预览(不写库)"}
+              {previewing ? "Chunking…" : "Chunk preview (no writes)"}
             </Btn>
             <Btn
               disabled={ingesting}
@@ -459,7 +461,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 void doIngest();
               }}
             >
-              {ingesting ? "录入中…" : "录入入库"}
+              {ingesting ? "Ingesting…" : "Ingest into KB"}
             </Btn>
             <label className="flex cursor-pointer items-center gap-1.5 text-[13px]">
               <input
@@ -468,7 +470,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 checked={vecAfter}
                 onChange={(e) => { setVecAfter(e.target.checked); }}
               />
-              入库后顺手向量化
+              Vectorize right after ingest
             </label>
           </div>
         </div>
@@ -476,33 +478,33 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         {preview ? (
           <div className="mt-3">
             <div className="flex flex-wrap gap-2">
-              <Pill tone="info">来源 {preview.source}</Pill>
+              <Pill tone="info">Source: {preview.source}</Pill>
               <Pill tone="info">
-                共 {preview.total} 块 / {preview.features.sections} 节
+                Total: {preview.total} chunks / {preview.features.sections} sections
               </Pill>
               <Pill tone={preview.features.table_split ? "pass" : "missing"}>
                 {preview.features.table_split
-                  ? "表格按行拆已触发"
-                  : "表格按行拆未触发"}
+                  ? "Table row-split triggered"
+                  : "Table row-split not triggered"}
               </Pill>
               <Pill tone={preview.features.overlap ? "pass" : "missing"}>
                 {preview.features.overlap
-                  ? "句末重叠已触发"
-                  : "句末重叠未触发(单节未超 400 字)"}
+                  ? "Sentence-end overlap triggered"
+                  : "Sentence-end overlap not triggered (no section over 400 chars)"}
               </Pill>
               <Pill tone={preview.key_clause ? "pass" : "missing"}>
-                关键条款 {preview.key_clause} 块
+                Key clauses: {preview.key_clause} chunks
               </Pill>
               {preview.dedup_known ? (
                 <Pill tone={preview.duplicates ? "fail" : "pass"}>
                   {preview.duplicates
-                    ? "库里已有 " +
+                    ? "Already in the KB: " +
                       String(preview.duplicates) +
-                      " 块,入库会跳过"
-                    : "无重复,可入库"}
+                      " chunks — they will be skipped on ingest"
+                    : "No duplicates, safe to ingest"}
                 </Pill>
               ) : (
-                <Pill tone="missing">查重未知(MySQL 读不到)</Pill>
+                <Pill tone="missing">Dedup unknown (MySQL can't be read)</Pill>
               )}
             </div>
             <TableScroll className="mt-3">
@@ -510,11 +512,11 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                 <thead>
                   <tr>
                     <Th>#</Th>
-                    <Th>节(section_path)</Th>
-                    <Th>问法 questions</Th>
-                    <Th>正文 answer</Th>
-                    <Th>字数</Th>
-                    <Th>标记</Th>
+                    <Th>Section (section_path)</Th>
+                    <Th>Questions</Th>
+                    <Th>Body (answer)</Th>
+                    <Th>Chars</Th>
+                    <Th>Flags</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -530,15 +532,15 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                       <Td className="whitespace-nowrap">
                         {ch.is_key_clause ? (
                           <Pill tone="fail" className="mr-1">
-                            关键条款
+                            Key clause
                           </Pill>
                         ) : null}
                         {ch.is_table ? (
                           <Pill tone="info" className="mr-1">
-                            表格块
+                            Table chunk
                           </Pill>
                         ) : null}
-                        {ch.duplicate ? <Pill tone="missing">重复</Pill> : null}
+                        {ch.duplicate ? <Pill tone="missing">Duplicate</Pill> : null}
                       </Td>
                     </Tr>
                   ))}
@@ -549,27 +551,27 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         ) : null}
       </Panel>
 
-      {/* ② 建库材料 */}
+      {/* ② Build materials */}
       <Panel
-        title="② 建库材料"
+        title="② Build materials"
         pill={
           <Pill tone="info">
-            {d.sources.length} 份材料 / 共切 {totalSources} 块
+            {d.sources.length} files / {totalSources} chunks in total
           </Pill>
         }
-        lede="data/kb/ 下的文档是离线建库的输入。这里的块数是就地切出来的(dry-run,不写库、不碰 Milvus、不调上游),点「看切块」把结果送到上面的预览区逐块看。"
+        lede="Documents under data/kb/ are the inputs of the offline build. The chunk counts here are cut on the spot (dry run — no DB writes, no Milvus, no upstream calls); click “View chunks” to send the result to the preview area above and inspect it chunk by chunk."
       >
         <TableScroll>
           <Tbl>
             <thead>
               <tr>
-                <Th>文件</Th>
-                <Th>类型</Th>
-                <Th>字符</Th>
-                <Th>行</Th>
-                <Th>切出块数</Th>
-                <Th>关键条款</Th>
-                <Th>特性</Th>
+                <Th>File</Th>
+                <Th>Type</Th>
+                <Th>Chars</Th>
+                <Th>Lines</Th>
+                <Th>Chunks</Th>
+                <Th>Key clauses</Th>
+                <Th>Features</Th>
                 <Th />
               </tr>
             </thead>
@@ -579,7 +581,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                   <Td>{s.path}</Td>
                   <Td>{s.content_type}</Td>
                   {!s.present ? (
-                    <Td colSpan={6}>文件不在</Td>
+                    <Td colSpan={6}>File missing</Td>
                   ) : (
                     <>
                       <Td num>{s.chars}</Td>
@@ -589,16 +591,16 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                       <Td className="whitespace-nowrap">
                         {s.features?.table_split ? (
                           <Pill tone="info" className="mr-1">
-                            拆表
+                            Table split
                           </Pill>
                         ) : null}
                         {s.features?.overlap ? (
                           <Pill tone="info" className="mr-1">
-                            重叠
+                            Overlap
                           </Pill>
                         ) : null}
                         <Pill tone="missing">
-                          {s.features?.sections ?? 0} 节
+                          {s.features?.sections ?? 0} sections
                         </Pill>
                       </Td>
                       <Td>
@@ -608,7 +610,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                             void doPreview({ file: s.file });
                           }}
                         >
-                          看切块
+                          View chunks
                         </Btn>
                       </Td>
                     </>
@@ -621,34 +623,34 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         <JobRow
           specs={pick(["kb-preview", "kb-build", "kb-repatch"])}
           onFinish={() => { void revalidate(); }}
-          note="kb-build 有幂等守卫:已存在同类型块就跳过;改过 md 用 kb-repatch 原地改,改完记得向量化"
+          note="kb-build has an idempotency guard: chunks of the same type that already exist are skipped; after editing an md file use kb-repatch to patch it in place, and remember to vectorize afterwards"
         />
       </Panel>
 
-      {/* ③ 对话挖知识 */}
+      {/* ③ Conversation mining */}
       <Panel
-        title="③ 对话挖知识"
+        title="③ Conversation mining"
         pill={
           <Pill tone="info">
             {d.staging
               ? d.staging.total
-                ? "累计 " +
+                ? "Total " +
                   String(d.staging.total) +
-                  " 条,最近批次 " +
+                  " rows, latest batch " +
                   (d.staging.latest_batch ?? "—")
-                : "还没挖过"
-              : "读不到"}
+                : "Nothing mined yet"
+              : "Can't read"}
           </Pill>
         }
-        lede="历史客服对话分批喂给 LLM 抽问答对,先落暂存表,再整体去重入库。三个状态的落差就是去重那一刀:抽出多少、留下多少、丢了多少。"
+        lede="Historical support conversations are fed to the LLM in batches to extract QA pairs, which land in the staging table first and are then deduplicated and ingested as a whole. The gap between the three counts is the dedup pass: how many were extracted, kept, and discarded."
       >
         {d.staging ? (
           <div className="flex flex-wrap gap-2">
             {[
-              { label: "已抽出待去重", v: d.staging.counts.extracted },
-              { label: "去重保留(已入库)", v: d.staging.counts.kept },
-              { label: "去重丢弃", v: d.staging.counts.discarded },
-              { label: "批次数", v: d.staging.batches },
+              { label: "Extracted, awaiting dedup", v: d.staging.counts.extracted },
+              { label: "Kept after dedup (in KB)", v: d.staging.counts.kept },
+              { label: "Discarded by dedup", v: d.staging.counts.discarded },
+              { label: "Batches", v: d.staging.batches },
             ].map(({ label, v }) => (
               <div
                 key={label}
@@ -660,12 +662,12 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
         ) : (
-          <MissingBox>MySQL 读不到,暂存表数看不了</MissingBox>
+          <MissingBox>MySQL can't be read, so staging counts are unavailable</MissingBox>
         )}
         <JobRow
           specs={pick(["seed-conv", "kb-mine"])}
           onFinish={() => { void revalidate(); }}
-          note="挖知识要调 LLM,分钟级"
+          note="Mining calls the LLM and takes minutes"
         />
         <div className="mt-3">
           <Btn
@@ -675,7 +677,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               void loadStaging();
             }}
           >
-            {stagingLoading ? "取数中…" : "看暂存表逐条"}
+            {stagingLoading ? "Loading…" : "Browse staging rows"}
           </Btn>
         </div>
         {stagingRows ? (
@@ -688,23 +690,25 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               return (
                 <div key={st}>
                   <h3 className="mt-3.5 mb-1.5 text-[13px] font-bold">
-                    {STAGING_LABEL[st]}({rows.length} 条)
+                    {STAGING_LABEL[st]} ({rows.length} rows)
                   </h3>
                   {st === "kept" ? (
                     <p className="mb-2 text-[12.5px] leading-6 text-ink-soft">
-                      这些是模型从历史对话里归纳出来的,质量参差。逐条看清楚再采纳,
-                      只对单笔订单成立的、夹带订单号的、答非所问的,都别放进知识库。
+                      These were summarized by the model from historical conversations and quality
+                      varies. Review each row before approving: anything that only applies to a
+                      single order, carries an order number, or answers the wrong question should
+                      not enter the Knowledge Base.
                     </p>
                   ) : null}
                   <TableScroll>
                     <Tbl>
                       <thead>
                         <tr>
-                          <Th>批次</Th>
-                          <Th>来源</Th>
-                          <Th>问法</Th>
-                          <Th>答案</Th>
-                          {st === "kept" ? <Th>处理</Th> : null}
+                          <Th>Batch</Th>
+                          <Th>Source</Th>
+                          <Th>Question</Th>
+                          <Th>Answer</Th>
+                          {st === "kept" ? <Th>Action</Th> : null}
                         </tr>
                       </thead>
                       <tbody>
@@ -726,7 +730,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                                     void reviewAction("approve", r.id);
                                   }}
                                 >
-                                  采纳
+                                  Approve
                                 </Btn>
                                 <Btn
                                   size="sm"
@@ -735,7 +739,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                                     void reviewAction("reject", r.id);
                                   }}
                                 >
-                                  弃用
+                                  Reject
                                 </Btn>
                               </Td>
                             ) : null}
@@ -750,35 +754,35 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             {STAGING_ORDER.every(
               (st) => (stagingRows.rows[st] ?? []).length === 0,
             ) ? (
-              <MissingBox>暂存表是空的,先跑一次对话挖知识</MissingBox>
+              <MissingBox>The staging table is empty — run conversation mining once first</MissingBox>
             ) : null}
           </div>
         ) : null}
       </Panel>
 
-      {/* ④ 向量化与双写 */}
+      {/* ④ Vectorization & dual-write */}
       <Panel
-        title="④ 向量化与双写"
+        title="④ Vectorization & dual-write"
         pill={
           d.consistent === null ? (
-            <Pill tone="missing">读不到,不下结论</Pill>
+            <Pill tone="missing">Can't read, no conclusion</Pill>
           ) : d.consistent ? (
-            <Pill tone="pass">两边对得上</Pill>
+            <Pill tone="pass">Both sides match</Pill>
           ) : (
-            <Pill tone="fail">对不上,按下面补齐</Pill>
+            <Pill tone="fail">Mismatched — fix it below</Pill>
           )
         }
-        lede="MySQL 是原文权威源,Milvus 只存向量。幂等靠 vectorize_status:写 MySQL 记 pending,嵌入后按主键 upsert 进 Milvus、回标 done。故意中断建库再按「向量化待补块」,漏掉的块会被捡起来补齐——这一条不用回终端演。"
+        lede="MySQL is the authoritative source for the original text; Milvus stores vectors only. Idempotency relies on vectorize_status: rows are written to MySQL as pending, then after embedding they are upserted into Milvus by primary key and marked done. Interrupt a build on purpose, then press “Vectorize pending chunks” and the missed chunks get picked up — no need to replay this in the terminal."
       >
         <div className="flex flex-wrap gap-2">
           {[
-            { label: "pending 待补", v: c.pending },
-            { label: "done 已向量化", v: c.done },
+            { label: "Pending", v: c.pending },
+            { label: "Done (vectorized)", v: c.done },
             {
-              label: "Milvus 条数",
+              label: "Milvus rows",
               v: d.milvus.online ? d.milvus.count : null,
             },
-            { label: "集合", v: d.milvus.collection ?? "knowledge" },
+            { label: "Collection", v: d.milvus.collection ?? "knowledge" },
           ].map(({ label, v }) => (
             <div
               key={label}
@@ -799,32 +803,32 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               void doVectorize();
             }}
           >
-            {vectorizing ? "向量化中…" : "向量化待补块"}
+            {vectorizing ? "Vectorizing…" : "Vectorize pending chunks"}
           </Btn>
           <span className="text-[11.5px] text-muted">
             {d.milvus.online
-              ? "in-process 直接跑,与 make kb-vectorize 同一个函数"
-              : "Milvus 离线:" + (d.milvus.detail ?? "")}
+              ? "Runs in-process — the same function as make kb-vectorize"
+              : "Milvus offline: " + (d.milvus.detail ?? "")}
           </span>
         </div>
         <JobRow
           specs={pick(["kb-vectorize", "kb-reset"])}
           onFinish={() => { void revalidate(); }}
-          note="清库会清空两表并 drop 集合,之后要重新建库"
+          note="Reset clears both tables and drops the collection; the KB must be rebuilt afterwards"
         />
       </Panel>
 
-      {/* ⑤ 检索自测 */}
+      {/* ⑤ Search self-test */}
       <Panel
-        title="⑤ 检索自测"
-        pill={<Pill tone="info">换个说法问一句</Pill>}
-        lede="问题向量化后到 Milvus 按相似度取 Top-K。「邮费是多少」库里一个字都没写过,靠的是与「运费」那块语义相近——词面查表做不到这件事。"
+        title="⑤ Search self-test"
+        pill={<Pill tone="info">Ask it another way</Pill>}
+        lede="The question is vectorized, then Top-K results are fetched from Milvus by similarity. “How much is postage?” never appears verbatim in the KB — it matches because it is semantically close to the shipping-fee chunk, and literal lookup could never do that."
       >
         <div className="flex flex-wrap items-center gap-2.5">
           <input
             type="text"
             className={cn(FIELD, "min-w-55 flex-1")}
-            placeholder="邮费是多少"
+            placeholder="How much is postage?"
             value={q}
             onChange={(e) => { setQ(e.target.value); }}
             onKeyDown={(e) => {
@@ -834,7 +838,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             }}
           />
           <label className="text-[12.5px] font-bold" htmlFor="strategy">
-            路线
+            Strategy
           </label>
           <select
             id="strategy"
@@ -842,10 +846,10 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             value={strategy}
             onChange={(e) => { setStrategy(e.target.value); }}
           >
-            <option value="vector">dense 向量单路(本章)</option>
-            <option value="bm25">BM25 关键词</option>
-            <option value="hybrid">混合召回</option>
-            <option value="hybrid_rerank">混合 + 重排</option>
+            <option value="vector">Dense vector only (this chapter)</option>
+            <option value="bm25">BM25 keyword</option>
+            <option value="hybrid">Hybrid retrieval</option>
+            <option value="hybrid_rerank">Hybrid + rerank</option>
           </select>
           <label className="text-[12.5px] font-bold" htmlFor="topk">
             Top-K
@@ -867,12 +871,16 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
             }}
           >
             <Search className="h-4 w-4" aria-hidden />
-            {searching ? "检索中…" : "检索"}
+            {searching ? "Searching…" : "Search"}
           </Btn>
         </div>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {["邮费是多少", "运费怎么算", "多久发货", "猫粮过期了能退吗"].map(
-            (preset) => (
+          {[
+            "How much is postage?",
+            "How is shipping calculated?",
+            "How soon will my order ship?",
+            "Can I return expired cat food?",
+          ].map((preset) => (
               <Btn
                 key={preset}
                 size="sm"
@@ -889,9 +897,9 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
         {hits ? (
           <div className="mt-3">
             <div className="flex flex-wrap gap-2">
-              <Pill tone="info">路线 {hitStrategy}</Pill>
+              <Pill tone="info">Strategy: {hitStrategy}</Pill>
               <Pill tone={hits.length ? "pass" : "fail"}>
-                召回 {hits.length} 块
+                Retrieved {hits.length} chunks
               </Pill>
             </div>
             {hits.length ? (
@@ -935,28 +943,28 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               </div>
             ) : (
               <MissingBox className="mt-2.5">
-                一条都没召回:库里可能还没有货,或者 pending 还没向量化
+                No hits at all: the KB may still be empty, or pending chunks have not been vectorized yet
               </MissingBox>
             )}
           </div>
         ) : null}
       </Panel>
 
-      {/* ⑥ 最近入库 */}
+      {/* ⑥ Recently ingested */}
       <Panel
-        title="⑥ 最近入库"
-        lede="按 id 倒序取最近 12 块,看录进去的东西长什么样、状态到哪一步了。"
+        title="⑥ Recently ingested"
+        lede="The latest 12 chunks in descending id order — see what ingested content looks like and how far each status has progressed."
       >
         <TableScroll>
           <Tbl>
             <thead>
               <tr>
                 <Th>id</Th>
-                <Th>类型</Th>
-                <Th>节</Th>
-                <Th>问法</Th>
-                <Th>正文(截断)</Th>
-                <Th>状态</Th>
+                <Th>Type</Th>
+                <Th>Section</Th>
+                <Th>Questions</Th>
+                <Th>Body (truncated)</Th>
+                <Th>Status</Th>
               </tr>
             </thead>
             <tbody>
@@ -975,10 +983,10 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
                         tone={r.status === "done" ? "pass" : "fail"}
                         className="mr-1"
                       >
-                        {r.status === "done" ? "已向量化" : "待向量化"}
+                        {r.status === "done" ? "Vectorized" : "Pending"}
                       </Pill>
                       {r.is_key_clause ? (
-                        <Pill tone="fail">关键条款</Pill>
+                        <Pill tone="fail">Key clause</Pill>
                       ) : null}
                     </Td>
                   </Tr>
@@ -986,7 +994,7 @@ export default function KbPage({ loaderData }: Route.ComponentProps) {
               ) : (
                 <Tr>
                   <Td colSpan={6}>
-                    库里还没有块。上面贴一段录进来,或者跑一次离线建库。
+                    No chunks in the KB yet. Paste some text above to ingest it, or run the offline build once.
                   </Td>
                 </Tr>
               )}

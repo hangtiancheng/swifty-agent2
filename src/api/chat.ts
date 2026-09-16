@@ -7,10 +7,10 @@ import { streamSSE } from "hono/streaming";
 import { parseJsonBody } from "./http.ts";
 import { chatRequestSchema } from "./schemas.ts";
 
-import { settings } from "@/config.ts";
-import * as memory from "@/core/memory.ts";
-import * as runtime from "@/graph/runtime.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import * as memory from "#/core/memory.ts";
+import * as runtime from "#/graph/runtime.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("api.chat");

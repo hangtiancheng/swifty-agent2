@@ -4,15 +4,15 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import { getChatModel, structured } from "@/core/llm.ts";
-import { contentToString } from "@/core/memory.ts";
-import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "@/core/prompts.ts";
-import * as readNotes from "@/core/read-notes.ts";
-import * as retrieval from "@/core/retrieval.ts";
-import { closeDb } from "@/db/client.ts";
-import * as repository from "@/db/repository.ts";
-import { queryFaq } from "@/tools/builtin/faq.ts";
+import { settings } from "#/config.ts";
+import { getChatModel, structured } from "#/core/llm.ts";
+import { contentToString } from "#/core/memory.ts";
+import { FAITHFULNESS_PROMPT, RAG_ANSWER_PROMPT } from "#/core/prompts.ts";
+import * as readNotes from "#/core/read-notes.ts";
+import * as retrieval from "#/core/retrieval.ts";
+import { closeDb } from "#/db/client.ts";
+import * as repository from "#/db/repository.ts";
+import { queryFaq } from "#/tools/builtin/faq.ts";
 
 const ROOT = settings.root;
 const OUT = path.join(ROOT, "data/eval/reports/eval_trend.txt");

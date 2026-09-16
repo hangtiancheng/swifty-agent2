@@ -1,12 +1,12 @@
 // query_faq: RAG pipeline (rewrite + hybrid retrieval + rerank + self-check) exposed as a tool.
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import * as queryUnderstanding from "@/core/query-understanding.ts";
-import * as retrieval from "@/core/retrieval.ts";
-import * as selfcheck from "@/core/selfcheck.ts";
-import type { KnowledgeHit } from "@/kb/store.ts";
-import { defineTool, register } from "@/tools/registry.ts";
+import { settings } from "#/config.ts";
+import * as queryUnderstanding from "#/core/query-understanding.ts";
+import * as retrieval from "#/core/retrieval.ts";
+import * as selfcheck from "#/core/selfcheck.ts";
+import type { KnowledgeHit } from "#/kb/store.ts";
+import { defineTool, register } from "#/tools/registry.ts";
 
 const faqInputSchema = z.object({
   keyword: z.string().describe("The policy/rule/procedure question the user is asking (the original wording is fine)"),

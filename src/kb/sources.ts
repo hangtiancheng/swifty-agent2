@@ -2,7 +2,7 @@
 // One definition shared by offline build, preview and the ingest page.
 import path from "node:path";
 
-import { settings } from "@/config.ts";
+import { settings } from "#/config.ts";
 
 export const KB_DIR = path.join(settings.root, "data", "kb");
 

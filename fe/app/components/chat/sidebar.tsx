@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { cn } from "~/lib/cn";
 import type { ConversationItem } from "~/lib/types";
 
-/* 会话侧栏:桌面端固定一列,移动端抽屉。列表项 = #id + 已摘要徽标 + 预览。 */
+/* Conversation sidebar: fixed column on desktop, drawer on mobile. List item = #id + summarized badge + preview. */
 
 function ConvList({
   items,
@@ -20,7 +20,7 @@ function ConvList({
   if (!items.length) {
     return (
       <div className="px-1.5 py-4 text-center text-[11.5px] text-muted">
-        还没有会话,发条消息开始吧~
+        No conversations yet. Send a message to get started!
       </div>
     );
   }
@@ -46,7 +46,7 @@ function ConvList({
             #{it.id}
             {it.has_summary ? (
               <span className="border border-ink bg-coral px-1 text-[9px] font-bold tracking-wider text-white">
-                已摘要
+                Summarized
               </span>
             ) : null}
           </div>
@@ -80,7 +80,7 @@ export function Sidebar({
       )}
     >
       <div className="border-b-4 border-ink bg-fur px-3 py-3.5 text-[13px] font-bold tracking-wider">
-        会话记录
+        History
       </div>
       <div className="scroll-cat flex-1 overflow-y-auto p-2.5">
         <ConvList
@@ -130,16 +130,16 @@ export function MobileDrawer({
             transition={{ type: "tween", duration: 0.22 }}
             onClick={(e) => { e.stopPropagation(); }}
             role="dialog"
-            aria-label="会话记录"
+            aria-label="Conversation history"
           >
             <div className="flex items-center justify-between border-b-4 border-ink bg-fur px-3 py-3">
               <span className="text-[13px] font-bold tracking-wider">
-                会话记录
+                History
               </span>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="关闭会话列表"
+                aria-label="Close conversation list"
                 className="press-sm grid h-7 w-7 cursor-pointer place-items-center border-2 border-ink bg-paper shadow-hard-xs"
               >
                 <X className="h-4 w-4" aria-hidden />
@@ -166,7 +166,7 @@ export function MobileDrawer({
                 }}
               >
                 <Plus className="h-4 w-4" aria-hidden />
-                新对话
+                New chat
               </button>
             </div>
           </motion.div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dedupe, dedupeFingerprint, normalizeQuestion } from "@/kb/dedup.ts";
+import { dedupe, dedupeFingerprint, normalizeQuestion } from "#/kb/dedup.ts";
 
 describe("dedup", () => {
   it("normalizes whitespace and punctuation", () => {

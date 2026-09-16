@@ -6,10 +6,10 @@ import path from "node:path";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import { W_KEY, W_MARGIN, W_TOP1, W_VALID } from "@/core/confidence.ts";
-import { status as jobStatus } from "@/core/jobs.ts";
-import * as repository from "@/db/repository.ts";
+import { settings } from "#/config.ts";
+import { W_KEY, W_MARGIN, W_TOP1, W_VALID } from "#/core/confidence.ts";
+import { status as jobStatus } from "#/core/jobs.ts";
+import * as repository from "#/db/repository.ts";
 
 export const observabilityRouter = new Hono();
 

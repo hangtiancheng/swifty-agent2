@@ -113,7 +113,7 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "MewMart · Acceptance Eval" },
+    { title: "MeowMeow Select · Acceptance Eval" },
     { name: "description", content: "Per-class P/R/F1 · tolerance red lines · confusion matrix · threshold" },
   ];
 }

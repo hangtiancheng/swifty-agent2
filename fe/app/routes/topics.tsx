@@ -36,20 +36,21 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 主题分布" },
+    { title: "MeowMeow Select · Topic Distribution" },
     {
       name: "description",
-      content: "低置信度问题经分类器旁路归类后的主题分布",
+      content:
+        "Topic distribution of low-confidence questions classified by the classifier bypass",
     },
   ];
 }
 
-/** classified_at 存的是 UTC(MySQL 容器时区),补 Z 后按本地时区渲染 */
+/** classified_at is stored as UTC (MySQL container timezone); append Z and render in local time */
 function fmtLatest(iso: string | null): string {
   if (!iso) {
     return "—";
   }
-  return new Date(iso + "Z").toLocaleString("zh-CN", {
+  return new Date(iso + "Z").toLocaleString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -112,11 +113,11 @@ function TopicRow({ c, max, top1 }: { c: TopicClass; max: number; top1: boolean 
               to={href}
               className="mt-2 inline-block border-3 border-ink bg-cream px-2.5 py-0.5 text-xs font-bold no-underline shadow-hard-xs hover:bg-fur-hover"
             >
-              查看全部 {c.count} 条 →
+              View all {c.count} →
             </Link>
           </>
         ) : (
-          <div className="text-muted">暂无样例</div>
+          <div className="text-muted">No examples yet</div>
         )}
       </div>
     </details>
@@ -132,8 +133,8 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <PageShell
-      title="主题分布"
-      sub="低置信度问题 → 分类器旁路归类 → 哪类堆得多,先补哪块知识"
+      title="Topic Distribution"
+      sub="Low-confidence questions → classifier-bypass classification → top up knowledge where questions pile up most"
       active="/topics"
       maxW="max-w-[1080px]"
       actions={
@@ -142,7 +143,7 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
@@ -150,14 +151,14 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
         <>
           <div className="mt-4 flex flex-wrap gap-3.5">
             <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
-              已归类问题<b className="block text-xl">{d.total}</b>
+              Classified questions<b className="block text-xl">{d.total}</b>
             </div>
             <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
-              最近归类
+              Last classified
               <b className="block text-sm leading-7">{fmtLatest(d.latest)}</b>
             </div>
             <div className="border-3 border-ink bg-paper px-4 py-2.5 text-[13px] shadow-hard-sm">
-              命中类目数
+              Classes hit
               <b className="block text-xl">
                 {hit} / {d.classes.length || 17}
               </b>
@@ -171,8 +172,9 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
             className="mt-4 border-4 border-ink bg-cream p-4 shadow-hard"
           >
             <h2 className="mb-3 text-sm font-bold">
-              {d.classes.length || 17} 类权威类目 ·
-              问题量(降序,点行展开样例,点类目名看全部)
+              {d.classes.length || 17} authoritative classes · question volume
+              (descending — click a row to expand samples, click a class name to
+              view all)
             </h2>
             <div>
               {classes.map((c, i) => (
@@ -180,14 +182,15 @@ export default function TopicsPage({ loaderData }: Route.ComponentProps) {
               ))}
             </div>
             <div className="mt-2.5 text-xs text-muted">
-              数据来自 topic_classifications(make classify-pool
-              旁路批量归类);多标签问题计入每个命中类目。
+              Data comes from topic_classifications (make classify-pool runs the
+              bypass batch classification); multi-label questions count toward
+              every class they hit.
             </div>
           </motion.div>
         </>
       ) : (
         <MissingBox className="mt-4">
-          拉取分布失败:{loaderData.ok ? "" : loaderData.error}
+          Failed to load the distribution: {loaderData.ok ? "" : loaderData.error}
         </MissingBox>
       )}
     </PageShell>

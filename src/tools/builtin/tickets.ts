@@ -1,9 +1,9 @@
 // create_ticket: the only write tool; requires the confirmation flow in agent_tools.
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import * as repository from "@/db/repository.ts";
-import { defineTool, register } from "@/tools/registry.ts";
+import { settings } from "#/config.ts";
+import * as repository from "#/db/repository.ts";
+import { defineTool, register } from "#/tools/registry.ts";
 
 const createTicketSchema = z.object({
   description: z.string(),

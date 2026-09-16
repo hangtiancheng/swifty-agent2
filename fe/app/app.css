@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
-/* 类名暗色模式:.dark 挂在 <html> 上,由 root.tsx 的内联脚本在首帧前决定 */
+/* Class-based dark mode: .dark sits on <html>, set by the inline script in root.tsx
+   before first paint. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ---------- 设计令牌:像素猫主题 ----------
-   亮色沿用原工程配色;暗色整套翻转(背景变深、ink 变浅、硬阴影转黑)。
-   组件只消费语义色(bg-paper / text-ink / border-ink …),明暗切换零改动。 */
+/* ---------- Design tokens: pixel-cat theme ----------
+   Light keeps the original palette; dark flips the whole set (darker backgrounds,
+   lighter ink, hard shadows turn black). Components consume only semantic colors
+   (bg-paper / text-ink / border-ink …), so switching themes needs zero changes. */
 :root {
   --ink: #2b2632;
   --ink-soft: #6d6478;
@@ -85,7 +87,8 @@
   --color-code-bg: var(--code-bg);
   --color-warn-bg: var(--warn-bg);
   --color-picked: var(--picked);
-  /* 固定品牌色:猫鼻子粉,也是 RAG 评估四策略配色之三,明暗通用 */
+  /* Fixed brand color: the cat-nose pink, also one of the four RAG-eval strategy
+     colors; works in both light and dark. */
   --color-pink: #ff8095;
 
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas,
@@ -133,7 +136,7 @@
   }
 }
 
-/* ---------- 基础 ---------- */
+/* ---------- Base ---------- */
 html,
 body {
   min-height: 100%;
@@ -143,7 +146,7 @@ body {
   font-family: var(--font-mono);
   color: var(--ink);
   background-color: var(--page);
-  /* 像素网格底纹,与原工程一致 */
+  /* Pixel-grid backdrop, same as the original project */
   background-image: linear-gradient(var(--grid-line) 2px, transparent 2px),
     linear-gradient(90deg, var(--grid-line) 2px, transparent 2px);
   background-size: 24px 24px;
@@ -156,7 +159,8 @@ body {
   color: var(--ink);
 }
 
-/* 硬阴影按钮的按压手感:按下位移 + 去阴影,像素风的"物理键" */
+/* Press feel for hard-shadow buttons: shift down + drop the shadow, a pixel-style
+   "physical key" */
 .press {
   transition:
     transform 60ms steps(1),
@@ -172,7 +176,7 @@ body {
   box-shadow: none !important;
 }
 
-/* 滚动条:橙色方块拇指,贴主题 */
+/* Scrollbar: orange square thumb, on-theme */
 .scroll-cat {
   scrollbar-width: thin;
   scrollbar-color: var(--fur) transparent;
@@ -189,7 +193,7 @@ body {
   border: 3px solid var(--cream);
 }
 
-/* 表格数字列:等宽数字右对齐 */
+/* Table numeric columns: tabular figures, right-aligned */
 .num {
   text-align: right;
   font-variant-numeric: tabular-nums;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { tidy, verify } from "@/core/read-notes.ts";
+import { tidy, verify } from "#/core/read-notes.ts";
 
 describe("read notes", () => {
   it("normalizes punctuation, spacing and the final period", () => {

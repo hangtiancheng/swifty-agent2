@@ -27,7 +27,7 @@ import { fmtTime } from "~/lib/format";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 分类器错例复核:错在哪一类 · 是冤枉还是放跑 · 标注本身有没有毛病。 */
+/* Error Analysis: which class erred · false alarm or missed · whether the gold labels are at fault. */
 
 interface ErrorItem {
   text: string;
@@ -35,7 +35,7 @@ interface ErrorItem {
   pred: string[];
   missed: string[];
   extra: string[];
-  kind: string; // 漏打 | 错位 | 多打
+  kind: string; // backend enum: 漏打 | 错位 | 多打
   matrix_entries: number;
 }
 
@@ -79,24 +79,37 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · 分类器错例复核" },
-    { name: "description", content: "错在哪一类 · 是冤枉还是放跑 · 标注有没有毛病" },
+    { title: "MeowMeow Select · Error Analysis" },
+    { name: "description", content: "Which class erred · false alarm or missed · are the gold labels at fault" },
   ];
 }
 
+// Keys are backend enum values and must stay Chinese; tones and labels are display-only.
 const KIND_PILL: Record<string, PillTone> = {
   漏打: "info",
   错位: "fail",
   多打: "running",
 };
 
-const SEV_TONE: Record<string, PillTone> = {
-  严: "sev-严",
-  中: "sev-中",
-  宽: "sev-宽",
+const KIND_LABEL: Record<string, string> = {
+  漏打: "Missed",
+  错位: "Misplaced",
+  多打: "Extra",
 };
 
-/** 标签对照条:标准里被放跑的红、预测里多打的橙、对上的绿 */
+const SEV_TONE: Record<string, PillTone> = {
+  严: "sev-strict",
+  中: "sev-medium",
+  宽: "sev-lenient",
+};
+
+const SEV_LABEL: Record<string, string> = {
+  严: "Strict",
+  中: "Medium",
+  宽: "Lenient",
+};
+
+/** Label legend: standard-missed → red, prediction-extra → orange, matched → green. */
 function LabelRow({
   kind,
   labels,
@@ -126,7 +139,7 @@ function LabelRow({
         ))
       ) : (
         <span className="border-2 border-ink bg-paper px-1.5 py-px text-xs">
-          (无)
+          (none)
         </span>
       )}
     </div>
@@ -140,8 +153,8 @@ export default function AcceptanceErrorsPage({
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="分类器错例复核" active="/acceptance/errors">
-        <MissingBox className="mt-4">加载失败:{loaderData.error}</MissingBox>
+      <PageShell title="Error Analysis" active="/acceptance/errors">
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       </PageShell>
     );
   }
@@ -150,8 +163,8 @@ export default function AcceptanceErrorsPage({
 
   return (
     <PageShell
-      title="分类器错例复核"
-      sub="错在哪一类 · 是冤枉还是放跑 · 标注本身有没有毛病"
+      title="Error Analysis"
+      sub="Which class erred · false alarm or missed · are the gold labels at fault"
       active="/acceptance/errors"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -159,22 +172,22 @@ export default function AcceptanceErrorsPage({
             className={state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"}
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <GateBar>
         {!d.eval.present ? (
-          <Stat label="评测产物" value="未生成" tone="fail" />
+          <Stat label="Eval artifact" value="Not generated" tone="fail" />
         ) : (
           <>
-            <Stat label="错例" value={String(d.errors.length) + " 条"} />
-            <Stat label="矩阵笔数" value={String(d.matrix_entries) + " 笔"} />
-            <Stat label="冤枉 FP" value={String(d.total_fp) + " 次"} />
-            <Stat label="放跑 FN" value={String(d.total_fn) + " 次"} />
-            <Stat label="测试集" value={String(d.eval.test_size ?? 0) + " 条"} />
+            <Stat label="Error cases" value={String(d.errors.length) + " cases"} />
+            <Stat label="Matrix entries" value={String(d.matrix_entries) + " entries"} />
+            <Stat label="False alarms (FP)" value={String(d.total_fp)} />
+            <Stat label="Misses (FN)" value={String(d.total_fn)} />
+            <Stat label="Test set" value={String(d.eval.test_size ?? 0) + " rows"} />
             <Stat
-              label="评测于"
+              label="Evaluated at"
               value={fmtTime(d.eval.ran_at).slice(5, 16)}
               small
             />
@@ -183,9 +196,9 @@ export default function AcceptanceErrorsPage({
       </GateBar>
 
       {!d.eval.present ? (
-        <Panel title="错例复核">
+        <Panel title="Error case review">
           <MissingBox>
-            {d.eval.hint ?? "评测产物还没生成,先跑 make train-eval"}
+            {d.eval.hint ?? "Eval artifact not generated yet — run make train-eval first"}
           </MissingBox>
           {jobSpecs["train-eval"] ? (
             <JobRow specs={[jobSpecs["train-eval"]]} onFinish={() => { void revalidate(); }} />
@@ -193,10 +206,10 @@ export default function AcceptanceErrorsPage({
         </Panel>
       ) : (
         <>
-          {/* ① 记账口径:错例条数 ≠ 矩阵笔数 */}
+          {/* ① The tally: error cases ≠ matrix entries */}
           <Panel
-            title="这笔账怎么算:错例条数 ≠ 矩阵笔数"
-            lede="错有三种:漏打——该打的没打,只记 1 次放跑;多打——不该打的多打一个,只记 1 笔冤枉;错位——该打的没打、反而打了别的类,一次记 2 笔(被抢的类放跑 +1、抢标签的类冤枉 +1)。所以清单条数比矩阵笔数少,差额全在错位上。"
+            title="How the tally works: error cases ≠ matrix entries"
+            lede="There are three kinds of errors. Missed: the required label was not applied — counts as 1 miss. Extra: an unneeded label was added — counts as 1 false alarm. Misplaced: the required label was not applied and a different class was labeled instead — counts as 2 entries (the missed class +1 miss, the grabbing class +1 false alarm). That is why the case list is shorter than the matrix tally — the difference is all misplaced errors."
           >
             <div className="flex flex-wrap gap-3">
               {Object.entries(d.kinds).map(([kind, n], i) => (
@@ -208,26 +221,28 @@ export default function AcceptanceErrorsPage({
                   className="min-w-50 flex-1 border-3 border-ink bg-paper px-3 py-2"
                 >
                   <div>
-                    <Pill tone={KIND_PILL[kind] ?? "info"}>{kind}</Pill>{" "}
-                    <span className="text-xl font-bold">{n} 条</span>
+                    <Pill tone={KIND_PILL[kind] ?? "info"}>
+                      {KIND_LABEL[kind] ?? kind}
+                    </Pill>{" "}
+                    <span className="text-xl font-bold">{n} cases</span>
                   </div>
                   <div className="mt-1 text-[11.5px] leading-6 text-ink-soft">
-                    修法:{d.recipes[kind] ?? "—"}
+                    Fix: {d.recipes[kind] ?? "—"}
                   </div>
                 </motion.div>
               ))}
             </div>
             <Tip>
-              {d.errors.length} 条错例 → 矩阵记 {d.matrix_entries}{" "}
-              笔:冤枉 {d.total_fp} 次、放跑 {d.total_fn}{" "}
-              次。由于目前才寥寥几条,不值得为此重新训练——攒到一定数量再重训,训练是有成本的。
+              {d.errors.length} error cases → {d.matrix_entries}{" "}
+              matrix entries: {d.total_fp} false alarms, {d.total_fn}{" "}
+              misses. With only a handful so far, this is not worth retraining for — collect more cases first; training has a cost.
             </Tip>
           </Panel>
 
-          {/* ② 边界摩擦配对 */}
+          {/* ② Boundary-friction pairs */}
           <Panel
-            title="边界摩擦:哪两类在抢标签"
-            lede="把「该打没打的类 ← 反而打了的类」按对计数。同一对反复出现,说明有个词横跨两类、句子正好踩在分界线上,模型两边都觉得是。这种要成对补对照句,两边同时喂才学得会看语境。"
+            title="Boundary friction: which two classes are fighting over labels"
+            lede="Pairs are counted as “missed class ← grabbing class”. The same pair recurring means a word spans both classes and the sentence sits right on the boundary — the model thinks it fits either side. Fix these with contrastive sentence pairs, feeding both sides at once so it learns to read context."
           >
             {d.pairs.length ? (
               <>
@@ -235,10 +250,10 @@ export default function AcceptanceErrorsPage({
                   <Tbl>
                     <thead>
                       <tr>
-                        <Th>被抢的类(该打没打)</Th>
-                        <Th>档位</Th>
-                        <Th>抢标签的类(冤枉打上)</Th>
-                        <Th>次数</Th>
+                        <Th>Missed class (should have been labeled)</Th>
+                        <Th>Severity</Th>
+                        <Th>Grabbing class (false alarm)</Th>
+                        <Th>Count</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -257,7 +272,7 @@ export default function AcceptanceErrorsPage({
                                   "plain"
                                 }
                               >
-                                {p.severity}
+                                {SEV_LABEL[p.severity] ?? p.severity}
                               </Pill>
                             ) : null}
                           </Td>
@@ -272,17 +287,17 @@ export default function AcceptanceErrorsPage({
                     </tbody>
                   </Tbl>
                 </TableScroll>
-                <Tip>出现 2 次以上的配对已标红——那是稳定复现的系统性偏差,优先补它的对照句。</Tip>
+                <Tip>Pairs seen 2+ times are marked red — those are stable, reproducible biases; add their contrastive sentences first.</Tip>
               </>
             ) : (
-              <MissingBox>本轮没有错位型错误,没有类目在互抢标签</MissingBox>
+              <MissingBox>No misplaced errors this round — no classes are fighting over labels</MissingBox>
             )}
           </Panel>
 
-          {/* ③ 逐条错例 */}
+          {/* ③ Case-by-case errors */}
           <Panel
-            title="逐条对照:标准答案 vs 模型预测"
-            lede="标准答案里被放跑的类标红、模型多打上的类标橙、两边都对上的标绿。语料里故意掺了错别字和方言模拟真实用户的键盘,噪声下的错例照样算错例,不给豁免。"
+            title="Case by case: gold standard vs. model prediction"
+            lede="Classes missed by the gold standard are red, extra classes added by the model are orange, and labels both sides agree on are green. The corpus deliberately mixes in typos and dialect to mimic real users' keyboards — errors under noise still count, no exemptions."
           >
             {d.errors.map((e, i) => {
               const marksGold: Record<string, string> = {};
@@ -302,27 +317,29 @@ export default function AcceptanceErrorsPage({
                   className="mt-2.5 border-3 border-ink bg-paper px-3 py-2.5 first:mt-0"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
-                    <Pill tone={KIND_PILL[e.kind] ?? "info"}>{e.kind}</Pill>
+                    <Pill tone={KIND_PILL[e.kind] ?? "info"}>
+                      {KIND_LABEL[e.kind] ?? e.kind}
+                    </Pill>
                     <span className="text-muted">
-                      记 {e.matrix_entries} 笔矩阵账
+                      counts as {e.matrix_entries} matrix entries
                     </span>
                   </div>
                   <div className="mt-1.5 text-[13.5px] leading-7 font-bold">
-                    「{e.text}」
+                    “{e.text}”
                   </div>
                   <div className="mt-2 flex flex-col gap-1.5">
-                    <LabelRow kind="标准" labels={e.gold} marks={marksGold} />
-                    <LabelRow kind="预测" labels={e.pred} marks={marksPred} />
+                    <LabelRow kind="Gold standard" labels={e.gold} marks={marksGold} />
+                    <LabelRow kind="Prediction" labels={e.pred} marks={marksPred} />
                   </div>
                   <div className="mt-2 text-xs leading-6 text-ink-soft">
                     {[
                       ...(e.missed.length
-                        ? ["放跑:" + e.missed.join("、")]
+                        ? ["Missed: " + e.missed.join(", ")]
                         : []),
                       ...(e.extra.length
-                        ? ["冤枉:" + e.extra.join("、")]
+                        ? ["Extra: " + e.extra.join(", ")]
                         : []),
-                      "修法:" + (d.recipes[e.kind] ?? "—"),
+                      "Fix: " + (d.recipes[e.kind] ?? "—"),
                     ].join(" | ")}
                   </div>
                 </motion.div>
@@ -332,7 +349,7 @@ export default function AcceptanceErrorsPage({
               <JobRow
                 specs={[jobSpecs["train-eval"]]}
                 onFinish={() => { void revalidate(); }}
-                note="重跑评测会刷新这份错例清单"
+                note="Re-running eval refreshes this error list"
               />
             ) : null}
           </Panel>

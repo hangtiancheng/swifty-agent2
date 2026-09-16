@@ -2,12 +2,14 @@ import type { ReactNode } from "react";
 
 import { cn } from "./cn";
 
-/** 读图小注:产物里带着模型看这一轮数写的那句就用它,数字自动加粗;
- *  没有才用页面写死的兜底文案。注是脚本落盘时生成并校过数的(app/core/read_notes.py),
- *  前端只负责显示,不再自己下结论。 */
+/** Chart-reading note: if the artifact carries the sentence the model wrote about
+ *  this round's numbers, use it (numbers auto-bolded); otherwise fall back to the
+ *  page's hardcoded copy. Notes are generated and number-checked when the script
+ *  writes the artifact (app/core/read_notes.py); the frontend only displays them and
+ *  no longer draws its own conclusions. */
 
-// 只加粗真正的数,名字里的数字不算(BM25 的 25、Recall@10 的 10、bge-m3 的 3),
-// 与 read_notes.py 里那条校验用的边界规则保持一致
+// Bold only real numbers, not digits inside names (the 25 in BM25, the 10 in
+// Recall@10, the 3 in bge-m3) — matching the boundary rule read_notes.py validates with.
 const NUM_RE =
   /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?%?(?![A-Za-z_])/g;
 
@@ -47,7 +49,7 @@ export function ReadNote({
       )}
     >
       <span className="mr-2 inline-block bg-ink px-1.5 py-px align-middle text-[11px] font-bold text-cream">
-        读图
+        Insight
       </span>
       {note ? boldNumbers(note) : fallback}
     </div>

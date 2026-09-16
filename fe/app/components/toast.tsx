@@ -18,7 +18,8 @@ export function useToast(): ToastFn {
   return useContext(ToastCtx);
 }
 
-/** 全局 toast:底部居中,最多叠三条,3.6s 自动消失。原工程每页一个 #toast,这里收到 root 一处。 */
+/** Global toast: bottom-center, stacks up to three, auto-dismisses after 3.6s.
+    The original had one #toast per page; here it lives once in root. */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const nextId = useRef(1);

@@ -57,7 +57,7 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "MewMart · Acceptance Overview" },
+    { title: "MeowMeow Select · Acceptance Overview" },
     { name: "description", content: "All nine evidence checks run on the page — no terminal needed" },
   ];
 }

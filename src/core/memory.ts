@@ -9,7 +9,7 @@ import type { BaseMessage } from "@langchain/core/messages";
 
 import * as budget from "./budget.ts";
 
-import { settings } from "@/config.ts";
+import { settings } from "#/config.ts";
 
 
 export function contentToString(content: BaseMessage["content"]): string {

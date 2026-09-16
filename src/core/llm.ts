@@ -8,8 +8,8 @@ import type { Runnable } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("llm");
 const TRUTHY = new Set(["1", "true", "yes", "on"]);

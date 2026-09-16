@@ -5,9 +5,9 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import { langfuseConfig } from "@/core/observability.ts";
-import * as readNotes from "@/core/read-notes.ts";
+import { settings } from "#/config.ts";
+import { langfuseConfig } from "#/core/observability.ts";
+import * as readNotes from "#/core/read-notes.ts";
 
 const ROOT = settings.root;
 const OUT_DIR = path.join(ROOT, "data/eval/reports");

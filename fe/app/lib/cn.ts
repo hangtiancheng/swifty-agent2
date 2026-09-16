@@ -1,4 +1,4 @@
-/** className 拼接:过滤假值,轻量替代 clsx */
+/** className joiner: filters falsy values; a lightweight clsx alternative */
 export function cn(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
 }

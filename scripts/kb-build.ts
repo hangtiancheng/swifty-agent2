@@ -2,11 +2,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { closeDb } from "@/db/client.ts";
-import * as repository from "@/db/repository.ts";
-import * as documents from "@/kb/documents.ts";
-import * as dualwrite from "@/kb/dualwrite.ts";
-import { KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
+import { closeDb } from "#/db/client.ts";
+import * as repository from "#/db/repository.ts";
+import * as documents from "#/kb/documents.ts";
+import * as dualwrite from "#/kb/dualwrite.ts";
+import { KB_DIR, SOURCE_TYPES } from "#/kb/sources.ts";
 
 async function main(): Promise<void> {
   // Non-idempotent inserts: skip when document chunks already exist; rebuild via kb-reset.

@@ -3,7 +3,7 @@ import { AIMessage } from "@langchain/core/messages";
 
 import type { GraphState } from "./state.ts";
 
-import { settings } from "@/config.ts";
+import { settings } from "#/config.ts";
 
 
 export type RouteKey = "escalate" | "fallback_script" | "knowledge" | "refund_flow" | "business";

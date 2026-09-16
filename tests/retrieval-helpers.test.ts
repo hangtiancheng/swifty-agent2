@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { arrangeHeadTail, splitClauses } from "@/core/retrieval.ts";
+import { arrangeHeadTail, splitClauses } from "#/core/retrieval.ts";
 
 describe("retrieval helpers", () => {
   it("splits multi-intent questions into clauses", () => {

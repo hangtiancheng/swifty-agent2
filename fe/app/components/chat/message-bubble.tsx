@@ -1,14 +1,20 @@
-import { ClipboardList, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
+import { Cat, ClipboardList, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
 import { memo, useState } from "react";
 
 import type { BotMsg, Msg } from "./use-chat";
 
-import { CatIcon } from "~/components/cat-icon";
 import { Btn } from "~/components/ui";
 import { cn } from "~/lib/cn";
 import { Markdown } from "~/lib/markdown";
 import type { Citation, Order, TicketPreview } from "~/lib/types";
 
+/* ticket_type arrives as the backend enum value (after_sales/complaint/inquiry);
+   render a friendly label, falling back to the raw value for anything unknown. */
+const TICKET_TYPE_LABEL: Record<string, string> = {
+  after_sales: "After-sales",
+  complaint: "Complaint",
+  inquiry: "Inquiry",
+};
 
 export interface BubbleCallbacks {
   onCite: (c: Citation, el: HTMLElement) => void;
@@ -35,7 +41,7 @@ function TypingDots() {
   );
 }
 
-/* ---------- 每段回答满意度反馈(👍/👎,点一次点亮 + 已反馈,一次性) ---------- */
+/* ---------- Per-reply satisfaction feedback (👍/👎; one-shot, one click highlights + confirms) ---------- */
 
 function FbBtn({
   down,
@@ -89,7 +95,7 @@ function FeedbackBar({
         active={given === "up"}
         dim={given === "down"}
         disabled={given !== undefined}
-        label="这条回答有帮助"
+        label="This reply was helpful"
         onClick={() => { onFeedback(msg.id, "up"); }}
       />
       <FbBtn
@@ -97,19 +103,19 @@ function FeedbackBar({
         active={given === "down"}
         dim={given === "up"}
         disabled={given !== undefined}
-        label="这条回答没帮助"
+        label="This reply was not helpful"
         onClick={() => { onFeedback(msg.id, "down"); }}
       />
       {given ? (
         <span className="text-[11px] tracking-wide text-muted">
-          已反馈,谢谢~
+          Thanks for your feedback!
         </span>
       ) : null}
     </div>
   );
 }
 
-/* ---------- 订单选择器卡片(interrupt 缺订单号 → 聊天流点选; 拒绝后点选重问) ---------- */
+/* ---------- Order picker cards (interrupt missing order id → pick in the chat flow; also offered after a rejection so the user can re-ask) ---------- */
 
 export function OrderCards({
   orders,
@@ -126,8 +132,8 @@ export function OrderCards({
     <div>
       <div className="text-sm">
         {orders.length
-          ? "请选择您要处理的订单:"
-          : "没有查到可选订单,请直接提供订单号。"}
+          ? "Please select the order you'd like to handle:"
+          : "No selectable orders found. Please provide the order number directly."}
       </div>
       {orders.length ? (
         <div className="mt-2.5 flex flex-col gap-2">
@@ -147,7 +153,7 @@ export function OrderCards({
                 onPick(o);
               }}
             >
-              <div className="text-[13px] font-bold">订单 {o.order_id}</div>
+              <div className="text-[13px] font-bold">Order {o.order_id}</div>
               <div className="mt-0.5 text-[12.5px]">{o.product ?? ""}</div>
               <div className="mt-0.5 text-[11.5px] text-muted">
                 {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
@@ -160,7 +166,7 @@ export function OrderCards({
   );
 }
 
-/* ---------- 工单预览确认卡(interrupt confirm_ticket → 确认提交/取消 → resume 续跑) ---------- */
+/* ---------- Ticket preview confirm card (interrupt confirm_ticket → Confirm/Cancel → resume) ---------- */
 
 function TicketConfirm({
   preview,
@@ -180,29 +186,33 @@ function TicketConfirm({
     >
       <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-bold">
         <ClipboardList className="h-4 w-4" aria-hidden />
-        工单预览
+        Ticket preview
       </div>
       <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="shrink-0 text-muted">工单类型</span>
-        <span>{preview.ticket_type ?? "咨询"}</span>
+        <span className="shrink-0 text-muted">Ticket type</span>
+        <span>
+          {preview.ticket_type
+            ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type)
+            : "Inquiry"}
+        </span>
       </div>
       <div className="mt-1 flex gap-1.5 text-[12.5px]">
-        <span className="shrink-0 text-muted">问题描述</span>
+        <span className="shrink-0 text-muted">Description</span>
         <span className="break-words">{preview.description ?? ""}</span>
       </div>
       <div className="mt-2.5 flex gap-2">
         <Btn size="sm" variant="go" disabled={decided} onClick={() => { onDecide(true); }}>
-          确认提交
+          Confirm & submit
         </Btn>
         <Btn size="sm" disabled={decided} onClick={() => { onDecide(false); }}>
-          取消
+          Cancel
         </Btn>
       </div>
     </div>
   );
 }
 
-/* ---------- actions 帧:转人工/建工单/退款/订单点选 ---------- */
+/* ---------- Actions frame: transfer to human / create ticket / refund / order picker ---------- */
 
 function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
   const [transferred, setTransferred] = useState(false);
@@ -210,8 +220,9 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
   const extras: React.ReactNode[] = [];
   for (const a of msg.actions) {
     if (a.type === "select_order") {
-      // 报了不属于自己的订单号被拒,把他名下的单列出来点选。拒绝之后得给条出路,
-      // 否则用户既查不到,也不知道自己的单号是多少
+      // The user quoted an order number that isn't theirs and got rejected; list the orders
+      // under their name to pick from. A rejection needs a way forward, otherwise they can't
+      // look anything up and don't even know their own order number
       extras.push(
         <OrderCards
           key="select_order"
@@ -233,7 +244,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
             cb.onTransfer();
           }}
         >
-          转人工
+          Transfer to a human agent
         </Btn>,
       );
     } else if (a.type === "create_ticket") {
@@ -244,7 +255,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
           disabled={msg.acted}
           onClick={() => { cb.onCreateTicket(msg.id); }}
         >
-          建工单
+          Create ticket
         </Btn>,
       );
     } else if (a.type === "refund_form") {
@@ -255,7 +266,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
           disabled={msg.acted}
           onClick={() => { cb.onRefund(msg.id, a.draft ?? {}); }}
         >
-          提交退款工单
+          Submit refund ticket
         </Btn>,
       );
     }
@@ -270,7 +281,7 @@ function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
   );
 }
 
-/* ---------- 消息气泡 ---------- */
+/* ---------- Message bubble ---------- */
 
 export const MessageBubble = memo(function MessageBubble({
   msg,
@@ -296,7 +307,7 @@ export const MessageBubble = memo(function MessageBubble({
   return (
     <div className="flex animate-pop-in items-end justify-start gap-2.5">
       <div className="hidden shrink-0 border-3 border-ink bg-paper p-1 shadow-hard-xs sm:block">
-        <CatIcon className="h-[34px] w-[34px]" />
+        <Cat className="h-[34px] w-[34px]" strokeWidth={1.5} />
       </div>
       <div
         className={cn(
@@ -318,7 +329,7 @@ export const MessageBubble = memo(function MessageBubble({
                     className="inline-flex items-center gap-1 rounded-full border border-dashed border-muted bg-ink/5 px-2 py-px text-xs text-muted"
                   >
                     <Wrench className="h-3 w-3" aria-hidden />
-                    调用了 {t}
+                    Called {t}
                   </span>
                 ))}
               </div>
@@ -342,7 +353,7 @@ export const MessageBubble = memo(function MessageBubble({
                 {m.streaming && m.raw === "" ? (
                   <TypingDots />
                 ) : m.raw === "" ? (
-                  <span>(无回复)</span>
+                  <span>(No reply)</span>
                 ) : (
                   <Markdown
                     text={m.raw}

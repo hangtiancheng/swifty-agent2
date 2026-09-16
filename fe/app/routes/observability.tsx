@@ -137,7 +137,7 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "MewMart · Observability" },
+    { title: "MeowMeow Select · Observability" },
     {
       name: "description",
       content:

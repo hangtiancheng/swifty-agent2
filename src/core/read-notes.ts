@@ -8,7 +8,7 @@ import type { ChatOpenAI } from "@langchain/openai";
 import { getChatModel } from "./llm.ts";
 import { contentToString } from "./memory.ts";
 
-import { childLogger } from "@/logger.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("read-notes");
 

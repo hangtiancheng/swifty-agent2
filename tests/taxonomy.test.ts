@@ -7,7 +7,7 @@ import {
   SEVERITY,
   TOPIC_NAMES,
   terminologyTable,
-} from "@/core/taxonomy.ts";
+} from "#/core/taxonomy.ts";
 
 describe("taxonomy", () => {
   it("keeps label ids in tuple order", () => {

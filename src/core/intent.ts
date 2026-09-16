@@ -5,7 +5,7 @@ import { z } from "zod";
 import { structured } from "./llm.ts";
 import { INTENT_CLASSIFY_PROMPT } from "./prompts.ts";
 
-import { childLogger } from "@/logger.ts";
+import { childLogger } from "#/logger.ts";
 
 const log = childLogger("intent");
 

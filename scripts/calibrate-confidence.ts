@@ -4,10 +4,10 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { settings } from "@/config.ts";
-import { computeEvidenceConfidence } from "@/core/confidence.ts";
-import * as readNotes from "@/core/read-notes.ts";
-import * as retrieval from "@/core/retrieval.ts";
+import { settings } from "#/config.ts";
+import { computeEvidenceConfidence } from "#/core/confidence.ts";
+import * as readNotes from "#/core/read-notes.ts";
+import * as retrieval from "#/core/retrieval.ts";
 
 const ROOT = settings.root;
 const OUT_DIR = path.join(ROOT, "data/eval/reports");

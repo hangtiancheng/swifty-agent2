@@ -4,7 +4,7 @@ import { BtnLink } from "~/components/ui";
 
 
 export function meta() {
-  return [{ title: "MewMart · Not Found" }];
+  return [{ title: "MeowMeow Select · Not Found" }];
 }
 
 export default function NotFound() {

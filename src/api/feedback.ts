@@ -4,9 +4,9 @@ import { Hono } from "hono";
 import { parseJsonBody } from "./http.ts";
 import { feedbackRequestSchema } from "./schemas.ts";
 
-import * as repository from "@/db/repository.ts";
-import * as runtime from "@/graph/runtime.ts";
-import { childLogger } from "@/logger.ts";
+import * as repository from "#/db/repository.ts";
+import * as runtime from "#/graph/runtime.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("api.feedback");

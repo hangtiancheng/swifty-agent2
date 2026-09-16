@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import * as jobs from "@/core/jobs.ts";
+import * as jobs from "#/core/jobs.ts";
 
 export const jobsRouter = new Hono();
 

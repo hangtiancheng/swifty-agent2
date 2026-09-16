@@ -1,6 +1,7 @@
-/** 跨页共享的接口数据形状。字段与 FastAPI 后端返回一一对应,前端只读不算。 */
+/** API data shapes shared across pages. Fields map one-to-one to the FastAPI backend
+    response; the frontend only reads them, never computes. */
 
-/* ---------- 作业运行器(/api/jobs) ---------- */
+/* ---------- Job runner (/api/jobs) ---------- */
 export type JobStatus = "idle" | "running" | "ok" | "failed" | "stopped";
 
 export interface JobSpec {
@@ -14,7 +15,7 @@ export interface JobSpec {
   returncode?: number | null;
 }
 
-/* ---------- 聊天页(SSE 帧 / 引用 / 动作 / 中断) ---------- */
+/* ---------- Chat page (SSE frames / citations / actions / interrupts) ---------- */
 export interface Citation {
   n: number;
   section_path?: string;
@@ -55,7 +56,7 @@ export interface ConversationItem {
 }
 
 export interface HistoryMessage {
-  /** "user" | "assistant" 等,后端原样透传 */
+  /** "user" | "assistant" etc.; passed through verbatim by the backend */
   role: string;
   content: string;
 }

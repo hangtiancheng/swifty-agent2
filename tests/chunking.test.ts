@@ -5,7 +5,7 @@ import {
   isTableBlock,
   splitSections,
   splitTableRows,
-} from "@/kb/chunking.ts";
+} from "#/kb/chunking.ts";
 
 describe("chunking", () => {
   it("splits markdown by header level and keeps the path in metadata", () => {

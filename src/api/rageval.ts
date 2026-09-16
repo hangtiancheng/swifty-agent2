@@ -9,10 +9,10 @@ import { z } from "zod";
 import { parseJsonBody, parseParamInt, parseQuery } from "./http.ts";
 import { faithCaseStatusRequestSchema } from "./schemas.ts";
 
-import { settings } from "@/config.ts";
-import { status as jobStatus } from "@/core/jobs.ts";
-import { parseJson } from "@/db/json.ts";
-import * as repository from "@/db/repository.ts";
+import { settings } from "#/config.ts";
+import { status as jobStatus } from "#/core/jobs.ts";
+import { parseJson } from "#/db/json.ts";
+import * as repository from "#/db/repository.ts";
 
 
 export const ragevalRouter = new Hono();

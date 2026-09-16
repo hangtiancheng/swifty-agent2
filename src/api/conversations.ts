@@ -4,7 +4,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { parseParamInt } from "./http.ts";
 
-import * as repository from "@/db/repository.ts";
+import * as repository from "#/db/repository.ts";
 
 
 export const conversationsRouter = new Hono();

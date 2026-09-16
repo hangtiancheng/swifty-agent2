@@ -43,10 +43,10 @@
     "skipLibCheck": true,
 
     "paths": {
-      "@/*": ["./src/*"],
-      "@generated/*": ["./generated/*"],
-      "@scripts/*": ["./scripts/*"],
-      "@tests/*": ["./tests/*"]
+      "#/*": ["./src/*"],
+      "#generated/*": ["./generated/*"],
+      "#scripts/*": ["./scripts/*"],
+      "#tests/*": ["./tests/*"]
     }
   },
   "exclude": ["fe"]

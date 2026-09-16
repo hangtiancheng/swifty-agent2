@@ -4,7 +4,7 @@
 // Milvus client, so the same capabilities (dense / BM25 / hybrid / hybrid+rerank) are
 // implemented over the knowledge_chunks table: embeddings are stored as JSON and scored
 // in-process, BM25 is computed on the fly with CJK-aware tokenization.
-import { listVectorizedChunks } from "@/db/repository.ts";
+import { listVectorizedChunks } from "#/db/repository.ts";
 
 export const COLLECTION = "knowledge";
 

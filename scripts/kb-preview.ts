@@ -2,9 +2,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import * as chunking from "@/kb/chunking.ts";
-import * as documents from "@/kb/documents.ts";
-import { KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
+import * as chunking from "#/kb/chunking.ts";
+import * as documents from "#/kb/documents.ts";
+import { KB_DIR, SOURCE_TYPES } from "#/kb/sources.ts";
 
 function preview(text: string, n = 46): string {
   const one = text.split(/\s+/).join(" ");

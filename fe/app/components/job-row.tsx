@@ -9,20 +9,23 @@ import { cn } from "~/lib/cn";
 import type { JobSpec, JobStatus } from "~/lib/types";
 
 
-/* 「重跑」按钮那一套(原 acceptance.js 的移植)。
-   交互契约:POST 发起 → 每 1.2s 轮询状态与日志尾 → 收到终态(ok/failed/stopped)
-   停止轮询、回调页面重新取数。作业名是后端白名单里的常量,前端只传名字。 */
+/* The "re-run" button machinery (ported from the original acceptance.js).
+   Interaction contract: POST to start → poll status + log tail every 1.2s → on a
+   terminal state (ok/failed/stopped) stop polling and tell the page to refetch.
+   Job names are constants in the backend allowlist; the frontend only passes names. */
 
 const STATUS_LABEL: Record<JobStatus, string> = {
-  idle: "未跑过",
-  running: "运行中",
-  ok: "已完成",
-  failed: "失败",
-  stopped: "已停止",
+  idle: "Not run",
+  running: "Running",
+  ok: "Done",
+  failed: "Failed",
+  stopped: "Stopped",
 };
 
-/** 日志尾缓存:作业跑完会回调页面重新取数,取数把按钮和日志窗口整个重建。
-    缓存按作业名留着,重建时贴回去——不然日志恰好在跑完那一刻消失,结论就读不到了。 */
+/** Log-tail cache: when a job finishes it tells the page to refetch, and the refetch
+    rebuilds the buttons and the log window wholesale. The cache is keyed by job name
+    and pasted back on rebuild — otherwise the log vanishes the instant the job ends
+    and the conclusion can't be read. */
 const JOB_LOGS = new Map<string, string>();
 
 interface RunState {
@@ -54,10 +57,10 @@ function JobButton({
     onLogRef.current = onLog;
   });
 
-  // 页面重新取数后 spec 换了新对象:同步状态,日志优先用缓存。
-  // 本地 run 状态必须跟随服务端 spec 重置,这是有意的 prop→state 同步
+  // After a refetch the spec is a new object: resync state, preferring the cached log.
+  // Local run state must follow the server spec — an intentional prop→state sync.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- spec 刷新时重同步按钮状态
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resync button state when the spec refreshes
     setState({
       status: spec.status,
       log: spec.log ?? JOB_LOGS.get(spec.name),
@@ -88,10 +91,10 @@ function JobButton({
         stopPoll();
         toast(
           spec.title +
-            ":" +
+            ": " +
             STATUS_LABEL[st.status] +
             (st.returncode !== null && st.returncode !== undefined
-              ? "(退出码 " + String(st.returncode) + ")"
+              ? " (exit code " + String(st.returncode) + ")"
               : ""),
           st.status !== "ok",
         );
@@ -99,7 +102,7 @@ function JobButton({
       }
     } catch (e) {
       stopPoll();
-      toast("轮询失败:" + errMsg(e), true);
+      toast("Polling failed: " + errMsg(e), true);
     }
   };
 
@@ -107,19 +110,19 @@ function JobButton({
     if (
       spec.heavy &&
       !window.confirm(
-        "「" +
+        '"' +
           spec.title +
-          "」是分钟级重活(" +
+          '" is a minutes-long heavy job (' +
           spec.cmd +
-          ")。\n" +
-          (spec.needs && spec.needs !== "—" ? "前置:" + spec.needs + "\n" : "") +
-          "确认现在跑?",
+          ").\n" +
+          (spec.needs && spec.needs !== "—" ? "Prerequisite: " + spec.needs + "\n" : "") +
+          "Run it now?",
       )
     ) {
       return;
     }
     setState((s) => ({ ...s, status: "running" }));
-    onLogRef.current("发起中…");
+    onLogRef.current("Starting…");
     try {
       const st = await api<RunState>("/api/jobs/" + spec.name, jsonPost());
       apply(st);
@@ -128,12 +131,13 @@ function JobButton({
       }, 1200);
     } catch (e) {
       setState((s) => ({ ...s, status: spec.status }));
-      onLogRef.current("发起失败:" + errMsg(e));
-      toast("发起失败:" + errMsg(e), true);
+      onLogRef.current("Failed to start: " + errMsg(e));
+      toast("Failed to start: " + errMsg(e), true);
     }
   };
 
-  // 页面打开时作业正在跑(上一个标签页发起的):直接接上轮询,别让它看着像卡住
+  // The job is already running when the page opens (started from another tab):
+  // attach polling right away so it doesn't look stuck.
   useEffect(() => {
     if (spec.status === "running" && timer.current === null) {
       timer.current = window.setInterval(() => {
@@ -141,13 +145,14 @@ function JobButton({
       }, 1200);
     }
     return stopPoll;
-    // eslint 忽略 fe/app;此处仅依赖关键标识,避免父级重渲染打断轮询
+    // eslint ignores fe/app; depend only on the key identity so a parent re-render
+    // doesn't interrupt polling.
   }, [spec.name]); // eslint-disable-line
 
   const running = state.status === "running";
   const label = running
-    ? "运行中… " + spec.title
-    : (state.status === "idle" ? "重跑 " : "再跑一次 ") + spec.title;
+    ? "Running… " + spec.title
+    : (state.status === "idle" ? "Re-run " : "Run again ") + spec.title;
 
   return (
     <Btn

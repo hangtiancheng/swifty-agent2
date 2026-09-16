@@ -9,8 +9,8 @@ import { z } from "zod";
 import { defineRawTool } from "./registry.ts";
 import type { ResultFormatter, ToolSpec } from "./registry.ts";
 
-import { settings } from "@/config.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("tools.mcp");

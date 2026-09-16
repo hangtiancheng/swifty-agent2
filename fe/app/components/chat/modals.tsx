@@ -5,8 +5,9 @@ import { useToast } from "~/components/toast";
 import { Btn } from "~/components/ui";
 import { api, jsonPost } from "~/lib/api";
 
-/* 建工单 / 退款两个表单弹窗(原 index.html)。
-   提交成功回调 onSuccess(工单号),由页面置灰触发按钮并追加系统消息。 */
+/* The create-ticket / refund form modals (from the original index.html).
+   On success, onSuccess(ticketNo) is called; the page then disables the trigger
+   button and appends a system message. */
 
 const FIELD_LABEL = "mb-1.5 block text-[12.5px] font-bold";
 const FIELD_INPUT =
@@ -97,11 +98,12 @@ export function TicketModal({
   const [err, setErr] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 每次打开重置:不预选类别、留空描述,用户自己填。
-  // 弹窗带退场动画不能靠卸载重置,只能在 open 变 true 时同步清状态
+  // Reset on every open: no preselected category, empty description — the user fills it in.
+  // The modal animates out, so we can't rely on unmount to reset; clear state synchronously
+  // when open turns true
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 打开瞬间重置表单是有意的同步行为
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting the form the moment it opens is an intentional synchronous step
       setType("");
       setDesc("");
       setErr("");
@@ -111,11 +113,11 @@ export function TicketModal({
 
   const submit = async () => {
     if (!type) {
-      setErr("请选择反馈类别");
+      setErr("Please select a category");
       return;
     }
     if (!desc.trim()) {
-      setErr("请填写反馈描述");
+      setErr("Please enter a description");
       return;
     }
     setErr("");
@@ -131,7 +133,7 @@ export function TicketModal({
       );
       onSuccess(d.ticket_no);
     } catch {
-      setErr("工单创建失败,请稍后重试");
+      setErr("Failed to create the ticket, please try again later");
       setSubmitting(false);
     }
   };
@@ -139,13 +141,13 @@ export function TicketModal({
   return (
     <ModalShell
       open={open}
-      title="创建工单"
-      sub="小喵会把问题登记成工单跟进处理"
+      title="Create ticket"
+      sub="Meow will log the issue as a ticket and follow up on it"
       onClose={onClose}
     >
       <div className="mb-3.5">
         <label className={FIELD_LABEL} htmlFor="ticketType">
-          反馈类别 <span className="text-error">*</span>
+          Category <span className="text-error">*</span>
         </label>
         <select
           id="ticketType"
@@ -154,28 +156,28 @@ export function TicketModal({
           onChange={(e) => { setType(e.target.value); }}
         >
           <option value="" disabled>
-            请选择反馈类别…
+            Select a category…
           </option>
-          <option value="售后">售后</option>
-          <option value="投诉">投诉</option>
-          <option value="咨询">咨询</option>
+          <option value="after_sales">After-sales</option>
+          <option value="complaint">Complaint</option>
+          <option value="inquiry">Inquiry</option>
         </select>
       </div>
       <div className="mb-3.5">
         <label className={FIELD_LABEL} htmlFor="ticketDesc">
-          反馈描述 <span className="text-error">*</span>
+          Description <span className="text-error">*</span>
         </label>
         <textarea
           id="ticketDesc"
           className={FIELD_INPUT + " min-h-22 resize-y"}
-          placeholder="请描述您遇到的问题…"
+          placeholder="Describe the issue you're facing…"
           value={desc}
           onChange={(e) => { setDesc(e.target.value); }}
         />
       </div>
       <FieldError text={err} />
       <div className="flex justify-end gap-2.5">
-        <Btn onClick={onClose}>取消</Btn>
+        <Btn onClick={onClose}>Cancel</Btn>
         <Btn
           variant="go"
           disabled={submitting}
@@ -183,7 +185,7 @@ export function TicketModal({
             void submit();
           }}
         >
-          {submitting ? "提交中…" : "提交工单"}
+          {submitting ? "Submitting…" : "Create ticket"}
         </Btn>
       </div>
     </ModalShell>
@@ -208,10 +210,10 @@ export function RefundModal({
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
 
-  // 同 TicketModal:打开瞬间重置,退场动画期间不能卸载
+  // Same as TicketModal: reset the moment it opens — can't unmount during the exit animation
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 打开瞬间重置表单是有意的同步行为
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting the form the moment it opens is an intentional synchronous step
       setReason("");
       setErr("");
       setSubmitting(false);
@@ -220,7 +222,7 @@ export function RefundModal({
 
   const submit = async () => {
     if (!reason) {
-      setErr("请选择退款原因");
+      setErr("Please select a refund reason");
       return;
     }
     setErr("");
@@ -232,22 +234,22 @@ export function RefundModal({
       );
       onSuccess(d.ticket_no);
     } catch {
-      setErr("退款提交失败,请稍后重试");
+      setErr("Failed to submit the refund, please try again later");
       setSubmitting(false);
-      toast("退款提交失败,请稍后重试", true);
+      toast("Failed to submit the refund, please try again later", true);
     }
   };
 
   return (
     <ModalShell
       open={open}
-      title="提交退款工单"
-      sub="确认订单与退款原因后提交,小喵会为您登记退款申请"
+      title="Submit refund ticket"
+      sub="Review the order and refund reason, then submit — Meow will register the refund request for you"
       onClose={onClose}
     >
       <div className="mb-3.5">
         <label className={FIELD_LABEL} htmlFor="refundOrder">
-          订单号
+          Order number
         </label>
         <input
           id="refundOrder"
@@ -259,7 +261,7 @@ export function RefundModal({
       </div>
       <div className="mb-3.5">
         <label className={FIELD_LABEL} htmlFor="refundReason">
-          退款原因 <span className="text-error">*</span>
+          Refund reason <span className="text-error">*</span>
         </label>
         <select
           id="refundReason"
@@ -268,18 +270,18 @@ export function RefundModal({
           onChange={(e) => { setReason(e.target.value); }}
         >
           <option value="" disabled>
-            请选择退款原因…
+            Select a refund reason…
           </option>
-          <option value="七天无理由">七天无理由</option>
-          <option value="质量问题">质量问题</option>
-          <option value="发错货">发错货</option>
-          <option value="不想要了">不想要了</option>
-          <option value="其他">其他</option>
+          <option value="no_reason_7_day">7-day no-reason return</option>
+          <option value="quality_issue">Quality issue</option>
+          <option value="wrong_item">Wrong item shipped</option>
+          <option value="no_longer_wanted">Changed my mind</option>
+          <option value="other">Other</option>
         </select>
       </div>
       <FieldError text={err} />
       <div className="flex justify-end gap-2.5">
-        <Btn onClick={onClose}>取消</Btn>
+        <Btn onClick={onClose}>Cancel</Btn>
         <Btn
           variant="go"
           disabled={submitting}
@@ -287,7 +289,7 @@ export function RefundModal({
             void submit();
           }}
         >
-          {submitting ? "提交中…" : "提交退款"}
+          {submitting ? "Submitting…" : "Submit refund"}
         </Btn>
       </div>
     </ModalShell>

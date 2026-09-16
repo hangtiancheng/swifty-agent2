@@ -2,9 +2,9 @@
 import { embedQuery } from "./embeddings.ts";
 import { rerank } from "./rerank.ts";
 
-import { settings } from "@/config.ts";
-import type { KnowledgeHit } from "@/kb/store.ts";
-import * as store from "@/kb/store.ts";
+import { settings } from "#/config.ts";
+import type { KnowledgeHit } from "#/kb/store.ts";
+import * as store from "#/kb/store.ts";
 
 
 const CLAUSE_RE = /[,，;；?？。]/;

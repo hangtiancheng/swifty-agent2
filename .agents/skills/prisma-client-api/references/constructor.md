@@ -171,7 +171,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 ```typescript
 // lib/prisma.ts
-import { PrismaClient } from '@/generated/client'
+import { PrismaClient } from '#/generated/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 const createAdapter = () => new PrismaPg({

@@ -11,14 +11,23 @@ import { fmtTime } from "~/lib/format";
 
 
 
-/* 类目与页码都在地址栏里(?label=…&page=…):这一页是可以贴给别人的链接,
-   翻页也走地址栏,刷新回到同一页。数据全来自 /api/topics/questions,不在前端筛。 */
+/* Class and page live in the URL (?label=…&page=…): this page is a shareable
+   link, paging goes through the URL, and a refresh lands back on the same
+   page. All data comes from /api/topics/questions — nothing is filtered
+   client-side. */
 
 const SIZE = 10;
 const SOURCE_LABEL: Record<string, string> = {
-  retrieval_low_conf: "检索置信度低",
-  self_check: "生成自评不够答",
-  user_feedback: "用户反馈没解决",
+  retrieval_low_conf: "Low retrieval confidence",
+  self_check: "Failed model self-check",
+  user_feedback: "User reported unresolved",
+};
+
+// Display labels for backend review statuses (keys are contract strings)
+const REVIEW_LABEL: Record<string, string> = {
+  pending_review: "Pending",
+  approved: "Approved",
+  rejected: "Rejected",
 };
 
 interface QuestionItem {
@@ -59,7 +68,7 @@ export async function clientLoader({
   if (!label) {
     return { kind: "nolabel" };
   }
-  // 类目选择条独立容错:分布拉不到只是没有选择条,不影响本页列表
+  // The class picker fails independently: if the distribution fetch fails, only the picker is missing — this page's list is unaffected
   const dist = await api<TopicDistribution>("/api/topics/distribution").catch(
     () => null,
   );
@@ -79,7 +88,7 @@ export async function clientLoader({
 }
 
 export function meta() {
-  return [{ title: "喵喵优选 · 类目问题列表" }];
+  return [{ title: "MeowMeow Select · Topic Questions" }];
 }
 
 function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
@@ -104,31 +113,36 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
           </span>
         ))}
         <span>
-          来源{" "}
+          Source{" "}
           <b className="text-ink">
             {SOURCE_LABEL[it.source] ?? it.source}
           </b>
         </span>
         <span>
-          同义合并{" "}
+          Synonym merge{" "}
           <b className="text-ink">
             {it.occurrence_count
-              ? String(it.occurrence_count) + " 条原话"
-              : "未归并"}
+              ? String(it.occurrence_count) + " originals"
+              : "not merged"}
           </b>
         </span>
         <span>
-          审核 <b className="text-ink">{it.review_status ?? "未入队列"}</b>
+          Review{" "}
+          <b className="text-ink">
+            {it.review_status
+              ? (REVIEW_LABEL[it.review_status] ?? it.review_status)
+              : "Not queued"}
+          </b>
         </span>
         <span>
-          归类于{" "}
+          Classified at{" "}
           <b className="text-ink">{fmtTime(it.classified_at).slice(5, 16)}</b>
         </span>
       </div>
-      {/* 归并过的问题,页面上显示的是标准化问法;把用户原话也带一句,免得看不出这条从哪来 */}
+      {/* Merged questions show the normalized phrasing; keep the user's original wording visible so the entry's origin stays clear */}
       {it.normalized && it.raw_question && it.raw_question !== it.text ? (
         <div className="mt-1.5 text-xs leading-6 text-ink-soft">
-          <span className="block text-[10.5px] text-muted">用户原话</span>
+          <span className="block text-[10.5px] text-muted">Original wording</span>
           {it.raw_question}
         </div>
       ) : null}
@@ -152,21 +166,21 @@ export default function TopicQuestionsPage({
 
   return (
     <PageShell
-      title={loaderData.kind === "ok" ? loaderData.label : "类目问题列表"}
+      title={loaderData.kind === "ok" ? loaderData.label : "Topic Questions"}
       sub={
         loaderData.kind === "ok"
-          ? "分类器归到「" +
+          ? "Questions the classifier grouped under “" +
             loaderData.label +
-            "」的问题,共 " +
+            "” — " +
             String(loaderData.d.total) +
-            " 条"
-          : "分类器归到这一类的问题,分页看全"
+            " in total"
+          : "Questions the classifier grouped under this class, paginated"
       }
       active="/topics"
       maxW="max-w-[1080px]"
       actions={
         <>
-          <BtnLink to="/topics">← 回主题分布</BtnLink>
+          <BtnLink to="/topics">← Back to Topic Distribution</BtnLink>
           <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
             <RefreshCw
               className={
@@ -174,7 +188,7 @@ export default function TopicQuestionsPage({
               }
               aria-hidden
             />
-            刷新
+            Refresh
           </Btn>
         </>
       }
@@ -213,26 +227,30 @@ export default function TopicQuestionsPage({
 
       {loaderData.kind === "nolabel" ? (
         <MissingBox className="mt-4">
-          没指定类目。回主题分布页,点某一类的名字进来。
+          No class specified. Go back to Topic Distribution and click a class
+          name to get here.
         </MissingBox>
       ) : loaderData.kind === "error" ? (
-        <MissingBox className="mt-4">取数失败:{loaderData.error}</MissingBox>
+        <MissingBox className="mt-4">Failed to load data: {loaderData.error}</MissingBox>
       ) : loaderData.d.total === 0 ? (
         <MissingBox className="mt-4">
-          这一类还没有归类到的问题。换个类目,或先跑一次旁路批量归类。
+          No questions have been classified into this class yet. Try another
+          class, or run the bypass batch classification first.
         </MissingBox>
       ) : (
         <div className="mt-4 border-4 border-ink bg-cream p-3.5 shadow-hard sm:p-4">
           <h2 className="flex flex-wrap items-center gap-2.5 text-sm font-bold">
             {loaderData.d.label}
             <Pill tone="info">
-              {loaderData.d.total} 条 · 第 {loaderData.d.page}/
-              {loaderData.d.pages} 页
+              {loaderData.d.total} questions · page {loaderData.d.page}/
+              {loaderData.d.pages}
             </Pill>
           </h2>
           <p className="mt-1 mb-1 text-[12.5px] leading-7 text-ink-soft">
-            列的是分类器归到这一类的问题,多标签的问题会同时出现在它命中的每个类目下。
-            问法取归并阶段产出的标准化问句,原话在下面一行。
+            Lists the questions the classifier grouped into this class;
+            multi-label questions appear under every class they hit. The
+            phrasing shown is the normalized question from the merge stage —
+            the original wording is on the line below.
           </p>
           {loaderData.d.items.map((it) => (
             <QuestionRow key={it.question_id} it={it} label={loaderData.label} />
@@ -243,20 +261,20 @@ export default function TopicQuestionsPage({
               disabled={loaderData.d.page <= 1}
               onClick={() => { go(loaderData.d.label, loaderData.d.page - 1); }}
             >
-              ← 上一页
+              ← Previous
             </Btn>
             <Btn
               size="sm"
               disabled={loaderData.d.page >= loaderData.d.pages}
               onClick={() => { go(loaderData.d.label, loaderData.d.page + 1); }}
             >
-              下一页 →
+              Next →
             </Btn>
             <span className="text-[12.5px]">
-              第 <b className="tabular-nums">{loaderData.d.page}</b> /{" "}
-              {loaderData.d.pages} 页 · 本类共{" "}
-              <b className="tabular-nums">{loaderData.d.total}</b> 条 · 每页{" "}
-              {loaderData.d.size} 条
+              Page <b className="tabular-nums">{loaderData.d.page}</b> /{" "}
+              {loaderData.d.pages} ·{" "}
+              <b className="tabular-nums">{loaderData.d.total}</b> questions in
+              this class · {loaderData.d.size} per page
             </span>
           </div>
         </div>

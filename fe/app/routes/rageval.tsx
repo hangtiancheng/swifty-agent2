@@ -36,27 +36,28 @@ import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
 
-/* 页面只画 /api/rag-eval/overview 端出来的那份产物:一个数都不在前端重算。
-   重跑按钮走共用的 /api/jobs 运行器(作业名 eval-rag),跑完回调重新取数。 */
+/* This page only renders the artifact served by /api/rag-eval/overview — not a single
+   number is recomputed on the client. The re-run button goes through the shared
+   /api/jobs runner (job name eval-rag) and revalidates once it finishes. */
 
 const STRAT: BarSeries[] = [
-  { key: "vector", label: "纯向量", color: "var(--sky)" },
-  { key: "bm25", label: "纯 BM25", color: "var(--online)" },
-  { key: "hybrid", label: "混合", color: "#ff8095" },
-  { key: "hybrid_rerank", label: "混合 + 重排", color: "var(--fur)" },
+  { key: "vector", label: "Vector", color: "var(--sky)" },
+  { key: "bm25", label: "BM25", color: "var(--online)" },
+  { key: "hybrid", label: "Hybrid", color: "#ff8095" },
+  { key: "hybrid_rerank", label: "Hybrid + Rerank", color: "var(--fur)" },
 ];
 
 const BUCKETS: BarGroup[] = [
-  { key: "A_policy", label: "政策类", sub: "A_policy" },
-  { key: "B_model", label: "型号类", sub: "B_model" },
-  { key: "C_colloquial", label: "口语类", sub: "C_colloquial" },
-  { key: "E_multi", label: "跨文档类", sub: "E_multi" },
-  { key: "overall", label: "总体", sub: "overall", agg: true },
+  { key: "A_policy", label: "Policy", sub: "A_policy" },
+  { key: "B_model", label: "Model", sub: "B_model" },
+  { key: "C_colloquial", label: "Colloquial", sub: "C_colloquial" },
+  { key: "E_multi", label: "Multi-doc", sub: "E_multi" },
+  { key: "overall", label: "Overall", sub: "overall", agg: true },
 ];
 
-const METRICS = ["MRR", "Recall@5", "证据覆盖度"] as const;
+const METRICS = ["MRR", "Recall@5", "Evidence Coverage"] as const;
 
-/* ---------- 产物形状 ---------- */
+/* ---------- Artifact shape ---------- */
 
 interface RefusalCase {
   id: string;
@@ -151,9 +152,9 @@ interface Hallucination {
   confirmed_rate: number | null;
   ledger: {
     total: number;
-    未解决: number;
-    已解决: number;
-    无需解决: number;
+    unresolved: number;
+    resolved: number;
+    dismissed: number;
   };
 }
 
@@ -179,10 +180,11 @@ export async function clientLoader(): Promise<LoaderData> {
 
 export function meta() {
   return [
-    { title: "喵喵优选 · RAG 评估" },
+    { title: "MeowMeow Select · RAG Eval" },
     {
       name: "description",
-      content: "四策略对照 · 检索排序 / 证据覆盖 / 端到端答案,一次跑齐",
+      content:
+        "Four strategies side by side · retrieval ranking / evidence coverage / end-to-end answers in one run",
     },
   ];
 }
@@ -190,7 +192,7 @@ export function meta() {
 const fmt2 = (v?: number | null): string =>
   v === null || v === undefined ? "—" : v.toFixed(2);
 
-/* ---------- 取数函数:四种指标各一种口径 ---------- */
+/* ---------- Value getters: one accessor per metric ---------- */
 
 function valFn(d: Overview, metric: string) {
   return (s: string, b: string): number | null | undefined => {
@@ -200,11 +202,11 @@ function valFn(d: Overview, metric: string) {
     if (metric === "Recall@5") {
       return d.retrieval[s]?.[b]?.recall ?? 0;
     }
-    if (metric === "证据覆盖度") {
+    if (metric === "Evidence Coverage") {
       return d.evidence_coverage[s]?.[b] ?? 0;
     }
-    if (metric === "答案覆盖度") {
-      // null = 这一桶一条都没评上(上游抖动),按 0 画会被读成真的零分
+    if (metric === "Answer Coverage") {
+      // null = no case in this bucket got evaluated (upstream flakiness); drawing 0 would read as a real zero score
       return d.generation?.answer_coverage?.[s]?.[b];
     }
     return 0;
@@ -221,47 +223,48 @@ function KpiBox({ d }: { d: Overview }) {
   const bestLabel = STRAT.find((s) => s.key === d.best.strategy)?.label ?? "—";
   const items: { label: string; val: string; sub: string }[] = [
     {
-      label: "最佳整体 MRR",
+      label: "Best overall MRR",
       val: fmt2(d.best.mrr),
-      sub: bestLabel + " · 四策略最高",
+      sub: bestLabel + " · highest of the four strategies",
     },
     {
-      label: "口语桶 MRR 提升",
+      label: "Colloquial bucket MRR lift",
       val: (cR - cB >= 0 ? "+" : "") + (cR - cB).toFixed(2),
-      sub: "纯 BM25 " + fmt2(cB) + " → 混合 + 重排 " + fmt2(cR),
+      sub: "BM25 " + fmt2(cB) + " → Hybrid + Rerank " + fmt2(cR),
     },
     G
       ? {
-          label: "答案覆盖度(重排)",
-          val: fmt2(valFn(d, "答案覆盖度")("hybrid_rerank", "overall")),
+          label: "Answer coverage (rerank)",
+          val: fmt2(valFn(d, "Answer Coverage")("hybrid_rerank", "overall")),
           sub:
-            "纯 BM25 只有 " + fmt2(valFn(d, "答案覆盖度")("bm25", "overall")),
+            "BM25 alone only reaches " +
+            fmt2(valFn(d, "Answer Coverage")("bm25", "overall")),
         }
       : {
-          label: "端到端答案覆盖度",
+          label: "End-to-end answer coverage",
           val: "—",
-          sub: "本次生成段未完成",
+          sub: "Generation stage incomplete for this run",
         },
     G?.refusal.rate != null
       ? {
-          label: "库外问题拒答",
+          label: "Out-of-KB refusals",
           val: String(Math.round(G.refusal.rate * 100)) + "%",
           sub:
             String(G.refusal.correct) +
             " / " +
             String(G.refusal.total) +
-            " 正确拒答并落池",
+            " correct refusals, logged to the low-confidence pool",
         }
       : G
         ? {
-            label: "库外问题拒答",
+            label: "Out-of-KB refusals",
             val: "—",
-            sub: "本轮一条都没评上(上游不稳)",
+            sub: "No cases evaluated this round (upstream instability)",
           }
         : {
-            label: "库外问题拒答",
+            label: "Out-of-KB refusals",
             val: "—",
-            sub: "本次生成段未完成",
+            sub: "Generation stage incomplete for this run",
           },
   ];
   return (
@@ -282,46 +285,46 @@ function KpiBox({ d }: { d: Overview }) {
   );
 }
 
-/* ---------- 01 检索质量 ---------- */
+/* ---------- 01 Retrieval quality ---------- */
 
 function RetrievalPanel({ d }: { d: Overview }) {
   const [metric, setMetric] = useState<(typeof METRICS)[number]>("MRR");
   const READ: Record<string, () => string> = {
     MRR: () =>
-      "型号桶里纯向量只有 " +
+      "Vector alone scores just " +
       fmt2(valFn(d, "MRR")("vector", "B_model")) +
-      ",易混型号族认错了型号。口语桶里纯 BM25 只有 " +
+      " in the Model bucket — it confuses look-alike model families. BM25 alone scores just " +
       fmt2(valFn(d, "MRR")("bm25", "C_colloquial")) +
-      ",关键词对不齐。两块短板都补上之后,总体 " +
+      " in the Colloquial bucket, where keywords don't line up. With both gaps covered, " +
       (STRAT.find((s) => s.key === d.best.strategy)?.label ?? "—") +
-      " " +
+      " leads overall at " +
       fmt2(d.best.mrr) +
-      " 居首。",
+      ".",
     "Recall@5": () =>
-      "召回率看的是「这题要的证据在前五条里凑齐了几成」。跨文档桶一问要两三块不同小节的知识,纯 BM25 只有 " +
+      "Recall@5 measures how much of the evidence a question needs lands in the top five hits. Multi-doc questions draw on two or three different sections: BM25 alone reaches only " +
       fmt2(valFn(d, "Recall@5")("bm25", "E_multi")) +
-      ",混合 + 重排到 " +
+      ", while hybrid + rerank gets to " +
       fmt2(valFn(d, "Recall@5")("hybrid_rerank", "E_multi")) +
-      "。",
-    证据覆盖度: () =>
-      "召回的十条证据里,标准要点有几个在。纯 BM25 在口语桶仅 " +
-      fmt2(valFn(d, "证据覆盖度")("bm25", "C_colloquial")) +
-      ",答题要用的事实漏了一部分。混合 + 重排四个桶全是满覆盖。",
+      ".",
+    "Evidence Coverage": () =>
+      "Of the ten retrieved chunks, how many gold-answer points are present. BM25 alone covers just " +
+      fmt2(valFn(d, "Evidence Coverage")("bm25", "C_colloquial")) +
+      " in the Colloquial bucket, leaving out facts the answer needs; hybrid + rerank reaches full coverage in all four buckets.",
   };
-  // 三张图各对一种小注:产物里有模型写的就用,没有才用 READ 里那句
+  // One read-note per chart: prefer the model-written note from the artifact; fall back to the canned READ copy
   const NOTE_KIND: Record<string, string> = {
     MRR: "rag_mrr",
     "Recall@5": "rag_recall",
-    证据覆盖度: "rag_coverage",
+    "Evidence Coverage": "rag_coverage",
   };
   return (
     <Panel
-      title="检索质量(确定性)"
-      pill={<Pill tone="info">不依赖大模型 · 可复现</Pill>}
-      lede="MRR 看排得够不够靠前,Recall@5 看这题要的证据在前五条里凑齐了几成。证据覆盖度是另一件事,召回的那十条证据里,标准答案的要点有几个在。三项都是机械算出来的,重跑分数不飘。图上是 A/B/C/E 四个可作答桶,库外该拒答的 D_absent 桶没有标准答案,它的成绩在生成段。"
+      title="Retrieval quality (deterministic)"
+      pill={<Pill tone="info">No LLM involved · reproducible</Pill>}
+      lede="MRR measures how high the right chunks rank; Recall@5 measures how much of the evidence a question needs lands in the top five hits. Evidence coverage asks a different question: of the ten retrieved chunks, how many gold-answer points are present. All three are computed mechanically, so scores don't drift across re-runs. The charts cover the four answerable buckets A/B/C/E; the out-of-KB bucket D_absent, which should be refused, has no gold answers — its results live in the generation stage."
     >
       <div className="flex flex-wrap items-center gap-3">
-        <SectionHead unit="越高越好 · 0–1" className="mt-0">
+        <SectionHead unit="Higher is better · 0–1" className="mt-0">
           {metric}
         </SectionHead>
         <span className="flex-1" />
@@ -356,7 +359,7 @@ function RetrievalPanel({ d }: { d: Overview }) {
               style={{ background: s.color }}
             />
             {s.label}
-            {s.key === d.best.strategy ? "(最佳)" : ""}
+            {s.key === d.best.strategy ? " (best)" : ""}
           </span>
         ))}
       </div>
@@ -364,7 +367,7 @@ function RetrievalPanel({ d }: { d: Overview }) {
         groups={BUCKETS}
         series={STRAT}
         getVal={valFn(d, metric)}
-        ariaLabel={"检索质量:" + metric}
+        ariaLabel={"Retrieval quality: " + metric}
       />
       <ReadNote
         note={d.read_notes?.[NOTE_KIND[metric] ?? ""]}
@@ -374,15 +377,15 @@ function RetrievalPanel({ d }: { d: Overview }) {
   );
 }
 
-/* ---------- 02 生成质量 ---------- */
+/* ---------- 02 Generation quality ---------- */
 
 function RefusalCases({ R }: { R: Generation["refusal"] }) {
   const cases = R.cases ?? [];
   if (!cases.length) {
     return (
       <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
-        ✓ 库外桶评上的 <b className="font-bold">{R.total}</b> 道题
-        <b className="font-bold">全部正确拒答</b>,没有「该拒没拒」的个案。
+        ✓ All <b className="font-bold">{R.total}</b> evaluated out-of-KB questions were{" "}
+        <b className="font-bold">correctly refused</b> — no should-refuse leaks.
       </div>
     );
   }
@@ -390,16 +393,17 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
     <details className="group mt-3 border-3 border-ink bg-paper">
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 bg-cream px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
-        该拒没拒的个案
-        <Pill tone="sev-中">{cases.length} 例</Pill>
+        Should-refuse leaks
+        <Pill tone="sev-medium">{cases.length} cases</Pill>
         <span className="font-normal text-muted">
-          点开看是哪一条 / 被什么证据骗过了闸
+          Open to see which questions slipped through, and what evidence fooled the gates
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
         <p className="my-2 text-xs leading-7 text-ink-soft">
-          这些是库外该拒答、但两道证据闸都放行了的问题。要看的是它把哪一节当成了答案,
-          据此收紧阈值或者补一条明确的「不支持」知识。
+          These out-of-KB questions should have been refused, but both evidence gates waved
+          them through. Check which section got mistaken for an answer, then tighten the
+          threshold or add an explicit "not supported" knowledge entry.
         </p>
         {cases.map((c) => (
           <div
@@ -411,17 +415,17 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
                 {c.id}
               </span>
               <span className="text-[13px] font-bold">{c.query}</span>
-              <span className="text-[11px] text-muted">库外桶</span>
+              <span className="text-[11px] text-muted">Out-of-KB bucket</span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
               <span className="block text-[10.5px] text-muted">
-                被当成答案的小节
+                Section mistaken for the answer
               </span>
               {c.section_path ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
               <span className="block text-[10.5px] text-muted">
-                那条证据(原文)
+                The evidence (verbatim)
               </span>
               <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
                 {c.evidence ?? ""}
@@ -439,62 +443,64 @@ function GenerationPanel({ d }: { d: Overview }) {
   if (!d.generation_done || !G) {
     return (
       <Panel
-        title="生成质量(端到端)"
-        pill={<Pill tone="missing">本次未完成</Pill>}
-        lede="四策略各自把召回的证据交给同一个模型,答案生成出来,再由裁判数一数覆盖了几个标准要点。检索越好、答案越全,这一段就是它的端到端证据。下面还有上线管线的忠实度,以及库外问题该拒有没有拒。"
+        title="Generation quality (end-to-end)"
+        pill={<Pill tone="missing">Incomplete this run</Pill>}
+        lede="Each strategy feeds its retrieved evidence to the same model, an answer is generated, and an LLM judge counts how many gold-answer points it covers — the end-to-end proof that better retrieval yields fuller answers. Below: faithfulness of the production pipeline, and whether out-of-KB questions were properly refused."
       >
         <MissingBox>
-          生成段没跑完,裁判模型上游不可用,这一段的数缺着。
-          上游恢复后按一次「重跑 RAG 评估」就补齐,检索段的分不受影响。
+          The generation stage didn't finish — the judge model's upstream was unavailable, so
+          these numbers are missing. Once it recovers, press "Re-run RAG evaluation" and they
+          will fill in; retrieval scores are unaffected.
         </MissingBox>
       </Panel>
     );
   }
-  const ac = valFn(d, "答案覆盖度");
+  const ac = valFn(d, "Answer Coverage");
   const acR = ac("hybrid_rerank", "overall");
   const acB = ac("bm25", "overall");
   return (
     <Panel
-      title="生成质量(端到端)"
-      pill={<Pill tone="info">LLM 裁判判分</Pill>}
-      lede="四策略各自把召回的证据交给同一个模型,答案生成出来,再由裁判数一数覆盖了几个标准要点。检索越好、答案越全,这一段就是它的端到端证据。下面还有上线管线的忠实度,以及库外问题该拒有没有拒。"
+      title="Generation quality (end-to-end)"
+      pill={<Pill tone="info">Scored by LLM judge</Pill>}
+      lede="Each strategy feeds its retrieved evidence to the same model, an answer is generated, and an LLM judge counts how many gold-answer points it covers — the end-to-end proof that better retrieval yields fuller answers. Below: faithfulness of the production pipeline, and whether out-of-KB questions were properly refused."
     >
       <SectionHead
-        unit="生成答案盖住标准要点的比例 · LLM 判分"
+        unit="Share of gold-answer points covered by the generated answer · LLM-judged"
         className="mt-0"
       >
-        四策略答案覆盖度
+        Answer coverage by strategy
       </SectionHead>
       <GroupedBarChart
         groups={BUCKETS}
         series={STRAT}
         getVal={ac}
-        ariaLabel="四策略答案覆盖度"
+        ariaLabel="Answer coverage by strategy"
       />
       <ReadNote
         note={d.read_notes?.rag_answer_coverage}
         fallback={
           <>
-            同一套生成提示词,只换检索策略:混合 + 重排的答案覆盖度总体{" "}
-            <b>{fmt2(acR)}</b>,纯 BM25 只有 <b>{fmt2(acB)}</b>
-            。检索差,证据就缺,答案跟着漏要点。
+            Same generation prompt, only the retrieval strategy changes: hybrid + rerank
+            reaches <b>{fmt2(acR)}</b> answer coverage overall, while BM25 alone manages just{" "}
+            <b>{fmt2(acB)}</b>. Weaker retrieval means missing evidence, and the answer drops
+            gold points.
           </>
         }
       />
 
       <div className="mt-3.5 grid gap-3.5 md:grid-cols-[1.45fr_1fr]">
         <div>
-          <SectionHead unit="混合 + 重排 · 答案有没有编造" className="mt-0">
-            忠实度 Faithfulness
+          <SectionHead unit="Hybrid + rerank · does the answer fabricate?" className="mt-0">
+            Faithfulness
           </SectionHead>
           <div className="mt-2 flex flex-col gap-3">
-            {/* 桶跟着上面的 BUCKETS 走,别在这儿再抄一份:漏的那桶恰恰是最难的那桶 */}
+            {/* Buckets follow BUCKETS above — don't duplicate the list here; the missing bucket is exactly the hardest one */}
             {BUCKETS.filter((x) => !x.agg).map((b) => {
               const f = G.faithfulness?.[b.key] ?? {
                 v: null,
                 answered: 0,
               };
-              const has = f.v !== null && f.v !== undefined; // 没评上 ≠ 0 分
+              const has = f.v !== null && f.v !== undefined; // not evaluated ≠ a score of 0
               const v = has ? (f.v ?? 0) : 0;
               return (
                 <div key={b.key}>
@@ -502,7 +508,7 @@ function GenerationPanel({ d }: { d: Overview }) {
                     <div>
                       <b className="font-bold">{b.label}</b>
                       <span className="ml-1.5 text-[11px] text-muted">
-                        {b.key} · 评 {f.answered} 题
+                        {b.key} · {f.answered} evaluated
                       </span>
                     </div>
                     <div className="font-bold tabular-nums">
@@ -532,9 +538,10 @@ function GenerationPanel({ d }: { d: Overview }) {
           rate={G.refusal.rate ?? 0}
           caption={
             <>
-              <b>D_absent 桶</b> · 库外问题
+              <b>D_absent bucket</b> · out-of-KB questions
               <br />
-              {G.refusal.correct} / {G.refusal.total} 正确拒答并落池
+              {G.refusal.correct} / {G.refusal.total} correct refusals, logged to the
+              low-confidence pool
             </>
           }
         />
@@ -542,12 +549,13 @@ function GenerationPanel({ d }: { d: Overview }) {
       <RefusalCases R={G.refusal} />
       {G.skipped ? (
         <div className="mt-3 border-3 border-ink bg-paper p-2.5 text-xs leading-7 text-ink-soft">
-          注:本轮有 {G.skipped}{" "}
-          次裁判调用超时或失败被跳过(上游不稳),已按可用样本计。
+          Note: {G.skipped}{" "}
+          judge calls timed out or failed this round and were skipped (upstream
+          instability); rates are computed from the available samples.
           {(G.refusal.skipped_ids ?? []).length
-            ? "库外桶里没评上的是 " +
-              (G.refusal.skipped_ids ?? []).join("、") +
-              "。"
+            ? " Skipped out-of-KB ids: " +
+              (G.refusal.skipped_ids ?? []).join(", ") +
+              "."
             : ""}
         </div>
       ) : null}
@@ -555,36 +563,35 @@ function GenerationPanel({ d }: { d: Overview }) {
   );
 }
 
-/* ---------- 03 完整数据 + 本轮编造个案 ---------- */
+/* ---------- 03 Full data + this round's fabricated cases ---------- */
 
 function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
   if (!cases.length) {
     return (
       <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
-        ✓ 本轮上线管线的生成答案
-        <b className="font-bold">没有被判「编造」的个案</b>
-        ,每句事实性说法都能在检索证据里找到依据。
+        ✓ No generated answer from this round's production pipeline was{" "}
+        <b className="font-bold">judged "fabricated"</b> — every factual claim is backed by
+        the retrieved evidence.
       </div>
     );
   }
-  // 桶名跟着上面 BUCKETS 走,别再手抄一份
-  const BMAP = Object.fromEntries(
-    BUCKETS.map((b) => [b.key, b.label.replace("类", "")]),
-  );
+  // Bucket names follow BUCKETS above — don't hand-copy a second list
+  const BMAP = Object.fromEntries(BUCKETS.map((b) => [b.key, b.label]));
   return (
     <details className="group mt-3 border-3 border-ink bg-paper">
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 bg-cream px-3 py-2 text-[12.5px] font-bold [&::-webkit-details-marker]:hidden">
         <span className="before:content-['▸'] group-open:before:content-['▾']" />
-        编造个案
-        <Pill tone="sev-中">{cases.length} 例</Pill>
+        Fabricated cases
+        <Pill tone="sev-medium">{cases.length} cases</Pill>
         <span className="font-normal text-muted">
-          点开看问题 / 生成答案 / 裁判理由
+          Open for the question / generated answer / judge rationale
         </span>
       </summary>
       <div className="px-3 pt-1 pb-3">
         <p className="my-2 text-xs leading-7 text-ink-soft">
-          下面这些是上线管线的生成答案里,被忠实度裁判判为「有检索证据没支撑的内容」的个案。
-          要看的是编在哪一句,据此回补知识库或者改判据。
+          These generated answers from the production pipeline were judged to contain claims
+          the retrieved evidence doesn't support. Look at which sentence was fabricated, then
+          patch the Knowledge Base or adjust the judging criteria.
         </p>
         {cases.map((c) => (
           <div
@@ -597,16 +604,16 @@ function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
               </span>
               <span className="text-[13px] font-bold">{c.query}</span>
               <span className="text-[11px] text-muted">
-                {(BMAP[c.bucket] ?? c.bucket) + "桶"}
+                {(BMAP[c.bucket] ?? c.bucket) + " bucket"}
               </span>
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
-              <span className="block text-[10.5px] text-muted">裁判理由</span>
+              <span className="block text-[10.5px] text-muted">Judge rationale</span>
               {c.reason ?? "—"}
             </div>
             <div className="mt-1.5 text-[12.5px] leading-7">
               <span className="block text-[10.5px] text-muted">
-                生成答案(原文)
+                Generated answer (verbatim)
               </span>
               <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
                 {c.answer ?? ""}
@@ -622,25 +629,25 @@ function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
 function TablePanel({ d }: { d: Overview }) {
   const G = d.generation;
   const mrr = valFn(d, "MRR");
-  const cov = valFn(d, "证据覆盖度");
-  const ac = valFn(d, "答案覆盖度");
+  const cov = valFn(d, "Evidence Coverage");
+  const ac = valFn(d, "Answer Coverage");
   return (
     <Panel
-      title="完整数据"
-      lede="左半是分桶 MRR,右半是总体的证据覆盖度与答案覆盖度。带底色那一行就是总体 MRR 最佳的策略。"
+      title="Full data"
+      lede="Left half: MRR per bucket. Right half: overall evidence and answer coverage. The highlighted row is the strategy with the best overall MRR."
     >
       <TableScroll>
         <Tbl>
           <thead>
             <tr>
-              <Th>策略</Th>
-              <Th>政策 MRR</Th>
-              <Th>型号 MRR</Th>
-              <Th>口语 MRR</Th>
-              <Th>跨文档 MRR</Th>
-              <Th>总体 MRR</Th>
-              <Th>证据覆盖</Th>
-              <Th>答案覆盖</Th>
+              <Th>Strategy</Th>
+              <Th>Policy MRR</Th>
+              <Th>Model MRR</Th>
+              <Th>Colloquial MRR</Th>
+              <Th>Multi-doc MRR</Th>
+              <Th>Overall MRR</Th>
+              <Th>Evidence cov.</Th>
+              <Th>Answer cov.</Th>
             </tr>
           </thead>
           <tbody>
@@ -686,38 +693,47 @@ function TablePanel({ d }: { d: Overview }) {
         </Tbl>
       </TableScroll>
       <Tip>
-        <b>D_absent</b> 库外问题(该拒答)没有标准答案,不参与上表。
+        <b>D_absent</b> out-of-KB questions (should be refused) have no gold answers, so they
+        don't appear in the table above.
         {G
-          ? "它走上线管线,只评「该拒有没有拒」:" +
+          ? " They run through the production pipeline and are graded on refusal only: " +
             String(G.refusal.correct) +
             " / " +
             String(G.refusal.total) +
             " = " +
             String(Math.round((G.refusal.rate ?? 0) * 100)) +
-            "% 正确拒答。"
-          : "它走上线管线,拒答率要等生成段跑完才有。"}
+            "% correct refusals."
+          : " They run through the production pipeline; the refusal rate arrives once the generation stage completes."}
       </Tip>
       {G ? <FaithCasesInline cases={G.faithfulness_cases ?? []} /> : null}
     </Panel>
   );
 }
 
-/* ---------- 03.5 编造个案台账 ---------- */
+/* ---------- 03.5 Fabricated-case ledger ---------- */
 
+/* Ledger status values are the backend enum (contract): they key the row classes and get
+   their English labels for display via STATUS_LABEL. */
 const ST_CLS: Record<string, string> = {
-  未解决: "bg-error-bg",
-  已解决: "bg-online-bg",
-  无需解决: "bg-paper text-muted",
+  unresolved: "bg-error-bg",
+  resolved: "bg-online-bg",
+  dismissed: "bg-paper text-muted",
 };
 
-/** 幻觉率两个口径:裁判判出率(线索量,含判严的)与确认幻觉率(人工过目并改掉的才算) */
+const STATUS_LABEL: Record<string, string> = {
+  unresolved: "Unresolved",
+  resolved: "Resolved",
+  dismissed: "Dismissed",
+};
+
+/** Two hallucination rates: judge-flagged (a lead volume, includes over-strict calls) and confirmed (only cases a human reviewed and fixed) */
 function HallucBox({ h }: { h: Hallucination }) {
   const pct = (v: number | null) =>
     v === null || v === undefined ? "—" : (v * 100).toFixed(1);
-  // 两类幻觉都算:可作答题「答了但编了」+ 库外题「该拒没拒」(无据而答)
+  // Both hallucination kinds count: answerable questions "answered but fabricated" + out-of-KB questions "should-refuse leaks" (answered without evidence)
   const split = (cases: number) => (
     <>
-      编造 <b>{cases}</b> 条 + 该拒没拒 <b>{h.refusal_missed}</b> 条
+      <b>{cases}</b> fabricated + <b>{h.refusal_missed}</b> should-refuse leaks
     </>
   );
   const lg = h.ledger;
@@ -725,42 +741,45 @@ function HallucBox({ h }: { h: Hallucination }) {
     <div className="grid gap-3 md:grid-cols-2">
       <div className="border-3 border-ink bg-cream p-2.5 shadow-hard-sm">
         <div className="text-[11.5px] text-muted">
-          本轮确认幻觉率(人工过目后算的真账)
+          Confirmed hallucination rate this round (counted after human review)
         </div>
         <div className="text-2xl leading-snug font-bold tabular-nums">
           {pct(h.confirmed_rate)}
           <small className="ml-0.5 text-[13px] font-normal text-muted">%</small>
         </div>
         <div className="text-[11.5px] leading-6 text-ink-soft [&_b]:font-bold">
-          <b>{h.confirmed}</b> / {h.evaluated ?? "—"} 道评上的题(
+          <b>{h.confirmed}</b> / {h.evaluated ?? "—"} evaluated questions (
           {split(h.cases_confirmed)}
-          )。编造那部分只算点成「已解决」的——确认真编了并且改掉了;
+          ). The fabricated part only counts cases marked "Resolved" — confirmed real and
+          fixed.{" "}
           {h.pending ? (
             <>
-              本轮还有 <b>{h.pending}</b> 条没过目,所以这是下界、会往上走。
+              <b>{h.pending}</b> cases are still awaiting review this round, so this is a
+              lower bound and can only go up.{" "}
             </>
           ) : (
-            "本轮判出的都过目了,这一轮的账已经结清。"
+            "Everything flagged this round has been reviewed — the books are settled. "
           )}
-          该拒没拒不用人工确认,库外题答了就是无据而答。
+          Should-refuse leaks need no human confirmation: answering an out-of-KB question is
+          answering without evidence.
         </div>
       </div>
       <div className="border-3 border-ink bg-paper p-2.5">
         <div className="text-[11.5px] text-muted">
-          本轮裁判判出率(线索量,别当结论)
+          Judge-flagged rate this round (a lead volume, not a verdict)
         </div>
         <div className="text-2xl leading-snug font-bold tabular-nums">
           {pct(h.judged_rate)}
           <small className="ml-0.5 text-[13px] font-normal text-muted">%</small>
         </div>
         <div className="text-[11.5px] leading-6 text-ink-soft [&_b]:font-bold">
-          <b>{h.judged}</b> / {h.evaluated ?? "—"} 道({split(h.cases_judged)}
-          )。编造那部分里有 <b>{h.dismissed}</b>{" "}
-          条人工看过是判严了(标成「无需解决」)。分母 = 可作答{" "}
-          {h.graded ?? "—"} 道 + 库外 {h.absent ?? "—"} 道。台账累计{" "}
-          <b>{lg.total ?? "—"}</b> 条(未解决 {lg["未解决"] ?? "—"} · 已解决{" "}
-          {lg["已解决"] ?? "—"} · 无需解决 {lg["无需解决"] ?? "—"}
-          ),那是跨轮的管理视图,不要拿它除以一轮的题量。
+          <b>{h.judged}</b> / {h.evaluated ?? "—"} questions ({split(h.cases_judged)}). Of the
+          fabricated ones, <b>{h.dismissed}</b> were reviewed as over-strict judge calls
+          (marked "Dismissed"). Denominator = {h.graded ?? "—"} answerable + {h.absent ?? "—"}{" "}
+          out-of-KB questions. The ledger holds <b>{lg.total ?? "—"}</b> cases across all
+          rounds (Unresolved {lg["unresolved"] ?? "—"} · Resolved {lg["resolved"] ?? "—"} ·
+          Dismissed {lg["dismissed"] ?? "—"}) — a cross-round management view; don't divide it
+          by one round's question count.
         </div>
       </div>
     </div>
@@ -786,10 +805,10 @@ function LedgerCaseCard({
         "/api/rag-eval/faith-cases/" + String(c.id) + "/status",
         jsonPost({ status: st, resolution }),
       );
-      toast(c.eval_id + " → " + st);
+      toast(c.eval_id + " → " + (STATUS_LABEL[st] ?? st));
       onChanged();
     } catch (e) {
-      toast("改状态失败:" + errMsg(e), true);
+      toast("Failed to update status: " + errMsg(e), true);
       onChanged();
     } finally {
       setPosting(false);
@@ -798,15 +817,16 @@ function LedgerCaseCard({
 
   const submitNote = () => {
     if (!note.trim()) {
-      toast("请先写一句处置说明", true);
+      toast("Write a resolution note first", true);
       return;
     }
     void post(noteFor ?? "", note.trim());
     setNoteFor(null);
   };
 
-  // 这份列表是**喂给模型的 Top-K 证据全集**,不是「答案引用过的」——答案通常只引其中两三条。
-  // 两者要分开说:看编造,既要看它引了什么,也要看它手里其实有什么却没用
+  // This list is the **full Top-K evidence set fed to the model**, not "what the answer cited" —
+  // answers usually cite only two or three of them. Keep the two apart: judging fabrication means
+  // looking at what was cited and at what was on hand but ignored
   const n = (c.citations ?? []).length;
   const used = [...new Set((c.answer ?? "").match(/\[(\d+)\]/g) ?? [])]
     .map((x) => Number.parseInt(x.slice(1, -1), 10))
@@ -825,7 +845,7 @@ function LedgerCaseCard({
         <span className="flex-1 text-[13px] font-bold">{c.query}</span>
         {c.reopened ? (
           <span className="border-2 border-ink bg-fur px-1.5 text-[11px] font-bold">
-            复发
+            Recurred
           </span>
         ) : null}
         <span
@@ -834,34 +854,34 @@ function LedgerCaseCard({
             ST_CLS[c.status] ?? "",
           )}
         >
-          {c.status}
+          {STATUS_LABEL[c.status] ?? c.status}
         </span>
       </div>
       <div className="mt-1 text-[11px] text-muted">
         {(BUCKETS.find((x) => x.key === c.bucket)?.label ?? c.bucket) +
           " · " +
           (STRAT.find((x) => x.key === c.strategy)?.label ?? c.strategy) +
-          " · 被判 " +
+          " · flagged " +
           String(c.seen_count) +
-          " 次 · 最近 " +
+          "× · last " +
           fmtTime(c.last_seen_at) +
-          (c.judge_model ? " · 裁判 " + c.judge_model : "")}
+          (c.judge_model ? " · judge " + c.judge_model : "")}
       </div>
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="block text-[10.5px] text-muted">裁判理由</span>
+        <span className="block text-[10.5px] text-muted">Judge rationale</span>
         {c.reason ?? "—"}
       </div>
-      {/* 处置说明:标了已解决/无需解决就得有交代(最该被回头看的两行放一起) */}
+      {/* Resolution note: marking resolved/dismissed requires an explanation (the two fields most worth revisiting, kept together) */}
       {c.resolution ? (
         <div className="mt-1.5 text-[12.5px] leading-7">
           <span className="block text-[10.5px] text-muted">
-            {c.status === "已解决" ? "怎么解决的" : "为什么不用改"}
+            {c.status === "resolved" ? "How it was resolved" : "Why no fix is needed"}
           </span>
           {c.resolution}
         </div>
       ) : null}
       <div className="mt-1.5 text-[12.5px] leading-7">
-        <span className="block text-[10.5px] text-muted">生成答案(原文)</span>
+        <span className="block text-[10.5px] text-muted">Generated answer (verbatim)</span>
         <div className="mt-0.5 border-2 border-ink bg-paper p-2 whitespace-pre-wrap">
           {c.answer ?? ""}
         </div>
@@ -870,16 +890,16 @@ function LedgerCaseCard({
       <details className="mt-2 border-2 border-ink bg-paper">
         <summary className="cursor-pointer bg-cream px-2.5 py-1.5 text-[11.5px] text-ink-soft [&::-webkit-details-marker]:hidden">
           {n
-            ? "证据原文 " +
+            ? "Evidence (verbatim): " +
               String(n) +
-              " 条(这一轮喂给模型的全部证据)" +
+              " chunks — everything fed to the model this round" +
               (used.length
-                ? " · 答案引用了其中 " +
+                ? " · the answer cited " +
                   String(used.length) +
-                  " 条:" +
+                  " of them: " +
                   used.map((x) => "[" + String(x) + "]").join("")
-                : " · 答案一条都没引")
-            : "证据原文 —— 这条个案入台账时还没记快照"}
+                : " · the answer cited none")
+            : "Evidence (verbatim) — no snapshot was recorded when this case entered the ledger"}
         </summary>
         {(c.citations ?? []).map((x) => {
           const isUsed = used.includes(x.n);
@@ -903,7 +923,7 @@ function LedgerCaseCard({
                 {x.question ?? ""}
                 {isUsed ? (
                   <span className="ml-1.5 border-2 border-ink bg-fur px-1 text-[10.5px]">
-                    答案引用
+                    Cited in answer
                   </span>
                 ) : null}
               </div>
@@ -920,41 +940,41 @@ function LedgerCaseCard({
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
-          disabled={c.status === "已解决" || posting}
+          disabled={c.status === "resolved" || posting}
           className={actBtn}
           onClick={() => {
             setNote("");
-            setNoteFor("已解决");
+            setNoteFor("resolved");
           }}
         >
-          已解决
+          Resolve
         </button>
         <button
           type="button"
-          disabled={c.status === "无需解决" || posting}
+          disabled={c.status === "dismissed" || posting}
           className={actBtn}
           onClick={() => {
             setNote("");
-            setNoteFor("无需解决");
+            setNoteFor("dismissed");
           }}
         >
-          无需解决
+          Dismiss
         </button>
-        {c.status !== "未解决" ? (
+        {c.status !== "unresolved" ? (
           <button
             type="button"
             disabled={posting}
             className={actBtn}
             onClick={() => {
-              // 退回不需要说明(会连说明一起清空)
-              void post("未解决", null);
+              // Reopening needs no note (it clears the existing one)
+              void post("unresolved", null);
             }}
           >
-            退回未解决
+            Reopen
           </button>
         ) : null}
       </div>
-      {/* 处置要留交代:先在卡片里展开一行输入,空的不让提交(后端也会挡,这里只是别让人白跑一趟) */}
+      {/* Resolutions must leave a trail: expand an inline input first and block empty submissions (the backend rejects them too — this just saves a wasted round trip) */}
       <AnimatePresence>
         {noteFor ? (
           <motion.div
@@ -971,9 +991,9 @@ function LedgerCaseCard({
                 autoFocus
                 className="min-w-65 flex-1 border-2 border-ink bg-paper px-2 py-1 text-[12.5px] outline-none"
                 placeholder={
-                  noteFor === "已解决"
-                    ? "怎么解决的?比如:库里补了「Lite 废砂盒容量约 5 天」"
-                    : "为什么不用改?比如:处理时限就是我们的到账时限,裁判判严了"
+                  noteFor === "resolved"
+                    ? 'How was it resolved? e.g. added "Lite waste bin holds ~5 days" to the Knowledge Base'
+                    : "Why is no fix needed? e.g. the processing deadline is our payout deadline — the judge was too strict"
                 }
                 value={note}
                 onChange={(e) => { setNote(e.target.value); }}
@@ -988,14 +1008,14 @@ function LedgerCaseCard({
                 className="press-sm cursor-pointer border-2 border-ink bg-fur px-2.5 py-1 text-[11.5px] shadow-hard-xs"
                 onClick={submitNote}
               >
-                确定标为「{noteFor}」
+                Mark as "{STATUS_LABEL[noteFor] ?? noteFor}"
               </button>
               <button
                 type="button"
                 className="cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 text-[11.5px]"
                 onClick={() => { setNoteFor(null); }}
               >
-                取消
+                Cancel
               </button>
             </div>
           </motion.div>
@@ -1006,7 +1026,7 @@ function LedgerCaseCard({
 }
 
 function LedgerPanel() {
-  const [status, setStatus] = useState("未解决");
+  const [status, setStatus] = useState("unresolved");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<FaithCasesData | null>(null);
   const [err, setErr] = useState("");
@@ -1026,28 +1046,29 @@ function LedgerPanel() {
     }
   }, [status, page]);
 
-  // 页签/翻页变化即取数:台账是跨轮管理视图,不进路由 loader(状态多、频次高)
+  // Refetch on tab/page change: the ledger is a cross-round management view, so it stays out of the route loader (lots of state, high frequency)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 异步取数,setState 发生在 await 之后
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; setState runs after the await
     void load();
   }, [load]);
 
   const h = data?.hallucination;
   const counts = data?.counts ?? {};
   const all =
-    (counts["未解决"] ?? 0) +
-    (counts["已解决"] ?? 0) +
-    (counts["无需解决"] ?? 0);
+    (counts["unresolved"] ?? 0) +
+    (counts["resolved"] ?? 0) +
+    (counts["dismissed"] ?? 0);
 
   return (
     <Panel
-      title="编造个案台账"
-      pill={<Pill tone="info">跨轮累计 · 可处置</Pill>}
-      lede="上面那一栏只有这一轮的个案,报告重跑一次就被覆盖。台账把历轮判出的个案按题号存下来:同一道题再被判编造只更新这一条并累加次数,已处置过又冒出来会退回「未解决」并标「复发」——那说明上次没改对。每条都带当时答案里角标 [n] 对应的证据原文,追溯时点开就能看到喂进去的是什么。"
+      title="Fabricated-case ledger"
+      pill={<Pill tone="info">Cumulative across rounds · actionable</Pill>}
+      lede="The section above only covers the current round — re-running the report overwrites it. The ledger keeps flagged cases across rounds, keyed by question: when the same question is flagged again, its entry updates and the count increments; a case that resurfaces after being handled reverts to "Unresolved" and is marked "Recurred" — the previous fix didn't hold. Every entry keeps the evidence behind the [n] markers in the answer at the time, so you can open it and see exactly what the model was fed."
     >
       {err ? (
         <div className="border-3 border-ink bg-error-bg p-2.5 text-[12.5px]">
-          台账取数失败:{err}(这张表要先应用 sql/rag-faith-ddl.sql)
+          Failed to load ledger data: {err} (the FaithCase table needs its Prisma migration
+          applied first)
         </div>
       ) : null}
       {h ? <HallucBox h={h} /> : null}
@@ -1055,14 +1076,18 @@ function LedgerPanel() {
         <>
           <div className="mt-3 mb-0.5 flex flex-wrap items-center gap-2">
             {[
-              { label: "未解决", st: "未解决", cnt: counts["未解决"] ?? 0 },
-              { label: "已解决", st: "已解决", cnt: counts["已解决"] ?? 0 },
               {
-                label: "无需解决",
-                st: "无需解决",
-                cnt: counts["无需解决"] ?? 0,
+                label: "Unresolved",
+                st: "unresolved",
+                cnt: counts["unresolved"] ?? 0,
               },
-              { label: "全部", st: "", cnt: all },
+              { label: "Resolved", st: "resolved", cnt: counts["resolved"] ?? 0 },
+              {
+                label: "Dismissed",
+                st: "dismissed",
+                cnt: counts["dismissed"] ?? 0,
+              },
+              { label: "All", st: "", cnt: all },
             ].map(({ label, st, cnt }) => (
               <button
                 key={label}
@@ -1076,7 +1101,7 @@ function LedgerPanel() {
                   setPage(1);
                 }}
               >
-                {label}({cnt})
+                {label} ({cnt})
               </button>
             ))}
           </div>
@@ -1093,8 +1118,8 @@ function LedgerPanel() {
           ) : (
             <div className="mt-3 border-3 border-ink bg-online-bg p-2.5 text-[12.5px]">
               {all
-                ? "这个状态下暂时没有个案。"
-                : "台账还是空的——跑一轮 make eval-rag,判出的编造个案会自动写进来。"}
+                ? "No cases in this status yet."
+                : "The ledger is still empty — run make eval-rag and the fabricated cases it flags are written here automatically."}
             </div>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px] text-ink-soft">
@@ -1104,7 +1129,7 @@ function LedgerPanel() {
               className="press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
               onClick={() => { setPage((p) => p - 1); }}
             >
-              ← 上一页
+              ← Previous
             </button>
             <button
               type="button"
@@ -1112,10 +1137,10 @@ function LedgerPanel() {
               className="press-sm cursor-pointer border-2 border-ink bg-paper px-2.5 py-1 shadow-hard-xs hover:bg-fur disabled:cursor-default disabled:opacity-40 disabled:shadow-none"
               onClick={() => { setPage((p) => p + 1); }}
             >
-              下一页 →
+              Next →
             </button>
             <span>
-              第 {data.page} / {data.pages} 页 · 共 {data.total} 条
+              Page {data.page} of {data.pages} · {data.total} cases total
             </span>
           </div>
         </>
@@ -1124,48 +1149,48 @@ function LedgerPanel() {
   );
 }
 
-/* ---------- 04 怎么读这份报告 ---------- */
+/* ---------- 04 How to read this report ---------- */
 
 const NOTES: [string, string][] = [
   [
-    "三类查询,三种偏科",
-    "型号桶特意放了易混型号族(几款饮水机、猫砂盆),纯向量会认错型号;口语桶换了说法,纯 BM25 关键词对不齐。混合 + 重排同时补上这两块短板。",
+    "Three query types, three blind spots",
+    "The Model bucket deliberately includes look-alike model families (several water fountains and litter boxes) that trip up vector-only retrieval; the Colloquial bucket rephrases questions so BM25 keywords don't match. Hybrid + rerank covers both gaps at once.",
   ],
   [
-    "融合 ≠ 重排",
-    "纯 RRF 融合在口语桶反被弱侧的 BM25 拖累。重排把正确答案顶回前面,总体 MRR 才登顶,这就是「要重排」的直接证据。",
+    "Fusion ≠ reranking",
+    "Plain RRF fusion actually gets dragged down by the weak BM25 side in the Colloquial bucket. Reranking pushes the right answers back to the top and takes the best overall MRR — the direct case for reranking.",
   ],
   [
-    "确定性 vs LLM 裁判",
-    "检索段与证据覆盖度不依赖大模型,重跑可复现。答案覆盖度与忠实度由裁判判定,有轻微浮动。生成段带超时与失败跳过,单点故障不拖垮整轮。",
+    "Deterministic vs LLM judge",
+    "Retrieval metrics and evidence coverage don't involve an LLM and reproduce exactly on re-run. Answer coverage and faithfulness are judge-graded and can fluctuate slightly. The generation stage skips timed-out or failed calls, so a single upstream failure doesn't sink the whole round.",
   ],
   [
-    "两道生成前证据闸",
-    "机械低分闸与语义自评闸都在生成之前把关。证据不足就拒答,问题落进 low_confidence_questions,库外的题应当全部拒答。",
+    "Two pre-generation evidence gates",
+    "A mechanical low-score gate and a semantic self-check gate both run before generation. Weak evidence triggers a refusal and the question lands in low_confidence_questions; out-of-KB questions should all be refused.",
   ],
 ];
 
-/* ---------- 页面 ---------- */
+/* ---------- Page ---------- */
 
 export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
   const { revalidate, state } = useRevalidator();
 
   const jobPanel = (d: Overview) => (
     <Panel
-      title="就地重跑"
-      pill={<Pill tone="missing">分钟级</Pill>}
+      title="Re-run in place"
+      pill={<Pill tone="missing">Takes minutes</Pill>}
       tight
-      lede="这个按钮按下去,跑的就是终端那条 make eval-rag,四策略各一轮检索,证据再交给裁判判分。跑完这一页的数就换成新报告,页面读的是产物,自己不算。"
+      lede="This button runs the same make eval-rag as the terminal: one retrieval round per strategy, then the evidence goes to the judge for scoring. When it finishes, this page swaps in the new report — it only reads the artifact and never computes anything itself."
     >
       <JobRow
         specs={d.job.specs}
         onFinish={() => { void revalidate(); }}
         note={
-          "产物 " +
+          "Artifact " +
           d.job.artifacts.json.path +
           (d.job.artifacts.json.mtime
-            ? "(写于 " + fmtTime(d.job.artifacts.json.mtime) + ")"
-            : "(还没有)")
+            ? " (written " + fmtTime(d.job.artifacts.json.mtime) + ")"
+            : " (none yet)")
         }
       />
     </Panel>
@@ -1173,8 +1198,10 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
 
   if (!loaderData.ok) {
     return (
-      <PageShell title="RAG 评估" active="/rag-eval">
-        <MissingBox className="mt-4">取数失败:{loaderData.error}</MissingBox>
+      <PageShell title="RAG Eval" active="/rag-eval">
+        <MissingBox className="mt-4">
+          Failed to load data: {loaderData.error}
+        </MissingBox>
       </PageShell>
     );
   }
@@ -1183,8 +1210,8 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
   if (!d.present) {
     return (
       <PageShell
-        title="RAG 评估"
-        sub="四策略对照 · 检索排序 / 证据覆盖 / 端到端答案,一次跑齐"
+        title="RAG Eval"
+        sub="Four strategies side by side · retrieval ranking / evidence coverage / end-to-end answers in one run"
         active="/rag-eval"
       >
         <MissingBox className="mt-4">{d.hint}</MissingBox>
@@ -1196,8 +1223,8 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
   const m = d.meta;
   return (
     <PageShell
-      title="RAG 评估"
-      sub="四策略对照 · 检索排序 / 证据覆盖 / 端到端答案,一次跑齐"
+      title="RAG Eval"
+      sub="Four strategies side by side · retrieval ranking / evidence coverage / end-to-end answers in one run"
       active="/rag-eval"
       actions={
         <Btn onClick={() => { void revalidate(); }} disabled={state === "loading"}>
@@ -1207,16 +1234,16 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
             }
             aria-hidden
           />
-          刷新
+          Refresh
         </Btn>
       }
     >
       <GateBar>
-        <Stat label="评估集" value={String(m.n_samples ?? "—") + " 题"} />
-        <Stat label="知识库" value={String(m.kb_chunks ?? "—") + " 块"} />
-        <Stat label="嵌入 / 重排" value="bge-m3 · reranker-v2-m3" small />
-        <Stat label="裁判模型" value={m.chat_model ?? "—"} small />
-        <Stat label="上次跑于" value={m.generated_at ?? "—"} small />
+        <Stat label="Eval set" value={String(m.n_samples ?? "—") + " questions"} />
+        <Stat label="Knowledge Base" value={String(m.kb_chunks ?? "—") + " chunks"} />
+        <Stat label="Embedding / rerank" value="bge-m3 · reranker-v2-m3" small />
+        <Stat label="Judge model" value={m.chat_model ?? "—"} small />
+        <Stat label="Last run" value={m.generated_at ?? "—"} small />
       </GateBar>
       <KpiBox d={d} />
       <RetrievalPanel d={d} />
@@ -1224,7 +1251,10 @@ export default function RagEvalPage({ loaderData }: Route.ComponentProps) {
       <TablePanel d={d} />
       <LedgerPanel />
       {jobPanel(d)}
-      <Panel title="怎么读这份报告" lede="四条口径,免得把分数读反。">
+      <Panel
+        title="How to read this report"
+        lede="Four ground rules so the scores don't get misread."
+      >
         <div className="grid gap-3 md:grid-cols-2">
           {NOTES.map(([t, body]) => (
             <div key={t} className="border-3 border-ink bg-paper p-3">

@@ -4,7 +4,7 @@ import {
   compute,
   describe as describeBudget,
   lookupWindow,
-} from "@/core/budget.ts";
+} from "#/core/budget.ts";
 
 describe("budget", () => {
   it("treats a large window as healthy", () => {

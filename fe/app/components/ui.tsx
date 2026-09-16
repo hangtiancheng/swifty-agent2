@@ -7,7 +7,7 @@ import { AdminNav } from "./admin-nav";
 import { cn } from "~/lib/cn";
 
 
-/* ---------- 按钮 ---------- */
+/* ---------- Buttons ---------- */
 
 type BtnVariant = "default" | "go" | "no" | "ok";
 type BtnSize = "md" | "sm";
@@ -44,7 +44,7 @@ export function Btn({
   );
 }
 
-/** 按钮样式的链接(站内跳转) */
+/** Button-styled link (in-app navigation) */
 export function BtnLink({
   to,
   variant = "default",
@@ -74,7 +74,7 @@ export function BtnLink({
   );
 }
 
-/* ---------- 状态药丸 ---------- */
+/* ---------- Status pills ---------- */
 
 export type PillTone =
   | "pass"
@@ -82,9 +82,9 @@ export type PillTone =
   | "missing"
   | "running"
   | "info"
-  | "sev-严"
-  | "sev-中"
-  | "sev-宽"
+  | "sev-strict"
+  | "sev-medium"
+  | "sev-lenient"
   | "plain";
 
 const PILL_TONE: Record<PillTone, string> = {
@@ -93,9 +93,9 @@ const PILL_TONE: Record<PillTone, string> = {
   missing: "border-muted bg-paper text-muted",
   running: "bg-fur text-ink",
   info: "bg-sky text-ink",
-  "sev-严": "bg-coral text-white",
-  "sev-中": "bg-fur text-ink",
-  "sev-宽": "border-muted bg-paper text-muted",
+  "sev-strict": "bg-coral text-white",
+  "sev-medium": "bg-fur text-ink",
+  "sev-lenient": "border-muted bg-paper text-muted",
   plain: "bg-paper text-ink",
 };
 
@@ -121,7 +121,7 @@ export function Pill({
   );
 }
 
-/* ---------- 面板 / 顶栏 / 页面壳 ---------- */
+/* ---------- Panel / top bar / page shell ---------- */
 
 export function Panel({
   title,
@@ -184,7 +184,7 @@ export function TopBar({
   );
 }
 
-/** 后台页统一外壳:顶栏 + 导航 + 内容(带入场动效) */
+/** Shared shell for admin pages: top bar + nav + content (with entrance animation) */
 export function PageShell({
   title,
   sub,
@@ -211,7 +211,7 @@ export function PageShell({
   );
 }
 
-/* ---------- 闸条统计 ---------- */
+/* ---------- Gate-bar stats ---------- */
 
 export function Stat({
   label,
@@ -247,7 +247,7 @@ export function GateBar({ children }: { children: ReactNode }) {
   );
 }
 
-/* ---------- 提示 / 占位 ---------- */
+/* ---------- Tips / placeholders ---------- */
 
 export function Tip({
   children,
@@ -268,7 +268,7 @@ export function Tip({
   );
 }
 
-/** 产物缺失时的统一占位:说清楚缺什么、该跑哪个目标 */
+/** Shared placeholder for a missing artifact: states what is missing and which target to run */
 export function MissingBox({
   children,
   className,
@@ -283,12 +283,12 @@ export function MissingBox({
         className,
       )}
     >
-      {children ?? "产物还没生成,先跑对应的 make 目标"}
+      {children ?? "Artifact not generated yet — run the corresponding make target first"}
     </div>
   );
 }
 
-/* ---------- 表格原语 ---------- */
+/* ---------- Table primitives ---------- */
 
 export function TableScroll({
   children,
@@ -374,10 +374,11 @@ export function Tr({
   return <tr className={cn(bad && "bg-error-bg", className)}>{children}</tr>;
 }
 
-/* ---------- 数值单元格:三位小数 + 横条 ---------- */
+/* ---------- Numeric cell: 3 decimals + bar ---------- */
 
-/** F1 这类 0~1 的分数统一这样画,能扫出高低。
- *  hi/lo 只在给了红线时才上色——没有线就不该有"及格/不及格"的暗示。 */
+/** Scores in 0–1 (like F1) are drawn this way so highs and lows are easy to scan.
+ *  hi/lo coloring only applies when a red line is given — with no line there should
+ *  be no implied pass/fail. */
 export function ScoreCell({
   v,
   redLine,
@@ -405,7 +406,7 @@ export function ScoreCell({
   );
 }
 
-/* ---------- 小方块数值盒 ---------- */
+/* ---------- Small boxed value ---------- */
 
 export function KvBox({
   label,
@@ -426,7 +427,7 @@ export function KvRow({ children }: { children: ReactNode }) {
   return <div className="mt-2.5 flex flex-wrap gap-2">{children}</div>;
 }
 
-/* ---------- 小标题 ---------- */
+/* ---------- Section heading ---------- */
 
 export function SectionHead({
   children,

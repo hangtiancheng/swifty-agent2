@@ -13,16 +13,16 @@ import {
   stagingReviewRequestSchema,
 } from "./schemas.ts";
 
-import { status as jobStatus } from "@/core/jobs.ts";
-import * as retrieval from "@/core/retrieval.ts";
-import * as repository from "@/db/repository.ts";
-import * as chunking from "@/kb/chunking.ts";
-import { dedupeFingerprint } from "@/kb/dedup.ts";
-import * as documents from "@/kb/documents.ts";
-import * as dualwrite from "@/kb/dualwrite.ts";
-import { CONTENT_TYPE_DESC, CONTENT_TYPES, KB_DIR, SOURCE_TYPES } from "@/kb/sources.ts";
-import * as store from "@/kb/store.ts";
-import { childLogger } from "@/logger.ts";
+import { status as jobStatus } from "#/core/jobs.ts";
+import * as retrieval from "#/core/retrieval.ts";
+import * as repository from "#/db/repository.ts";
+import * as chunking from "#/kb/chunking.ts";
+import { dedupeFingerprint } from "#/kb/dedup.ts";
+import * as documents from "#/kb/documents.ts";
+import * as dualwrite from "#/kb/dualwrite.ts";
+import { CONTENT_TYPE_DESC, CONTENT_TYPES, KB_DIR, SOURCE_TYPES } from "#/kb/sources.ts";
+import * as store from "#/kb/store.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("api.kb");

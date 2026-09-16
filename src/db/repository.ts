@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "./client.ts";
 import { numberArraySchema, parseWith, stringArraySchema, toJson } from "./json.ts";
 
-import { settings } from "@/config.ts";
+import { settings } from "#/config.ts";
 
 const metricRecordSchema = z.record(z.string(), z.number());
 

@@ -7,10 +7,10 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 
 import type { ToolSpec } from "./registry.ts";
 
-import { settings } from "@/config.ts";
-import * as memory from "@/core/memory.ts";
-import * as repository from "@/db/repository.ts";
-import { childLogger } from "@/logger.ts";
+import { settings } from "#/config.ts";
+import * as memory from "#/core/memory.ts";
+import * as repository from "#/db/repository.ts";
+import { childLogger } from "#/logger.ts";
 
 
 const log = childLogger("tools.engine");
