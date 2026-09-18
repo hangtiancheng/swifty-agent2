@@ -5,8 +5,14 @@
       "args": ["serve", "--mcp"],
       "disabled": false
     },
-    "mcp-py": {
-      "url": "http://127.0.0.1:3300/mcp"
+    "swifty-agent2-mcp-http": {
+      "url": "http://127.0.0.1:3300/mcp",
+      "transport": "sse"
+    },
+    "swifty-agent2-mcp": {
+      "command": "make",
+      "args": ["agent2-mcp"],
+      "enabled": false
     }
   }
 }
