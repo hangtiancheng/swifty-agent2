@@ -1,48 +1,36 @@
-# swifty-agent2-mcp (Python)
+# swifty-agent2-mcp (TypeScript)
 
 An MCP (Model Context Protocol) server that exposes GitHub repositories as
 tools for LLM agents, over stdio (default) or HTTP (Streamable HTTP +
 legacy SSE).
 
-- the official [`mcp` Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-  (stdio + HTTP transports)
-- **FastAPI** + **uvicorn** host the optional HTTP transports; the SDK's
-  ASGI apps are mounted as plain Starlette routes
-- **httpx** for all outbound HTTP, **pydantic** for schemas and settings,
-  **typer** for the CLI, **structlog** for stderr-only JSON logging
-- **uv** for dependency management — this directory is part of the single uv
-  project at the repository root (`../pyproject.toml` + `../uv.lock`); it has
-  no `pyproject.toml`, lockfile or `.python-version` of its own
+- the official [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk)
+  (stdio + web-standard Streamable HTTP + SSE transports)
+- **h3** (v2) hosts the optional HTTP transports; the SDK's web-standard
+  transport consumes h3's `Request` directly, the legacy SSE transport
+  writes to the raw Node response via `fromNodeHandler`
+- **zod** for tool input schemas and settings, **pino** for stderr-only
+  JSON logging
+- part of the root pnpm package — no `package.json` of its own; run it
+  with `tsx`
 
 ## Requirements
 
-- Python >= 3.13 (pinned by the repository root's `.python-version`),
-  [uv](https://docs.astral.sh/uv/)
+- Node.js >= 20.12 (built-in `process.loadEnvFile`, `fetch`,
+  `AbortSignal.timeout`)
 - For the `github_*` tools: either an installed and authenticated
   [`gh` CLI](https://cli.github.com/) (`gh auth login`) — the preferred
   backend — or a personal access token set as `GITHUB_TOKEN` (or `GH_TOKEN`)
   for the HTTP fallback. Without either, the server still starts; the github
   tools answer with a clear unavailable error per call.
 
-## Setup
-
-From the repository root (the single uv project):
-
-```bash
-uv sync                 # install runtime + dev dependencies
-uv run pytest           # tests (testpaths = mcp/tests)
-uv run --with mypy mypy # strict type checking (files scoped in pyproject.toml)
-uv run ruff check .     # lint
-```
-
 ## Running
 
-The root project is not installed as a package (`package = false`), so there
-is no console script. Run the server as a module with `mcp/` as the working
-directory, so the `app` package resolves:
+From the repository root:
 
 ```bash
-cd mcp && uv run python -m app.main
+pnpm tsx mcp/src/main.ts            # stdio (default)
+pnpm tsx mcp/src/main.ts --http     # HTTP (Streamable HTTP + SSE)
 ```
 
 CLI flags:
@@ -54,15 +42,14 @@ CLI flags:
 
 ### HTTP transports (`--http`)
 
-`cd mcp && uv run python -m app.main --http` (or `MCP_TRANSPORT=http`)
-serves the same tools on one port, mirroring the TypeScript server's
-`http.ts`:
+`pnpm tsx mcp/src/main.ts --http` (or `MCP_TRANSPORT=http`) serves the same
+tools on one port:
 
-| Endpoint                                      | Transport                                                            |
-| --------------------------------------------- | -------------------------------------------------------------------- |
-| `POST /mcp`                                   | Streamable HTTP — stateless, one session per request, JSON responses |
-| `GET /mcp`                                    | 405 — stateless mode has no server-initiated notification stream     |
-| `GET /sse` + `POST /messages/?session_id=...` | Legacy SSE — one long-lived stream per connection                    |
+| Endpoint                                     | Transport                                                            |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `POST /mcp`                                  | Streamable HTTP — stateless, one session per request, JSON responses |
+| `GET /mcp`                                   | 405 — stateless mode has no server-initiated notification stream     |
+| `GET /sse` + `POST /messages?sessionId=...`  | Legacy SSE — one long-lived stream per connection                    |
 
 | Variable        | Default     | Description                                               |
 | --------------- | ----------- | --------------------------------------------------------- |
@@ -97,9 +84,10 @@ MCP client configuration (HTTP):
 | `GITHUB_TOKEN`    | _(empty)_ | Personal access token for the GitHub API HTTP fallback (`github_*` tools); secret — never logged                         |
 | `GH_TOKEN`        | _(empty)_ | Fallback for `GITHUB_TOKEN` (same variable the `gh` CLI uses)                                                            |
 | `GITHUB_BASE_URL` | _(empty)_ | REST API base URL for the HTTP fallback; empty means `https://api.github.com` (set a GitHub Enterprise API URL for GHES) |
+| `LOG_LEVEL`       | `info`    | pino level (`fatal`/`error`/`warn`/`info`/`debug`/`trace`/`silent`); unknown values degrade to `info`                    |
 
-All three live in the repository root's `.env` (see `../.env.example`);
-`load_dotenv()` walks up from `mcp/` to find it.
+All of them live in the repository root's `.env`; the entry point walks up
+from `mcp/` to find it (`process.loadEnvFile`, existing variables win).
 
 ### MCP client configuration (stdio)
 
@@ -107,14 +95,12 @@ All three live in the repository root's `.env` (see `../.env.example`);
 {
   "mcpServers": {
     "swifty-agent2-mcp": {
-      "command": "uv",
+      "command": "pnpm",
       "args": [
-        "run",
-        "--directory",
-        "/absolute/path/to/swifty-agent2/mcp",
-        "python",
-        "-m",
-        "app.main"
+        "--dir",
+        "/absolute/path/to/swifty-agent2",
+        "tsx",
+        "mcp/src/main.ts"
       ],
       "env": {
         "GITHUB_TOKEN": "<personal access token — omit when the gh CLI is authenticated>"
@@ -200,8 +186,8 @@ credentials the org endpoint is attempted.
   created. The tool is annotated `destructiveHint` — it replaces the whole
   file content in a single commit.
 - The HTTP transport follows API redirects (renamed repositories answer 301);
-  httpx drops the Authorization header when a redirect leaves the API origin,
-  so the token cannot leak to a third host.
+  Node's fetch drops the Authorization header when a redirect leaves the API
+  origin, so the token cannot leak to a third host.
 
 ## Authentication (GitHub)
 
@@ -220,36 +206,30 @@ authenticates with a **personal access token** via the `GITHUB_TOKEN` (or
   header to the configured API base URL and is never logged; with the gh
   backend no token passes through this process at all.
 
-All tests live in `tests/` (flat) and run under one `uv run pytest`.
-
 ## Project layout
 
 ```
-app/
-├── main.py                  # typer CLI entry (stdio default, --http for HTTP)
-├── server.py                # create_server(): registry + tool modules
-├── version.py
-├── http/
-│   ├── app.py               # FastAPI app: POST /mcp (streamable) + GET /sse, POST /messages/ (SSE)
-│   └── config.py            # MCP_HOST / MCP_PORT env parsing
+src/
+├── main.ts                  # entry point (stdio default, --http for HTTP) + shutdown
+├── server.ts                # createServer(): McpServer + tool modules
+├── version.ts
+├── http.ts                  # h3 app: POST /mcp (streamable) + GET /sse, POST /messages (SSE)
 ├── shared/
-│   ├── config.py            # GITHUB_TOKEN / GITHUB_BASE_URL env parsing
-│   ├── logger.py            # structlog JSON -> stderr (stdout belongs to stdio MCP)
-│   └── tools/
-│       └── host.py          # ToolRegistry driving the SDK's tools/list + tools/call
+│   ├── config.ts            # GITHUB_TOKEN / GITHUB_BASE_URL / MCP_HOST / MCP_PORT env parsing
+│   └── logger.ts            # pino JSON -> stderr (stdout belongs to stdio MCP)
 └── tools/
-    ├── types.py             # ToolModule protocol
+    ├── index.ts             # the tool-module registry
+    ├── types.ts             # ToolModule interface
     └── github/              # gh-CLI/HTTP transports + GitHubClient + the github_* tools
-tests/                       # pytest + respx + pytest-asyncio
+tests/                       # vitest (config, client, tools, server, http transports)
 ```
 
 ## Development
 
-All commands run from the repository root (the single uv project):
+All commands run from the repository root:
 
 ```bash
-uv run pytest                                # full suite (testpaths = mcp/tests)
-uv run ruff check mcp --fix                  # lint + autofix
-uv run ruff format mcp                       # format
-uv run --with mypy mypy                      # strict type check (mcp + train subtrees)
+pnpm vitest run mcp/tests   # this server's test suite
+pnpm typecheck              # tsc --noEmit (covers mcp/)
+pnpm lint                   # eslint (covers mcp/)
 ```

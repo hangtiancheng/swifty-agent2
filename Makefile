@@ -123,8 +123,8 @@ classifier-down:
 classify-pool:
 	pnpm exec tsx scripts/train/classify-pool.ts $(if $(FORCE),--force,)
 
-mcp-py:
+agent2-mcp:
 	cd mcp && uv run python -m app.main
 
-mcp-py-http:
+agent2-mcp-http:
 	cd mcp && uv run python -m app.main --http
