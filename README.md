@@ -48,7 +48,26 @@ column stays null; `vector_id` + status are still recorded) and a down bridge su
 error instead of silently degrading. BM25 always stays in-process, and `hybrid` fuses the two
 with reciprocal-rank fusion — unlike the Python original, which ran dense + BM25 + hybrid all
 inside Milvus Standalone (its BM25 Function needs Standalone; Lite does not support it).
-`make milvus-proto` regenerates the Python stubs after editing the proto.
+
+### Regenerating the protobuf stubs
+
+After editing `src/milvus/kb_store.proto`, regenerate the Python stubs. All four artifacts land
+in `src/milvus/pb/` (machine-generated, never hand-edited; the `.pyi` stubs keep
+`src/milvus/server.py` mypy-strict clean):
+
+```bash
+make milvus-proto
+# equivalent to:
+# uv run python -m grpc_tools.protoc -I src/milvus \
+#   --python_out=src/milvus/pb --grpc_python_out=src/milvus/pb \
+#   --mypy_out=src/milvus/pb --mypy_grpc_out=src/milvus/pb \
+#   src/milvus/kb_store.proto
+```
+
+Outputs: `kb_store_pb2.py` / `kb_store_pb2_grpc.py` (runtime) and `kb_store_pb2.pyi` /
+`kb_store_pb2_grpc.pyi` (type stubs, via `mypy-protobuf`). The bridge imports them flat
+(`import kb_store_pb2`), so `src/milvus/pb` — not `src/milvus` — is added to `sys.path` at
+runtime and to mypy's module search path.
 
 ## train topic classifier (hybrid Python/TypeScript)
 

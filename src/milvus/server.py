@@ -25,8 +25,9 @@ from typing import Any, TypeVar
 
 import grpc
 
-# The generated stubs live next to this file and use flat imports (import kb_store_pb2).
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# The generated stubs live in pb/ next to this file and use flat imports (import kb_store_pb2),
+# so the pb directory — not this one — goes on sys.path.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pb"))
 import kb_store_pb2 as pb2
 import kb_store_pb2_grpc as pb2_grpc
 from pymilvus import DataType, MilvusClient

@@ -84,17 +84,27 @@ All three live in the repository root's `.env` (see `../.env.example`);
 
 ## Tools: `github_*`
 
-Access to GitHub repositories. The four read tools take a `repo` argument —
-an `owner/name` path (e.g. `hangtiancheng/swifty-agent2`) — and
-`github_create_repo` creates new repositories.
+Access to GitHub repositories. The repo-scoped tools take a `repo` argument —
+an `owner/name` path (e.g. `hangtiancheng/swifty-agent2`) — and the search
+tools take a GitHub query string.
 
-| Tool                   | Purpose                                                 |
-| ---------------------- | ------------------------------------------------------- |
-| `github_read_file`     | Read a file's text content at a ref                     |
-| `github_list_tree`     | List files/directories at a path (recursive, flattened) |
-| `github_list_commits`  | List recent commits on a ref                            |
-| `github_list_branches` | List branches (marks default / protected)               |
-| `github_create_repo`   | Create a repository under the user or an organization   |
+| Tool                           | Kind  | Purpose                                                        |
+| ------------------------------ | ----- | -------------------------------------------------------------- |
+| `github_read_file`             | read  | Read a file's text content at a ref                            |
+| `github_list_tree`             | read  | List files/directories at a path (recursive, flattened)        |
+| `github_list_commits`          | read  | List recent commits on a ref                                   |
+| `github_list_branches`         | read  | List branches (marks default / protected)                      |
+| `github_list_tags`             | read  | List tags with the commit sha each one points at               |
+| `github_get_repo`              | read  | Repository metadata: visibility, language, stars/forks, URLs   |
+| `github_search_code`           | read  | Search file contents (GitHub code-search query syntax)         |
+| `github_search_repositories`   | read  | Search repositories (name, language, stars, ...)               |
+| `github_list_issues`           | read  | List issues (pull requests excluded), with labels and authors  |
+| `github_list_pull_requests`    | read  | List pull requests with head/base refs and draft flag          |
+| `github_create_repo`           | write | Create a repository under the user or an organization          |
+| `github_create_issue`          | write | Open an issue (optional body, labels, assignees)               |
+| `github_create_pull_request`   | write | Open a pull request from a head branch (optionally as a draft) |
+| `github_create_branch`         | write | Create a branch from another branch, tag or sha                |
+| `github_create_or_update_file` | write | Write one file's content to a branch in a single commit        |
 
 ### Backend selection
 
@@ -131,8 +141,25 @@ credentials the org endpoint is attempted.
   between `main` and `master`, so nothing is guessed).
 - `github_list_tree` uses the git trees API with `recursive=1` and filters
   by path prefix locally; a truncated tree response is logged as a warning.
+  A `path` pointing at a single file returns exactly that file.
 - File contents arrive base64-encoded from the contents API and are decoded
   to UTF-8 (invalid bytes are replaced, so binary files cannot crash a call).
+  Files larger than the contents API's 1 MB inline limit are fetched through
+  the git blobs API automatically.
+- `github_list_issues` filters out the pull requests the issues endpoint also
+  returns; use `github_list_pull_requests` for those. Note: GitHub's issues
+  list is eventually consistent for a few seconds right after
+  `github_create_issue`, so an immediate re-list may not show the new issue.
+- `github_create_branch` resolves its base (branch, tag or sha; default
+  branch when omitted) to a commit sha before creating the ref, and rejects
+  invalid git branch names before any API call.
+- `github_create_or_update_file` reads the target path first: an existing
+  file is overwritten (its blob sha is sent along) and a missing one is
+  created. The tool is annotated `destructiveHint` — it replaces the whole
+  file content in a single commit.
+- The HTTP transport follows API redirects (renamed repositories answer 301);
+  httpx drops the Authorization header when a redirect leaves the API origin,
+  so the token cannot leak to a third host.
 
 ## Authentication (GitHub)
 
@@ -167,7 +194,7 @@ app/
 │       └── host.py          # ToolRegistry driving the SDK's tools/list + tools/call
 └── tools/
     ├── types.py             # ToolModule protocol
-    └── github/              # gh-CLI/HTTP transports + GitHubClient + the five github_* tools
+    └── github/              # gh-CLI/HTTP transports + GitHubClient + the github_* tools
 tests/                       # pytest + respx + pytest-asyncio
 ```
 

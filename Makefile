@@ -41,8 +41,9 @@ milvus-down:
 	@echo "Milvus bridge stopped"
 
 milvus-proto:
-	uv run python -m grpc_tools.protoc -I src/milvus --python_out=src/milvus --grpc_python_out=src/milvus src/milvus/kb_store.proto
-	@echo "Regenerated src/milvus/kb_store_pb2.py and kb_store_pb2_grpc.py"
+	@mkdir -p src/milvus/pb
+	uv run python -m grpc_tools.protoc -I src/milvus --python_out=src/milvus/pb --grpc_python_out=src/milvus/pb --mypy_out=src/milvus/pb --mypy_grpc_out=src/milvus/pb src/milvus/kb_store.proto
+	@echo "Regenerated src/milvus/pb/kb_store_pb2.py/.pyi and kb_store_pb2_grpc.py/.pyi"
 
 seed-conv:
 	pnpm exec tsx scripts/seed-conv.ts

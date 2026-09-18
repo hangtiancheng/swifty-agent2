@@ -66,13 +66,23 @@ async def _call(
     )
 
 
-def test_registers_exactly_the_five_github_tools(registry: ToolRegistry) -> None:
+def test_registers_the_full_github_tool_suite(registry: ToolRegistry) -> None:
     assert sorted(registry.names()) == [
+        "github_create_branch",
+        "github_create_issue",
+        "github_create_or_update_file",
+        "github_create_pull_request",
         "github_create_repo",
+        "github_get_repo",
         "github_list_branches",
         "github_list_commits",
+        "github_list_issues",
+        "github_list_pull_requests",
+        "github_list_tags",
         "github_list_tree",
         "github_read_file",
+        "github_search_code",
+        "github_search_repositories",
     ]
 
 
@@ -316,6 +326,219 @@ async def test_api_errors_surface_as_error_results(
     assert "404" in first_text(result)
 
 
+@respx.mock
+async def test_get_repo_formats_metadata(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    respx.get(f"{API_BASE}/repos/{REPO}").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "id": 42,
+                "name": "swifty-agent2",
+                "full_name": REPO,
+                "description": "demo",
+                "private": False,
+                "default_branch": "main",
+                "language": "TypeScript",
+                "stargazers_count": 7,
+                "forks_count": 2,
+                "open_issues_count": 3,
+                "html_url": f"https://github.com/{REPO}",
+            },
+        )
+    )
+
+    result = await _call(registry, "github_get_repo", {"repo": REPO})
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    text = first_text(result)
+    assert f"{REPO} (id 42)" in text
+    assert "stars: 7" in text
+    assert result.structured_content is not None
+    assert result.structured_content["default_branch"] == "main"
+
+
+@respx.mock
+async def test_search_code_lists_repository_and_path(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    route = respx.get(f"{API_BASE}/search/code").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "total_count": 1,
+                "items": [{"path": "src/index.ts", "repository": {"full_name": REPO}}],
+            },
+        )
+    )
+
+    result = await _call(registry, "github_search_code", {"query": f"TODO repo:{REPO}"})
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    assert first_text(result) == f"{REPO}  src/index.ts"
+    assert route.calls.last.request.url.params["q"] == f"TODO repo:{REPO}"
+
+
+@respx.mock
+async def test_list_issues_skips_pull_requests(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    respx.get(f"{API_BASE}/repos/{REPO}/issues").mock(
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    "number": 7,
+                    "title": "bug",
+                    "state": "open",
+                    "user": {"login": "octo"},
+                    "labels": [{"name": "p0"}],
+                    "created_at": "2026-09-01T00:00:00Z",
+                },
+                {"number": 8, "title": "pr", "state": "open", "pull_request": {}},
+            ],
+        )
+    )
+
+    result = await _call(registry, "github_list_issues", {"repo": REPO})
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    assert first_text(result) == "#7 [open] bug [p0] by octo on 2026-09-01"
+    assert result.structured_content is not None
+    assert result.structured_content["count"] == 1
+
+
+@respx.mock
+async def test_create_issue_posts_title_and_labels(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    route = respx.post(f"{API_BASE}/repos/{REPO}/issues").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "number": 9,
+                "title": "bug",
+                "state": "open",
+                "html_url": f"https://github.com/{REPO}/issues/9",
+            },
+        )
+    )
+
+    result = await _call(
+        registry,
+        "github_create_issue",
+        {"repo": REPO, "title": "bug", "labels": ["p0"]},
+    )
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    assert "Created issue #9: bug" in first_text(result)
+    assert json.loads(route.calls.last.request.content) == {
+        "title": "bug",
+        "labels": ["p0"],
+    }
+    assert result.structured_content is not None
+    assert result.structured_content["number"] == 9
+
+
+@respx.mock
+async def test_create_branch_resolves_the_default_branch_and_posts_the_ref(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    respx.get(f"{API_BASE}/repos/{REPO}").mock(
+        return_value=httpx.Response(200, json={"default_branch": "main"})
+    )
+    respx.get(f"{API_BASE}/repos/{REPO}/commits/main").mock(
+        return_value=httpx.Response(200, json={"sha": "b" * 40})
+    )
+    route = respx.post(f"{API_BASE}/repos/{REPO}/git/refs").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ref": "refs/heads/feature", "object": {"sha": "b" * 40}},
+        )
+    )
+
+    result = await _call(
+        registry, "github_create_branch", {"repo": REPO, "branch": "feature"}
+    )
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    assert first_text(result) == f"Created refs/heads/feature at {'b' * 8}"
+    assert json.loads(route.calls.last.request.content) == {
+        "ref": "refs/heads/feature",
+        "sha": "b" * 40,
+    }
+
+
+@respx.mock
+async def test_create_or_update_file_creates_on_404(
+    registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import mcp.types as types
+
+    _configure_token(monkeypatch)
+    respx.get(f"{API_BASE}/repos/{REPO}").mock(
+        return_value=httpx.Response(200, json={"default_branch": "main"})
+    )
+    respx.get(f"{API_BASE}/repos/{REPO}/contents/docs/notes.md").mock(
+        return_value=httpx.Response(404, json={"message": "Not Found"})
+    )
+    route = respx.put(f"{API_BASE}/repos/{REPO}/contents/docs/notes.md").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "content": {
+                    "sha": "newblob",
+                    "html_url": f"https://github.com/{REPO}/blob/main/docs/notes.md",
+                },
+                "commit": {"sha": "c" * 40},
+            },
+        )
+    )
+
+    result = await _call(
+        registry,
+        "github_create_or_update_file",
+        {
+            "repo": REPO,
+            "file_path": "docs/notes.md",
+            "content": "hello",
+            "message": "add notes",
+        },
+    )
+
+    assert isinstance(result, types.CallToolResult)
+    assert not result.is_error
+    assert first_text(result).startswith("Created docs/notes.md")
+    body = json.loads(route.calls.last.request.content)
+    assert body["message"] == "add notes"
+    assert base64.b64decode(body["content"]).decode() == "hello"
+    assert body["branch"] == "main"
+    assert "sha" not in body  # creation, not an update
+    assert result.structured_content is not None
+    assert result.structured_content["created"] is True
+
+
 async def test_invalid_arguments_produce_an_error_result(
     registry: ToolRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -356,6 +579,38 @@ async def test_input_schema_uses_the_published_wire_names(
         "description",
         "private",
     }
+
+    # The state filter is a closed enum, published in the schema.
+    list_issues = tools["github_list_issues"]
+    assert list_issues.input_schema["properties"]["state"]["enum"] == [
+        "open",
+        "closed",
+        "all",
+    ]
+
+    # Writing a file is flagged destructive; creating a branch is not.
+    write_file = tools["github_create_or_update_file"]
+    assert write_file.annotations is not None
+    assert write_file.annotations.read_only_hint is False
+    assert write_file.annotations.destructive_hint is True
+    assert set(write_file.input_schema["properties"]) == {
+        "repo",
+        "file_path",
+        "content",
+        "message",
+        "branch",
+    }
+    assert write_file.input_schema["required"] == [
+        "repo",
+        "file_path",
+        "content",
+        "message",
+    ]
+
+    create_branch = tools["github_create_branch"]
+    assert create_branch.annotations is not None
+    assert create_branch.annotations.destructive_hint is False
+    assert create_branch.annotations.read_only_hint is False
 
 
 @respx.mock

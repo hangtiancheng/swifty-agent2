@@ -168,8 +168,12 @@ class HttpTransport:
         }
         params = {key: str(value) for key, value in (query or {}).items()}
 
+        # follow_redirects: renamed/moved repositories answer 301 with the new
+        # API URL (the gh CLI follows those too). httpx strips the
+        # Authorization header when a redirect leaves the origin, so the token
+        # cannot leak to a third host.
         async with httpx.AsyncClient(
-            timeout=REQUEST_TIMEOUT, follow_redirects=False
+            timeout=REQUEST_TIMEOUT, follow_redirects=True
         ) as client:
             response = await client.request(
                 method,

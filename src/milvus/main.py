@@ -1,3 +1,10 @@
+"""pymilvus Milvus Lite smoke script: drop and recreate the demo collection.
+
+Standalone sanity check that the pinned pymilvus version can open a Milvus Lite
+database and manage a collection; the production bridge is src/milvus/server.py
+(start it with `make milvus-up`). Run: `uv run python src/milvus/main.py`.
+"""
+
 from pymilvus import MilvusClient
 
 client: MilvusClient = MilvusClient("milvus-lite.db")

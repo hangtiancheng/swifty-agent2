@@ -15,10 +15,11 @@ SERVER_NAME = "swifty-agent2-mcp"
 # context, improving tool selection.
 INSTRUCTIONS = (
     "swifty-agent2-mcp exposes GitHub repositories as MCP tools. "
-    "Use the github_* tools to read files, list directory trees, commits and "
-    "branches from repositories there, and github_create_repo to create new "
-    "repositories; they run through the local gh CLI when it is authenticated "
-    "and fall back to the GITHUB_TOKEN env var otherwise."
+    "Use the github_* tools to inspect repositories (metadata, files, trees, "
+    "commits, branches, tags), search code and repositories, work with issues "
+    "and pull requests (list/create), and make changes (create repositories "
+    "and branches, write single files); they run through the local gh CLI when "
+    "it is authenticated and fall back to the GITHUB_TOKEN env var otherwise."
 )
 
 

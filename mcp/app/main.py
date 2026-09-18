@@ -9,6 +9,7 @@ always starts.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable
 
 import typer
 from dotenv import load_dotenv
@@ -36,9 +37,9 @@ async def _run_stdio() -> None:
 
         # Kick off module initialization only after the transport is up, so
         # tools are listable immediately. Failures are logged, not fatal.
-        async def _init_module(module_name: str, coro: object) -> None:
+        async def _init_module(module_name: str, coro: Awaitable[None]) -> None:
             try:
-                await coro  # type: ignore[misc]
+                await coro
             except Exception as err:  # noqa: BLE001 — init is best-effort
                 logger.warning("module init failed", err=str(err), module=module_name)
 

@@ -26,6 +26,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    # Typed grpc stubs: the mypy-protobuf-generated .pyi files are written
+    # against a typed `grpc`, and src/milvus/server.py checks against both.
+    "grpc-stubs>=1.53",
+    # protoc plugin generating the .pyi stubs next to the pb2 modules, so
+    # src/milvus/server.py type-checks against the generated message classes.
+    "mypy-protobuf>=3.6",
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "pytest-timeout>=2.4.0",
@@ -44,8 +50,7 @@ package = false
 [tool.ruff]
 force-exclude = true
 extend-exclude = [
-    "src/milvus/kb_store_pb2.py",
-    "src/milvus/kb_store_pb2_grpc.py",
+    "src/milvus/pb",
     ".agents",
 ]
 
@@ -64,17 +69,29 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC"]
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
-# Strict typing for the vendored train training pipeline (scripts/train/py) and the mcp/ server
-# (mcp/app + mcp/tests). Scoped via `files` so a bare `mypy` run targets only these typed
-# subtrees and leaves the other loose scripts alone.
+# Strict typing for the vendored train training pipeline (scripts/train/py), the mcp/ server
+# (mcp/app + mcp/tests) and the Milvus gRPC bridge (src/milvus). Scoped via `files` so a bare
+# `mypy` run targets only these typed subtrees and leaves the other loose scripts alone.
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["scripts/train/py", "mcp/app", "mcp/tests"]
+files = ["scripts/train/py", "mcp/app", "mcp/tests", "src/milvus"]
+# The generated pb2 modules are machine-generated (`make milvus-proto`); mypy consumes the
+# .pyi stubs generated next to them instead of type-checking the .py sources.
+exclude = ["src/milvus/pb/kb_store_pb2(_grpc)?\\.py$"]
+# server.py imports the generated modules flat (`import kb_store_pb2`), the way the
+# grpc-generated code does, so the pb directory is a module search root.
+mypy_path = "src/milvus/pb"
 
 # scikit-learn and onnxruntime ship no py.typed marker / stubs; treat them as Any at the boundary.
 [[tool.mypy.overrides]]
 module = ["sklearn.*", "onnxruntime.*"]
+ignore_missing_imports = true
+
+# pymilvus ships no py.typed marker / stubs; treat it as Any at the boundary. grpc is typed
+# via grpc-stubs and google.protobuf via types-protobuf (both dev deps, see above).
+[[tool.mypy.overrides]]
+module = ["pymilvus.*"]
 ignore_missing_imports = true
 
 # The only Python tests in this repo are the mcp/ server's; `tests/` at the root is vitest.
