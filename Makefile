@@ -125,3 +125,6 @@ classify-pool:
 
 mcp-py:
 	cd mcp && uv run python -m app.main
+
+mcp-py-http:
+	cd mcp && uv run python -m app.main --http
