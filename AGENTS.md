@@ -11,16 +11,22 @@
 ## Python project layout (single uv project)
 
 - ONE uv project at the repo root: `pyproject.toml` + `uv.lock` + `.python-version`
-  (3.13) cover every Python subtree — `scripts/train/py`, `src/milvus` and the
-  `mcp/` server. Do not create per-directory `pyproject.toml` / `uv.lock` /
-  `.python-version` files.
-- `mcp/` is the GitHub MCP server: stdio by default, `--http` (or
-  `MCP_TRANSPORT=http`) adds Streamable HTTP (`POST /mcp`) + legacy SSE
-  (`GET /sse`) on `MCP_HOST:MCP_PORT` (default `127.0.0.1:3300`). The root
-  project is `package = false`, so run it as `cd mcp && uv run python -m app.main`.
-- Gates: `uv run ruff check .`, `uv run ruff format --check .`,
-  `uv run --with mypy mypy` (strict; scoped via `files`), `uv run pytest`
-  (testpaths = `mcp/tests`; the root `tests/` dir is vitest).
+  (3.13) cover every Python subtree — `scripts/train/py` and `src/milvus`. Do not
+  create per-directory `pyproject.toml` / `uv.lock` / `.python-version` files.
+- Python gates: `uv run ruff check .`, `uv run ruff format --check .`,
+  `uv run --with mypy mypy` (strict; scoped via `files`). There are no Python
+  tests; all tests run through vitest (root `tests/` and `mcp/tests`).
+
+## mcp/ GitHub MCP server (TypeScript)
+
+- `mcp/` is the GitHub MCP server, part of the root pnpm package (no
+  `package.json` of its own): stdio by default, `--http` (or `MCP_TRANSPORT=http`)
+  adds Streamable HTTP (`POST /mcp`) + legacy SSE (`GET /sse`) on
+  `MCP_HOST:MCP_PORT` (default `127.0.0.1:3300`), hosted by h3 v2. Run it as
+  `pnpm tsx mcp/src/main.ts` (or `make agent2-mcp` / `make agent2-mcp-http`);
+  details in `mcp/README.md`.
+- TS gates: `pnpm typecheck`, `pnpm lint`, `pnpm test` (vitest picks up
+  `mcp/tests/*.test.ts` together with the root `tests/`).
 
 ## Milvus migration (Python Milvus => Node -> gRPC -> Milvus Lite)
 

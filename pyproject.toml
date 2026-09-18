@@ -5,26 +5,23 @@ description = "Swifty Agent2 Python Force"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    # Not imported directly: transformers.Trainer (scripts/train/py/train.py)
+    # pulls it in at runtime.
     "accelerate>=1.15.0",
-    "fastapi>=0.115",
+    # protoc + the grpc python plugins for `make milvus-proto`.
     "grpcio-tools>=1.84.0",
-    "httpx>=0.27",
-    "mcp>=1.15",
+    # pymilvus's local-file backend (data/milvus/kb.db, no docker).
     "milvus-lite>=3.2.1",
     "numpy>=2.5.3",
+    # Not imported directly: torch.onnx.export(dynamo=True) in
+    # scripts/train/py/export_onnx.py needs it at runtime.
     "onnx>=1.22.0",
     "onnxruntime>=1.30.0",
-    "pydantic>=2.9",
     "pymilvus>=3.0.1",
-    "python-dotenv>=1.0",
     "ruff>=0.16.7",
     "scikit-learn>=1.9.1",
-    "starlette>=0.27",
-    "structlog>=24.4",
     "torch>=2.14.0",
     "transformers>=5.17.0",
-    "typer>=0.12",
-    "uvicorn>=0.31.1",
 ]
 
 [dependency-groups]
@@ -35,15 +32,11 @@ dev = [
     # protoc plugin generating the .pyi stubs next to the pb2 modules, so
     # src/milvus/server.py type-checks against the generated message classes.
     "mypy-protobuf>=3.6",
-    "pytest>=8.3",
-    "pytest-asyncio>=0.24",
-    "pytest-timeout>=2.4.0",
-    "respx>=0.22",
 ]
 
 # uv syncs the dependencies but never builds/installs this repo as a Python package (it is a Node
-# project). The mcp/ server therefore has no console script: run it with `mcp/` as the working
-# directory so `app` resolves, e.g. `cd mcp && uv run python -m app.main`.
+# project). The remaining Python subtrees are scripts run in place, e.g. `uv run python
+# scripts/train/py/train.py` or `uv run python src/milvus/server.py` (see the Makefile targets).
 [tool.uv]
 package = false
 
@@ -57,8 +50,8 @@ extend-exclude = [
     ".agents",
 ]
 
-# Default rules (E4/E7/E9/F) plus import sorting and the modernization/bugbear/async rules the mcp/
-# server was written under. E501 stays off: line width is `ruff format`'s job, and the pre-existing
+# Default rules (E4/E7/E9/F) plus import sorting and the modernization/bugbear/async rules.
+# E501 stays off: line width is `ruff format`'s job, and the pre-existing
 # training/milvus comments intentionally exceed the format width.
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC"]
@@ -67,18 +60,13 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC"]
 # Pre-existing training scripts use `l` as a jsonl-line loop variable; kept as authored.
 "scripts/train/py/*.py" = ["E741"]
 
-# The mcp/ server's package lives at mcp/app and is resolved via pytest's `pythonpath = ["mcp"]`;
-# from the repo root isort cannot infer it as first-party on its own.
-[tool.ruff.lint.isort]
-known-first-party = ["app"]
-
-# Strict typing for the vendored train training pipeline (scripts/train/py), the mcp/ server
-# (mcp/app + mcp/tests) and the Milvus gRPC bridge (src/milvus). Scoped via `files` so a bare
-# `mypy` run targets only these typed subtrees and leaves the other loose scripts alone.
+# Strict typing for the vendored train training pipeline (scripts/train/py) and the Milvus gRPC
+# bridge (src/milvus). Scoped via `files` so a bare `mypy` run targets only these typed subtrees
+# and leaves the other loose scripts alone.
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["scripts/train/py", "mcp/app", "mcp/tests", "src/milvus"]
+files = ["scripts/train/py", "src/milvus"]
 # The generated pb2 modules are machine-generated (`make milvus-proto`); mypy consumes the
 # .pyi stubs generated next to them instead of type-checking the .py sources.
 exclude = ["src/milvus/pb/kb_store_pb2(_grpc)?\\.py$"]
@@ -92,14 +80,7 @@ module = ["sklearn.*", "onnxruntime.*"]
 ignore_missing_imports = true
 
 # pymilvus ships no py.typed marker / stubs; treat it as Any at the boundary. grpc is typed
-# via grpc-stubs and google.protobuf via types-protobuf (both dev deps, see above).
+# via grpc-stubs and google.protobuf via types-protobuf (pulled in by mypy-protobuf).
 [[tool.mypy.overrides]]
 module = ["pymilvus.*"]
 ignore_missing_imports = true
-
-# The only Python tests in this repo are the mcp/ server's; `tests/` at the root is vitest.
-# `pythonpath` puts mcp/ on sys.path so `import app` resolves from the repo root.
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["mcp/tests"]
-pythonpath = ["mcp"]

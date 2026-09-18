@@ -92,6 +92,22 @@ a missing artifact returns `present=false` plus the `make` target to run.
 > imports, which do not resolve under this repo's `nodenext` config. `src/types/huggingface-tokenizers.d.ts`
 > provides a minimal ambient declaration for the surface we use; the runtime itself works.
 
+## GitHub MCP server (mcp/)
+
+`mcp/` is a standalone TypeScript MCP server that exposes GitHub repositories as tools
+for LLM agents — the `github_*` suite reads files/trees/commits/branches/tags, searches
+code and repositories, works with issues and pull requests, and can create repos,
+branches and single-file commits. It prefers an authenticated `gh` CLI and falls back to
+`GITHUB_TOKEN` HTTP calls; with neither, each call answers with a clear unavailable error.
+
+```bash
+make agent2-mcp        # stdio (default; wire into an MCP client)
+make agent2-mcp-http   # Streamable HTTP (POST /mcp) + legacy SSE on MCP_HOST:MCP_PORT
+```
+
+Part of the root pnpm package, built on the official MCP SDK with h3 v2 for the HTTP
+transports. See `mcp/README.md` for configuration and behaviour details.
+
 ## Offline jobs
 
 `make <target>` and the admin pages' "re-run" buttons share one job runner (`src/core/jobs.ts`); the

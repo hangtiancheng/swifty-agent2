@@ -123,8 +123,9 @@ classifier-down:
 classify-pool:
 	pnpm exec tsx scripts/train/classify-pool.ts $(if $(FORCE),--force,)
 
-agent2-mcp:
-	cd mcp && uv run python -m app.main
+# GitHub MCP server (mcp/, TypeScript): github_* tools over the gh CLI or GITHUB_TOKEN.
+agent2-mcp: ## Run the GitHub MCP server over stdio
+	pnpm exec tsx mcp/src/main.ts
 
-agent2-mcp-http:
-	cd mcp && uv run python -m app.main --http
+agent2-mcp-http: ## Run the GitHub MCP server over HTTP (Streamable HTTP + SSE)
+	pnpm exec tsx mcp/src/main.ts --http
