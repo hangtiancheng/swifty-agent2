@@ -115,7 +115,7 @@ async def test_create_server_registers_the_tool_modules() -> None:
             await session.initialize()
             tools_result = await session.list_tools()
             names = [tool.name for tool in tools_result.tools]
-            assert "gitlab_read_file" in names
+            assert "github_read_file" in names
             assert len(names) == len(created.registry)
 
 

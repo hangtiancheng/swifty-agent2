@@ -14,7 +14,7 @@ from app.shared.tools.host import ToolRegistry
 
 
 class ToolModule(ABC):
-    """Base class for the server's own tool modules (gitlab, ...)."""
+    """Base class for the server's own tool modules (github, ...)."""
 
     #: Unique module name, used in logs.
     name: ClassVar[str]

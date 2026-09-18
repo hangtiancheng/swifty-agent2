@@ -13,29 +13,31 @@ from collections.abc import Mapping
 from pydantic import BaseModel
 
 
-class GitLabConfig(BaseModel):
-    """Self-hosted GitLab connection settings.
+class GitHubConfig(BaseModel):
+    """GitHub connection settings for the github_* tools' HTTP fallback.
 
-    Both fields default to empty, which means "not configured": the gitlab_*
-    tools then answer with a clear unavailable error per call instead of
-    failing at startup. Nothing in the code points at a particular instance.
+    The preferred backend is the local `gh` CLI when it is installed and
+    authenticated; these settings cover machines without one. Both fields
+    default to empty, which means "not configured": without an authenticated
+    gh CLI or a token the github_* tools answer with a clear unavailable
+    error per call instead of failing at startup.
 
-    `private_token` is a secret: it is only ever appended to request URLs by
-    the client and must never be logged.
+    `token` is a secret: it is only ever sent in an Authorization header and
+    must never be logged.
     """
 
-    #: Base URL of the GitLab instance (`GITLAB_BASE_URL` env).
+    #: Personal access token for the GitHub API (`GITHUB_TOKEN` env, with
+    #: `GH_TOKEN` as a fallback). Empty means "not configured".
+    token: str = ""
+    #: REST API base URL (`GITHUB_BASE_URL` env); empty means the transport
+    #: default (https://api.github.com, or a GitHub Enterprise API URL).
     base_url: str = ""
-    #: Personal access token for the GitLab API (`GITLAB_PRIVATE_TOKEN` env).
-    #: Empty means "not configured": the gitlab_* tools then answer with a
-    #: clear unavailable error per call instead of failing at startup.
-    private_token: str = ""
 
 
 class AppConfig(BaseModel):
-    """Self-hosted GitLab connection settings."""
+    """Connection settings for the hosted tool suites."""
 
-    gitlab: GitLabConfig
+    github: GitHubConfig
 
 
 def _drop_empty_values(env: Mapping[str, str]) -> dict[str, str]:
@@ -47,8 +49,8 @@ def load_config(env: Mapping[str, str] | None = None) -> AppConfig:
     """Parse the environment into an AppConfig; `env` defaults to os.environ."""
     source = _drop_empty_values(dict(os.environ if env is None else env))
     return AppConfig(
-        gitlab=GitLabConfig(
-            base_url=source.get("GITLAB_BASE_URL", "").rstrip("/"),
-            private_token=source.get("GITLAB_PRIVATE_TOKEN", "").strip(),
-        )
+        github=GitHubConfig(
+            token=(source.get("GITHUB_TOKEN") or source.get("GH_TOKEN") or "").strip(),
+            base_url=source.get("GITHUB_BASE_URL", "").rstrip("/"),
+        ),
     )

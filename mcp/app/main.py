@@ -1,8 +1,9 @@
 """Entry point: the stdio MCP server.
 
-There is no startup credential gate: the gitlab_* tools read
-GITLAB_PRIVATE_TOKEN from the environment per call and answer with a clear
-unavailable error when it is not set, so the server always starts.
+There is no startup credential gate: the github_* tools resolve their
+backend (an authenticated `gh` CLI or the GITHUB_TOKEN env var) per call and
+answer with a clear unavailable error when neither is present, so the server
+always starts.
 """
 
 from __future__ import annotations
@@ -71,7 +72,7 @@ def main(
         False, "-v", "--version", help="Show the version and exit."
     ),
 ) -> None:
-    """MCP server exposing a self-hosted GitLab instance as tools (stdio)."""
+    """MCP server exposing GitHub repositories as tools (stdio)."""
     if version:
         typer.echo(__version__)
         raise typer.Exit()

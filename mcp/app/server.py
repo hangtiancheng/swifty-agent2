@@ -14,11 +14,11 @@ SERVER_NAME = "swifty-agent2-mcp"
 # Surfaced to clients at initialize time; hosts inject it into the model's
 # context, improving tool selection.
 INSTRUCTIONS = (
-    "swifty-agent2-mcp exposes a self-hosted GitLab instance as MCP tools. Use the "
-    "gitlab_* tools to read files, list directory trees, commits and branches "
-    "from repositories there, and gitlab_create_project to create new "
-    "repositories; they talk to the instance configured via the "
-    "GITLAB_BASE_URL and GITLAB_PRIVATE_TOKEN env vars."
+    "swifty-agent2-mcp exposes GitHub repositories as MCP tools. "
+    "Use the github_* tools to read files, list directory trees, commits and "
+    "branches from repositories there, and github_create_repo to create new "
+    "repositories; they run through the local gh CLI when it is authenticated "
+    "and fall back to the GITHUB_TOKEN env var otherwise."
 )
 
 

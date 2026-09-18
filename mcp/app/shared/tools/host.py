@@ -98,7 +98,7 @@ class ToolRegistry:
                 is_error=True,
             )
         arguments = params.arguments or {}
-        if not isinstance(arguments, dict):  # type: ignore
+        if not isinstance(arguments, dict):
             return types.CallToolResult(
                 content=[
                     types.TextContent(

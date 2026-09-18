@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.tools.gitlab.tool import gitlab_module
+from app.tools.github.tool import github_module
 from app.tools.types import ToolModule
 
-MODULES: tuple[ToolModule, ...] = (gitlab_module,)
+MODULES: tuple[ToolModule, ...] = (github_module,)
