@@ -97,13 +97,13 @@ repositories. All tools authenticate with the `GITLAB_PRIVATE_TOKEN` env var
 
 ### `gitlab_create_project` arguments
 
-| Argument           | Type    | Meaning                                                                |
-| ------------------ | ------- | ---------------------------------------------------------------------- |
-| `name`             | string  | Repository name                                                        |
-| `namespace`        | string? | Namespace path (e.g. `hangtiancheng`), resolved to an id via the namespaces API   |
-| `namespace_id`     | int?    | Numeric namespace id; takes precedence over `namespace`                |
-| `description`      | string? | Repository description                                                 |
-| `visibility_level` | int?    | `0` private / `10` internal / `20` public (instance default: internal) |
+| Argument           | Type    | Meaning                                                                         |
+| ------------------ | ------- | ------------------------------------------------------------------------------- |
+| `name`             | string  | Repository name                                                                 |
+| `namespace`        | string? | Namespace path (e.g. `hangtiancheng`), resolved to an id via the namespaces API |
+| `namespace_id`     | int?    | Numeric namespace id; takes precedence over `namespace`                         |
+| `description`      | string? | Repository description                                                          |
+| `visibility_level` | int?    | `0` private / `10` internal / `20` public (instance default: internal)          |
 
 One of `namespace` / `namespace_id` is required on instances that reject
 creation without a valid namespace ("Namespace is not valid.").

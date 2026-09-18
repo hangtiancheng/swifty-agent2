@@ -2,7 +2,7 @@
 
 Authentication: a personal access token via the `private_token` query
 parameter. This client targets the token-accessible surface of older
-self-hosted forks (the behaviour below was measured against such an
+self-hosted forks (the behavior below was measured against such an
 instance, and standard GitLab accepts the same query parameter on these
 endpoints):
 

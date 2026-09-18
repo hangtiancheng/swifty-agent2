@@ -13,15 +13,15 @@ import sys
 
 import structlog
 
-_CONFIGURED = False
+_configured = False
 
 
 def configure_logging() -> None:
     """Idempotent structlog setup; safe to call from every entry point."""
-    global _CONFIGURED
-    if _CONFIGURED:
+    global _configured
+    if _configured:
         return
-    _CONFIGURED = True
+    _configured = True
 
     level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
