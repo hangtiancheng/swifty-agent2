@@ -8,6 +8,19 @@
 - Project Brand Name: MeowMeow Select
 - Project Agent Persona: Meow
 
+## Python project layout (single uv project)
+
+- ONE uv project at the repo root: `pyproject.toml` + `uv.lock` + `.python-version`
+  (3.13) cover every Python subtree — `scripts/train/py`, `src/milvus` and the
+  `mcp/` server. Do not create per-directory `pyproject.toml` / `uv.lock` /
+  `.python-version` files.
+- `mcp/` is the stdio-only GitLab MCP server (its InsForge tool suite and OAuth
+  HTTP mode were removed; see `mcp/AGENTS.md`). The root project is
+  `package = false`, so run it as `cd mcp && uv run python -m app.main`.
+- Gates: `uv run ruff check .`, `uv run ruff format --check .`,
+  `uv run --with mypy mypy` (strict; scoped via `files`), `uv run pytest`
+  (testpaths = `mcp/tests`; the root `tests/` dir is vitest).
+
 ## Milvus migration (Python Milvus => Node -> gRPC -> Milvus Lite)
 
 The Python original ran Milvus Standalone with dense + sparse(BM25) + hybrid all inside

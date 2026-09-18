@@ -19,7 +19,9 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, TypeVar
 
 import grpc
 
@@ -29,10 +31,14 @@ import kb_store_pb2 as pb2
 import kb_store_pb2_grpc as pb2_grpc
 from pymilvus import DataType, MilvusClient
 
-_OUTPUT = ["question", "answer", "section_path", "content_type", "category"]
+_OUTPUT: list[str] = ["question", "answer", "section_path", "content_type", "category"]
 
 # Single dedicated thread for all Milvus calls (see module docstring).
-_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="milvus")
+_EXECUTOR: ThreadPoolExecutor = ThreadPoolExecutor(
+    max_workers=1, thread_name_prefix="milvus"
+)
+
+_T = TypeVar("_T")
 
 
 class KbStoreServicer(pb2_grpc.KbStoreServicer):
@@ -40,9 +46,9 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
         self._uri = uri
         self._collection = collection
         self._client: MilvusClient | None = None
-        self._ready = False  # collection exists and is loaded
+        self._ready: bool = False  # collection exists and is loaded
 
-    def _run(self, fn):
+    def _run(self, fn: Callable[[], _T]) -> _T:
         # Execute fn on the dedicated Milvus thread and block for its result.
         return _EXECUTOR.submit(fn).result()
 
@@ -89,8 +95,10 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             self._ready = True
         return client
 
-    def Upsert(self, request, context):
-        rows = [
+    def Upsert(
+        self, request: pb2.UpsertRequest, context: grpc.ServicerContext
+    ) -> pb2.UpsertResponse:
+        rows: list[dict[str, Any]] = [
             {
                 "id": int(r.id),
                 "dense": list(r.dense),
@@ -119,12 +127,14 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             return pb2.UpsertResponse(count=0)
         return pb2.UpsertResponse(count=n)
 
-    def Search(self, request, context):
+    def Search(
+        self, request: pb2.SearchRequest, context: grpc.ServicerContext
+    ) -> pb2.SearchResponse:
         vector = list(request.vector)
         top_k = int(request.top_k) or 10
         category = request.category or None
 
-        def work():
+        def work() -> list[dict[str, Any]]:
             client = self._loaded_client()
             if client is None:
                 return []
@@ -146,7 +156,7 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"search failed: {exc}")
             return pb2.SearchResponse(hits=[])
-        hits = [
+        hits: list[pb2.Hit] = [
             pb2.Hit(
                 id=int(h["id"]),
                 score=float(h["distance"]),
@@ -160,7 +170,9 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
         ]
         return pb2.SearchResponse(hits=hits)
 
-    def Count(self, request, context):
+    def Count(
+        self, request: pb2.CountRequest, context: grpc.ServicerContext
+    ) -> pb2.CountResponse:
         def work() -> int:
             client = self._loaded_client()
             if client is None:
@@ -201,7 +213,9 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             return pb2.DeleteResponse(count=0)
         return pb2.DeleteResponse(count=count)
 
-    def Drop(self, request, context):
+    def Drop(
+        self, request: pb2.DropRequest, context: grpc.ServicerContext
+    ) -> pb2.DropResponse:
         def work() -> None:
             client = self._get_client()
             if client.has_collection(self._collection):
@@ -215,7 +229,9 @@ class KbStoreServicer(pb2_grpc.KbStoreServicer):
             context.set_details(f"drop failed: {exc}")
         return pb2.DropResponse()
 
-    def Flush(self, request, context):
+    def Flush(
+        self, request: pb2.FlushRequest, context: grpc.ServicerContext
+    ) -> pb2.FlushResponse:
         def work() -> None:
             client = self._loaded_client()
             if client is not None:

@@ -11,21 +11,23 @@ import datetime as dt
 import json
 import pathlib
 import shutil
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 import onnxruntime as ort
 import torch
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    PreTrainedModel,
+    BatchEncoding,
+    PreTrainedTokenizerBase,
 )
 
-MODEL_DIR = pathlib.Path("data/train/model")
-OUT = pathlib.Path("data/train/onnx")
-TEST = pathlib.Path("data/train/dataset/test.jsonl")
-REPORTS = pathlib.Path("data/train/reports")
+MODEL_DIR: pathlib.Path = pathlib.Path("data/train/model")
+OUT: pathlib.Path = pathlib.Path("data/train/onnx")
+TEST: pathlib.Path = pathlib.Path("data/train/dataset/test.jsonl")
+REPORTS: pathlib.Path = pathlib.Path("data/train/reports")
 
 
 def _write_report(checked: int, mismatch: int) -> None:
@@ -54,7 +56,9 @@ def _write_report(checked: int, mismatch: int) -> None:
 class LogitsWrapper(torch.nn.Module):
     """The HF model outputs a ModelOutput dict; wrap it to return only the logits tensor for export."""
 
-    def __init__(self, model: PreTrainedModel) -> None:
+    # model is nn.Module, not PreTrainedModel: transformers' overrides are untyped
+    # (the same workaround evaluate.py's predict() documents).
+    def __init__(self, model: torch.nn.Module) -> None:
         super().__init__()
         self.model = model
 
@@ -74,16 +78,18 @@ class LogitsWrapper(torch.nn.Module):
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
+    tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(MODEL_DIR)
+    model: torch.nn.Module = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_DIR
+    )
     model.eval()
     wrapper = LogitsWrapper(model)
-    sample = tokenizer(
+    sample: BatchEncoding = tokenizer(
         ["bought it too big want to return", "where is my package"],
         padding=True,
         return_tensors="pt",
     )
-    dyn = {0: "batch", 1: "seq"}
+    dyn: dict[int, str] = {0: "batch", 1: "seq"}
     torch.onnx.export(
         wrapper,
         (sample["input_ids"], sample["attention_mask"], sample["token_type_ids"]),
@@ -106,28 +112,29 @@ def main() -> None:
     # The reference model must be reloaded: tracing bakes transformers v5 masking_utils branches into
     # constants and pollutes the in-process model (the polluted reference logits differed by 1.88 in
     # practice, while the file itself was fine).
-    ref = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
+    ref: torch.nn.Module = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
     ref.eval()
-    threshold = json.loads((OUT / "threshold.json").read_text())["threshold"]
+    threshold: float = json.loads((OUT / "threshold.json").read_text())["threshold"]
     texts: list[str] = [
         json.loads(l)["text"]
         for l in TEST.read_text(encoding="utf-8").splitlines()
         if l.strip()
     ]
-    sess = ort.InferenceSession(
+    sess: ort.InferenceSession = ort.InferenceSession(
         str(OUT / "model.onnx"), providers=["CPUExecutionProvider"]
     )
-    mismatch = 0
+    mismatch: int = 0
     with torch.no_grad():
         for i in range(0, len(texts), 32):
-            enc = tokenizer(
+            enc: BatchEncoding = tokenizer(
                 texts[i : i + 32],
                 truncation=True,
                 padding=True,
                 max_length=128,
                 return_tensors="pt",
             )
-            t_logits = ref(**enc).logits.numpy()
+            t_logits: npt.NDArray[Any] = ref(**enc).logits.numpy()
+            o_logits: npt.NDArray[Any]
             (o_logits,) = sess.run(["logits"], {k: v.numpy() for k, v in enc.items()})
             assert np.allclose(t_logits, o_logits, atol=1e-3), "logits exceed tolerance"
             t_pred = 1 / (1 + np.exp(-t_logits)) >= threshold

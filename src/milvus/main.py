@@ -1,6 +1,6 @@
 from pymilvus import MilvusClient
 
-client = MilvusClient("milvus-lite.db")
+client: MilvusClient = MilvusClient("milvus-lite.db")
 
 if client.has_collection(collection_name="knowledge"):
     client.drop_collection(collection_name="knowledge")

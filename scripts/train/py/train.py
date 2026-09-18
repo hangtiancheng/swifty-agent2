@@ -17,6 +17,7 @@ import pathlib
 from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from sklearn.metrics import f1_score
 from taxonomy import ID2LABEL, LABEL2ID, NUM_CLASSES
@@ -36,9 +37,9 @@ from transformers import (
     default_data_collator,
 )
 
-BASE = os.environ.get("TRAIN_BASE_MODEL", "bert-base-uncased")
-DATA = pathlib.Path("data/train/dataset")
-OUT = pathlib.Path("data/train/model")
+BASE: str = os.environ.get("TRAIN_BASE_MODEL", "bert-base-uncased")
+DATA: pathlib.Path = pathlib.Path("data/train/dataset")
+OUT: pathlib.Path = pathlib.Path("data/train/model")
 
 
 def load_jsonl(path: pathlib.Path) -> list[dict[str, Any]]:
@@ -113,17 +114,17 @@ class BestInMemory(TrainerCallback):
 
 
 def main() -> None:
-    tokenizer = AutoTokenizer.from_pretrained(BASE)
-    model = AutoModelForSequenceClassification.from_pretrained(
+    tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(BASE)
+    model: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
         BASE,
         num_labels=NUM_CLASSES,
         problem_type="multi_label_classification",
         id2label=ID2LABEL,
         label2id=LABEL2ID,
     )
-    train_ds = encode(load_jsonl(DATA / "train.jsonl"), tokenizer)
-    val_ds = encode(load_jsonl(DATA / "val.jsonl"), tokenizer)
-    args = TrainingArguments(
+    train_ds: list[dict[str, Any]] = encode(load_jsonl(DATA / "train.jsonl"), tokenizer)
+    val_ds: list[dict[str, Any]] = encode(load_jsonl(DATA / "val.jsonl"), tokenizer)
+    args: TrainingArguments = TrainingArguments(
         output_dir="data/train/checkpoints",  # training logs only; save_strategy=no writes no weights
         eval_strategy="epoch",  # v5 parameter name, not evaluation_strategy
         save_strategy="no",  # zero on-disk checkpoints; best weights via BestInMemory
@@ -138,7 +139,7 @@ def main() -> None:
         report_to="none",
     )
     best_cb = BestInMemory(model)
-    trainer = Trainer(
+    trainer: Trainer = Trainer(
         model=model,
         args=args,
         train_dataset=train_ds,
@@ -156,10 +157,16 @@ def main() -> None:
         print(f"Backfilled best weights: validation micro-F1 {best_cb.best_metric:.4f}")
     # Scan the global best threshold on the validation set (0.30~0.70 step 0.05)
     # val_ds is a plain list used as a map-style dataset; the Trainer stub types it as torch Dataset.
-    predictions = trainer.predict(cast(TorchDataset[Any], val_ds)).predictions
-    logits = predictions if isinstance(predictions, np.ndarray) else predictions[0]
-    probs = 1 / (1 + np.exp(-logits))
-    gold = np.array([d["labels"] for d in val_ds])
+    predictions: np.ndarray | tuple[np.ndarray] = trainer.predict(
+        cast(TorchDataset[Any], val_ds)
+    ).predictions
+    logits: np.ndarray = (
+        predictions if isinstance(predictions, np.ndarray) else predictions[0]
+    )
+    probs: npt.NDArray[Any] = 1 / (1 + np.exp(-logits))
+    gold: npt.NDArray[Any] = np.array([d["labels"] for d in val_ds])
+    best_t: float
+    best_f1: float
     best_t, best_f1 = 0.5, -1.0
     for t in np.arange(0.30, 0.71, 0.05):
         f1 = f1_score(gold, (probs >= t).astype(int), average="micro", zero_division=0)

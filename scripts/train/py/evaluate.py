@@ -26,10 +26,13 @@ from transformers import (
     PreTrainedTokenizerBase,
 )
 
-MODEL_DIR = pathlib.Path("data/train/model")
-TEST = pathlib.Path("data/train/dataset/test.jsonl")
-REPORTS = pathlib.Path("data/train/reports")
-RED_LINES = {"strict": 0.9, "medium": 0.8}  # per-severity F1 red line; lenient has none
+MODEL_DIR: pathlib.Path = pathlib.Path("data/train/model")
+TEST: pathlib.Path = pathlib.Path("data/train/dataset/test.jsonl")
+REPORTS: pathlib.Path = pathlib.Path("data/train/reports")
+RED_LINES: dict[str, float] = {
+    "strict": 0.9,
+    "medium": 0.8,
+}  # per-severity F1 red line; lenient has none
 
 
 def pick_device() -> str:
@@ -61,9 +64,11 @@ def predict(
 
 
 def main() -> None:
-    device = pick_device()
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR).to(device)
+    device: str = pick_device()
+    tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(MODEL_DIR)
+    model: torch.nn.Module = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_DIR
+    ).to(device)
     threshold: float = json.loads((MODEL_DIR / "threshold.json").read_text())[
         "threshold"
     ]
@@ -73,11 +78,11 @@ def main() -> None:
         if l.strip()
     ]
     texts: list[str] = [s["text"] for s in samples]
-    gold = np.zeros((len(samples), NUM_CLASSES), dtype=int)
+    gold: npt.NDArray[Any] = np.zeros((len(samples), NUM_CLASSES), dtype=int)
     for i, s in enumerate(samples):
         for lb in s["labels"]:
             gold[i][LABEL2ID[lb]] = 1
-    preds = predict(model, tokenizer, texts, threshold, device)
+    preds: npt.NDArray[Any] = predict(model, tokenizer, texts, threshold, device)
 
     p, r, f1, support = precision_recall_fscore_support(gold, preds, zero_division=0)
     micro_p, micro_r, micro_f1, _ = precision_recall_fscore_support(
@@ -86,10 +91,10 @@ def main() -> None:
     macro_p, macro_r, macro_f1, _ = precision_recall_fscore_support(
         gold, preds, average="macro", zero_division=0
     )
-    cms = multilabel_confusion_matrix(gold, preds)
+    cms: npt.NDArray[Any] = multilabel_confusion_matrix(gold, preds)
 
     REPORTS.mkdir(parents=True, exist_ok=True)
-    lines = [
+    lines: list[str] = [
         "# train classifier evaluation report (held-out test set)",
         "",
         f"Test set {len(samples)} rows; decision threshold {threshold} (from the validation scan).",
@@ -110,7 +115,7 @@ def main() -> None:
         # so readers do not think it also passed some line
         line = RED_LINES.get(sev)
         if line is not None:
-            flag = f"{line} {'🔴 below bar, go fix the data' if f1[i] < line else '✅'}"
+            flag = f"{line} {'below bar, go fix the data' if f1[i] < line else '✅'}"
         else:
             flag = "—"
         lines.append(
@@ -124,7 +129,7 @@ def main() -> None:
         lines.append(f"- **{name}**: TN={tn} FP={fp} FN={fn} TP={tp}")
     (REPORTS / "eval_report.md").write_text("\n".join(lines), encoding="utf-8")
 
-    err = [
+    err: list[str] = [
         "# train misclassified samples (human review: which class erred? is the gold label itself wrong?)",
         "",
     ]

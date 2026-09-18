@@ -7,18 +7,34 @@ requires-python = ">=3.13"
 dependencies = [
     "accelerate>=1.15.0",
     "grpcio-tools>=1.84.0",
+    "httpx>=0.27",
+    "mcp>=1.15",
     "milvus-lite>=3.2.1",
     "numpy>=2.5.3",
     "onnx>=1.22.0",
     "onnxruntime>=1.30.0",
+    "pydantic>=2.9",
     "pymilvus>=3.0.1",
+    "python-dotenv>=1.0",
     "ruff>=0.16.7",
     "scikit-learn>=1.9.1",
+    "structlog>=24.4",
     "torch>=2.14.0",
     "transformers>=5.17.0",
+    "typer>=0.12",
 ]
 
-# uv syncs the dependencies but never builds/installs this repo as a Python package (it is a Node project).
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-timeout>=2.4.0",
+    "respx>=0.22",
+]
+
+# uv syncs the dependencies but never builds/installs this repo as a Python package (it is a Node
+# project). The mcp/ server therefore has no console script: run it with `mcp/` as the working
+# directory so `app` resolves, e.g. `cd mcp && uv run python -m app.main`.
 [tool.uv]
 package = false
 
@@ -33,14 +49,37 @@ extend-exclude = [
     ".agents",
 ]
 
-# Strict typing for the vendored train training pipeline (scripts/train/py). Scoped via `files`
-# so a bare `mypy` run targets only this typed subtree and leaves the other loose scripts alone.
+# Default rules (E4/E7/E9/F) plus import sorting and the modernization/bugbear/async rules the mcp/
+# server was written under. E501 stays off: line width is `ruff format`'s job, and the pre-existing
+# training/milvus comments intentionally exceed the format width.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# Pre-existing training scripts use `l` as a jsonl-line loop variable; kept as authored.
+"scripts/train/py/*.py" = ["E741"]
+
+# The mcp/ server's package lives at mcp/app and is resolved via pytest's `pythonpath = ["mcp"]`;
+# from the repo root isort cannot infer it as first-party on its own.
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# Strict typing for the vendored train training pipeline (scripts/train/py) and the mcp/ server
+# (mcp/app + mcp/tests). Scoped via `files` so a bare `mypy` run targets only these typed
+# subtrees and leaves the other loose scripts alone.
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["scripts/train/py"]
+files = ["scripts/train/py", "mcp/app", "mcp/tests"]
 
 # scikit-learn and onnxruntime ship no py.typed marker / stubs; treat them as Any at the boundary.
 [[tool.mypy.overrides]]
 module = ["sklearn.*", "onnxruntime.*"]
 ignore_missing_imports = true
+
+# The only Python tests in this repo are the mcp/ server's; `tests/` at the root is vitest.
+# `pythonpath` puts mcp/ on sys.path so `import app` resolves from the repo root.
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["mcp/tests"]
+pythonpath = ["mcp"]
