@@ -99,12 +99,16 @@ export async function startHttpServer(
   app.post(
     "/messages",
     fromNodeHandler(async (req, res) => {
-      if (!(req instanceof IncomingMessage) || !(res instanceof ServerResponse)) {
+      if (
+        !(req instanceof IncomingMessage) ||
+        !(res instanceof ServerResponse)
+      ) {
         throw new Error("the SSE transport requires the Node.js runtime");
       }
-      const sessionId = new URL(req.url ?? "/", "http://internal.invalid")
-        .searchParams
-        .get("sessionId");
+      const sessionId = new URL(
+        req.url ?? "/",
+        "http://internal.invalid",
+      ).searchParams.get("sessionId");
       const transport =
         sessionId === null ? undefined : sseTransports.get(sessionId);
       if (transport === undefined) {

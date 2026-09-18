@@ -7,7 +7,7 @@
 
 import { createServer, type Server } from "node:http";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   GitHubClient,
@@ -103,7 +103,9 @@ function listen(server: Server): Promise<number> {
 
 function closeServer(server: Server): Promise<void> {
   return new Promise((resolve) => {
-    server.close(() => { resolve(); });
+    server.close(() => {
+      resolve();
+    });
   });
 }
 
@@ -224,7 +226,13 @@ describe("listTree", () => {
     truncated: false,
     tree: [
       { path: "src", type: "tree", sha: "s1", mode: "040000" },
-      { path: "src/index.ts", type: "blob", sha: "s2", mode: "100644", size: 10 },
+      {
+        path: "src/index.ts",
+        type: "blob",
+        sha: "s2",
+        mode: "100644",
+        size: 10,
+      },
       {
         path: "src/util/helpers.ts",
         type: "blob",
@@ -249,7 +257,9 @@ describe("listTree", () => {
       "src/util/helpers.ts",
       "readme.md",
     ]);
-    expect(transport.requests[1]?.apiPath).toBe(`/repos/${REPO}/git/trees/main`);
+    expect(transport.requests[1]?.apiPath).toBe(
+      `/repos/${REPO}/git/trees/main`,
+    );
     expect(transport.requests[1]?.query).toEqual({ recursive: "1" });
   });
 
@@ -533,7 +543,10 @@ describe("issues", () => {
       },
     ]);
 
-    const issues = await client.listIssues(REPO, { state: "open", perPage: 10 });
+    const issues = await client.listIssues(REPO, {
+      state: "open",
+      perPage: 10,
+    });
 
     expect(issues).toHaveLength(1);
     expect(issues[0]?.number).toBe(7);
@@ -643,14 +656,22 @@ describe("createBranch", () => {
     },
   );
 
-  it.each(["", "  ", "a b", "a..b", "-x", "x/", "a~b", "x@{y", "v1.lock", ".hidden"])(
-    "rejects invalid branch names (%s)",
-    (bad) => {
-      expect(() => validateBranchName(bad)).toThrow(
-        "not a valid git branch name",
-      );
-    },
-  );
+  it.each([
+    "",
+    "  ",
+    "a b",
+    "a..b",
+    "-x",
+    "x/",
+    "a~b",
+    "x@{y",
+    "v1.lock",
+    ".hidden",
+  ])("rejects invalid branch names (%s)", (bad) => {
+    expect(() => validateBranchName(bad)).toThrow(
+      "not a valid git branch name",
+    );
+  });
 
   it("resolves the base ref to a sha", async () => {
     const { client, transport } = makeClient();
@@ -667,7 +688,9 @@ describe("createBranch", () => {
 
     expect(created.ref).toBe("refs/heads/feature");
     expect(created.sha).toBe("b".repeat(40));
-    expect(transport.requests[0]?.apiPath).toBe(`/repos/${REPO}/commits/release`);
+    expect(transport.requests[0]?.apiPath).toBe(
+      `/repos/${REPO}/commits/release`,
+    );
     expect(transport.requests[1]?.method).toBe("POST");
     expect(transport.requests[1]?.apiPath).toBe(`/repos/${REPO}/git/refs`);
     expect(transport.requests[1]?.jsonBody).toEqual({
@@ -691,9 +714,9 @@ describe("createBranch", () => {
   it("rejects an invalid name before any request", async () => {
     const { client, transport } = makeClient();
 
-    await expect(
-      client.createBranch(REPO, { branch: "a b" }),
-    ).rejects.toThrow("not a valid git branch name");
+    await expect(client.createBranch(REPO, { branch: "a b" })).rejects.toThrow(
+      "not a valid git branch name",
+    );
     expect(transport.requests).toEqual([]);
   });
 });
@@ -753,7 +776,9 @@ describe("createOrUpdateFile", () => {
     expect(put?.jsonBody).toMatchObject({ sha: "oldblob", branch: "dev" });
     // An explicit branch skips the default-branch lookup entirely.
     expect(
-      transport.requests.every((request) => request.apiPath !== `/repos/${REPO}`),
+      transport.requests.every(
+        (request) => request.apiPath !== `/repos/${REPO}`,
+      ),
     ).toBe(true);
   });
 
@@ -971,13 +996,18 @@ printf '"%s"' "$last"`,
     writeFakeGh(dir, "true");
     process.env.PATH = dir;
 
-    expect(await new GhCliTransport().request("DELETE", "/repos/o/r")).toBeNull();
+    expect(
+      await new GhCliTransport().request("DELETE", "/repos/o/r"),
+    ).toBeNull();
   });
 
   it("surfaces gh errors with the HTTP status", async () => {
     const dir = makeTempDir();
-    writeFakeGh(dir, `echo "gh: HTTP 404: Not Found" >&2
-exit 1`);
+    writeFakeGh(
+      dir,
+      `echo "gh: HTTP 404: Not Found" >&2
+exit 1`,
+    );
     process.env.PATH = dir;
 
     const attempt = new GhCliTransport().request("GET", "/repos/o/r");

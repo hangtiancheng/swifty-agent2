@@ -12,7 +12,13 @@ import { z } from "zod";
 
 import { githubModule } from "../src/tools/github/tool.ts";
 
-import { firstText, isolateEnv, makeTempDir, stubFetchRoutes, writeFakeGh } from "./helpers.ts";
+import {
+  firstText,
+  isolateEnv,
+  makeTempDir,
+  stubFetchRoutes,
+  writeFakeGh,
+} from "./helpers.ts";
 
 const API_BASE = "https://api.github.com";
 const TOKEN = "tok-secret";
@@ -50,7 +56,8 @@ beforeEach(async () => {
 
   const server = new McpServer({ name: "test", version: "0.0.0" });
   githubModule.register(server);
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
   client = new Client({ name: "vitest", version: "0.0.0" });
   await Promise.all([
     client.connect(clientTransport),
@@ -155,9 +162,7 @@ describe("backend gating", () => {
       type: "file",
     });
     // The configured token is the one that reaches GitHub.
-    expect(fetchStub.lastCall().headers.authorization).toBe(
-      `Bearer ${TOKEN}`,
-    );
+    expect(fetchStub.lastCall().headers.authorization).toBe(`Bearer ${TOKEN}`);
   });
 
   it("read_file prefers the gh CLI over the token", async () => {
@@ -370,9 +375,7 @@ describe("result formatting", () => {
         url: `${API_BASE}/search/code`,
         json: {
           total_count: 1,
-          items: [
-            { path: "src/index.ts", repository: { full_name: REPO } },
-          ],
+          items: [{ path: "src/index.ts", repository: { full_name: REPO } }],
         },
       },
     ]);
@@ -636,9 +639,7 @@ describe("custom base URL", () => {
 
     expect(result.isError).toBeUndefined();
     expect(
-      fetchStub.calls.filter((call) =>
-        call.url.includes("/contents/f.txt"),
-      ),
+      fetchStub.calls.filter((call) => call.url.includes("/contents/f.txt")),
     ).toHaveLength(1);
   });
 });

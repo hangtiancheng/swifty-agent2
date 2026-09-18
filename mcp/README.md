@@ -45,11 +45,11 @@ CLI flags:
 `pnpm tsx mcp/src/main.ts --http` (or `MCP_TRANSPORT=http`) serves the same
 tools on one port:
 
-| Endpoint                                     | Transport                                                            |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `POST /mcp`                                  | Streamable HTTP — stateless, one session per request, JSON responses |
-| `GET /mcp`                                   | 405 — stateless mode has no server-initiated notification stream     |
-| `GET /sse` + `POST /messages?sessionId=...`  | Legacy SSE — one long-lived stream per connection                    |
+| Endpoint                                    | Transport                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `POST /mcp`                                 | Streamable HTTP — stateless, one session per request, JSON responses |
+| `GET /mcp`                                  | 405 — stateless mode has no server-initiated notification stream     |
+| `GET /sse` + `POST /messages?sessionId=...` | Legacy SSE — one long-lived stream per connection                    |
 
 | Variable        | Default     | Description                                               |
 | --------------- | ----------- | --------------------------------------------------------- |

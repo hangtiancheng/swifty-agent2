@@ -67,7 +67,8 @@ class SseReader {
           }
           const separator = line.indexOf(":");
           const field = separator === -1 ? line : line.slice(0, separator);
-          const value = separator === -1 ? "" : line.slice(separator + 1).trim();
+          const value =
+            separator === -1 ? "" : line.slice(separator + 1).trim();
           event[field] = value;
         }
         if (Object.keys(event).length > 0) {
@@ -153,46 +154,40 @@ describe("legacy SSE", () => {
     expect(response.status).toBe(400);
   });
 
-  it(
-    "initialize round trip over the SSE stream",
-    async () => {
-      const response = await fetch(url("/sse"));
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toMatch(
-        /^text\/event-stream/,
-      );
+  it("initialize round trip over the SSE stream", async () => {
+    const response = await fetch(url("/sse"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toMatch(/^text\/event-stream/);
 
-      const sse = new SseReader(response.body);
-      try {
-        // First event announces the message endpoint for this session.
-        const endpointEvent = await sse.nextEvent();
-        expect(endpointEvent.event).toBe("endpoint");
-        const endpoint = endpointEvent.data ?? "";
-        expect(endpoint.startsWith("/messages?sessionId=")).toBe(true);
+    const sse = new SseReader(response.body);
+    try {
+      // First event announces the message endpoint for this session.
+      const endpointEvent = await sse.nextEvent();
+      expect(endpointEvent.event).toBe("endpoint");
+      const endpoint = endpointEvent.data ?? "";
+      expect(endpoint.startsWith("/messages?sessionId=")).toBe(true);
 
-        // Client messages are POSTed back; the reply arrives on the SSE
-        // stream, not on the POST (which only answers 202).
-        const post = await fetch(url(endpoint), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(INITIALIZE_REQUEST),
-        });
-        expect(post.status).toBe(202);
+      // Client messages are POSTed back; the reply arrives on the SSE
+      // stream, not on the POST (which only answers 202).
+      const post = await fetch(url(endpoint), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(INITIALIZE_REQUEST),
+      });
+      expect(post.status).toBe(202);
 
-        const messageEvent = await sse.nextEvent();
-        expect(messageEvent.event).toBe("message");
-        const message = z
-          .object({
-            id: z.number(),
-            result: z.object({ serverInfo: z.object({ name: z.string() }) }),
-          })
-          .parse(JSON.parse(messageEvent.data ?? ""));
-        expect(message.id).toBe(1);
-        expect(message.result.serverInfo.name).toBe(SERVER_NAME);
-      } finally {
-        await sse.cancel();
-      }
-    },
-    30_000,
-  );
+      const messageEvent = await sse.nextEvent();
+      expect(messageEvent.event).toBe("message");
+      const message = z
+        .object({
+          id: z.number(),
+          result: z.object({ serverInfo: z.object({ name: z.string() }) }),
+        })
+        .parse(JSON.parse(messageEvent.data ?? ""));
+      expect(message.id).toBe(1);
+      expect(message.result.serverInfo.name).toBe(SERVER_NAME);
+    } finally {
+      await sse.cancel();
+    }
+  }, 30_000);
 });

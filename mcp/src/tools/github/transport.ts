@@ -139,7 +139,9 @@ function runProcess(
 
     // A vanished process must not turn the stdin write into an unhandled
     // EPIPE; the close/error handlers report the real outcome.
-    child.stdin.on("error", () => { /** noop */});
+    child.stdin.on("error", () => {
+      /** noop */
+    });
     child.stdin.end(options.stdin ?? "");
   });
 }

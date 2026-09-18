@@ -47,7 +47,7 @@ export function isolateEnv(keys: string[]): void {
     for (const [key, value] of saved) {
       if (value === undefined) {
         // delete process.env[key];
-        Reflect.deleteProperty(process.env, key)
+        Reflect.deleteProperty(process.env, key);
       } else {
         process.env[key] = value;
       }
@@ -97,7 +97,7 @@ export function stubFetchRoutes(routes: FetchRoute[]): FetchStub {
   const fetchStub = async (
     input: string | URL | Request,
     init?: RequestInit,
-  // eslint-disable-next-line @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
   ): Promise<Response> => {
     const url =
       typeof input === "string"
@@ -125,7 +125,9 @@ export function stubFetchRoutes(routes: FetchRoute[]): FetchStub {
     );
     if (route === undefined) {
       return Response.json(
-        { message: `no fetch route for ${recorded.method} ${recorded.baseUrl}` },
+        {
+          message: `no fetch route for ${recorded.method} ${recorded.baseUrl}`,
+        },
         { status: 404 },
       );
     }

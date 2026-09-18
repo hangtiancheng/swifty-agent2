@@ -29,7 +29,7 @@ export function encodeRepo(repo: string): string {
   const parts = repo.trim().split("/");
   if (parts.length !== 2 || parts[0] === "" || parts[1] === "") {
     throw new GitHubError(
-      "Repository must be an `owner/name` path (e.g. \"hangtiancheng/swifty-agent2\"), " +
+      'Repository must be an `owner/name` path (e.g. "hangtiancheng/swifty-agent2"), ' +
         `got "${repo}".`,
     );
   }
@@ -280,10 +280,7 @@ export class GitHubClient {
    * (GitHub repos are split between `main` and `master`, so guessing is not
    * an option).
    */
-  private async resolveRef(
-    repo: string,
-    ref?: string | null  ,
-  ): Promise<string> {
+  private async resolveRef(repo: string, ref?: string | null): Promise<string> {
     return ref !== undefined && ref !== null && ref !== ""
       ? ref
       : await this.getDefaultBranch(repo);
@@ -293,7 +290,7 @@ export class GitHubClient {
   async readFile(
     repo: string,
     filePath: string,
-    ref?: string | null  ,
+    ref?: string | null,
   ): Promise<FileContent> {
     const resolvedRef = await this.resolveRef(repo, ref);
     const data = await this.transport.request(
@@ -302,7 +299,9 @@ export class GitHubClient {
       { query: { ref: resolvedRef } },
     );
     if (!isRecord(data)) {
-      throw new GitHubError(`GitHub returned no file metadata for ${filePath}.`);
+      throw new GitHubError(
+        `GitHub returned no file metadata for ${filePath}.`,
+      );
     }
 
     const entryType = asString(data.type);
@@ -359,7 +358,10 @@ export class GitHubClient {
    */
   async listTree(
     repo: string,
-    options: { path?: string | undefined; ref?: string | null | undefined } = {},
+    options: {
+      path?: string | undefined;
+      ref?: string | null | undefined;
+    } = {},
   ): Promise<TreeEntry[]> {
     const resolvedRef = await this.resolveRef(repo, options.ref);
     const data = await this.transport.request(
@@ -414,7 +416,10 @@ export class GitHubClient {
   /** List commits on a ref. */
   async listCommits(
     repo: string,
-    options: { ref?: string | null | undefined; perPage?: number | undefined } = {},
+    options: {
+      ref?: string | null | undefined;
+      perPage?: number | undefined;
+    } = {},
   ): Promise<CommitEntry[]> {
     const resolvedRef = await this.resolveRef(repo, options.ref);
     const data = await this.transport.request(
@@ -614,9 +619,7 @@ export class GitHubClient {
       }
       entries.push({
         name,
-        commit_sha: isRecord(raw.commit)
-          ? asString(raw.commit.sha)
-          : null,
+        commit_sha: isRecord(raw.commit) ? asString(raw.commit.sha) : null,
       });
     }
     return entries;
@@ -693,7 +696,11 @@ export class GitHubClient {
     if (options.body !== undefined && options.body !== null) {
       payload.body = options.body;
     }
-    if (options.labels !== undefined && options.labels !== null && options.labels.length > 0) {
+    if (
+      options.labels !== undefined &&
+      options.labels !== null &&
+      options.labels.length > 0
+    ) {
       payload.labels = options.labels;
     }
     if (
@@ -807,8 +814,7 @@ export class GitHubClient {
   ): Promise<CreatedBranch> {
     const name = validateBranchName(options.branch);
     const base = options.fromRef?.trim() ?? "";
-    const resolvedBase =
-      base !== "" ? base : await this.getDefaultBranch(repo);
+    const resolvedBase = base !== "" ? base : await this.getDefaultBranch(repo);
     // Resolve the base ref to a commit sha; one endpoint covers branches,
     // tags and shas alike.
     const commit = await this.transport.request(
@@ -830,9 +836,7 @@ export class GitHubClient {
     if (!isRecord(data)) {
       throw new GitHubError(`GitHub returned no created ref for ${ref}.`);
     }
-    const objectSha = isRecord(data.object)
-      ? asString(data.object.sha)
-      : null;
+    const objectSha = isRecord(data.object) ? asString(data.object.sha) : null;
     return {
       ref: asString(data.ref) ?? ref,
       sha: objectSha ?? sha,

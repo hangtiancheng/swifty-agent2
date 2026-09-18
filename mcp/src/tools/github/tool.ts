@@ -63,7 +63,9 @@ const ListTreeSchema = {
   path: z
     .string()
     .default("")
-    .describe("Directory path within the repository; empty string for the root."),
+    .describe(
+      "Directory path within the repository; empty string for the root.",
+    ),
   ref: z.string().nullish().describe(REF_DESCRIPTION),
 };
 
@@ -98,7 +100,10 @@ const CreateRepoSchema = {
     .describe(
       "Account or organization to create the repository under. Defaults to the authenticated user.",
     ),
-  description: z.string().nullish().describe("Optional repository description."),
+  description: z
+    .string()
+    .nullish()
+    .describe("Optional repository description."),
   private: z
     .boolean()
     .nullish()
@@ -172,8 +177,14 @@ const CreateIssueSchema = {
   repo: z.string().min(1).describe(REPO_DESCRIPTION),
   title: z.string().min(1).describe("Issue title."),
   body: z.string().nullish().describe("Optional issue body (markdown)."),
-  labels: z.array(z.string()).nullish().describe("Optional label names to attach."),
-  assignees: z.array(z.string()).nullish().describe("Optional user logins to assign."),
+  labels: z
+    .array(z.string())
+    .nullish()
+    .describe("Optional label names to attach."),
+  assignees: z
+    .array(z.string())
+    .nullish()
+    .describe("Optional user logins to assign."),
 };
 
 const ListPullRequestsSchema = {
@@ -285,9 +296,7 @@ export function formatCommits(entries: CommitEntry[]): string {
   }
   return entries
     .map((commit) => {
-      const date = (commit.authored_date ?? "")
-        .slice(0, 19)
-        .replace("T", " ");
+      const date = (commit.authored_date ?? "").slice(0, 19).replace("T", " ");
       return `${commit.short_id}  ${date}  ${commit.author_name}  ${commit.title}`;
     })
     .join("\n");
@@ -379,7 +388,8 @@ export function formatIssues(entries: IssueEntry[]): string {
   }
   return entries
     .map((issue) => {
-      const labels = issue.labels.length > 0 ? ` [${issue.labels.join(", ")}]` : "";
+      const labels =
+        issue.labels.length > 0 ? ` [${issue.labels.join(", ")}]` : "";
       const author = issue.author ? ` by ${issue.author}` : "";
       const date = issue.created_at
         ? ` on ${issue.created_at.slice(0, 10)}`
@@ -485,7 +495,12 @@ export const githubModule: ToolModule = {
           );
           return {
             content: [{ type: "text", text: formatTree(entries) }],
-            structuredContent: { repo, path, ref: ref ?? null, count: entries.length },
+            structuredContent: {
+              repo,
+              path,
+              ref: ref ?? null,
+              count: entries.length,
+            },
           };
         } catch (err) {
           logger.warn({ err }, "github_list_tree failed");
@@ -520,7 +535,11 @@ export const githubModule: ToolModule = {
           );
           return {
             content: [{ type: "text", text: formatCommits(commits) }],
-            structuredContent: { repo, ref: ref ?? null, count: commits.length },
+            structuredContent: {
+              repo,
+              ref: ref ?? null,
+              count: commits.length,
+            },
           };
         } catch (err) {
           logger.warn({ err }, "github_list_commits failed");
@@ -586,7 +605,10 @@ export const githubModule: ToolModule = {
             description,
             private: isPrivate,
           });
-          logger.info({ repo: repo.full_name, id: repo.id }, "github_create_repo ok");
+          logger.info(
+            { repo: repo.full_name, id: repo.id },
+            "github_create_repo ok",
+          );
           const lines = [`Created ${repo.full_name} (id ${String(repo.id)})`];
           if (repo.html_url) {
             lines.push(`web:  ${repo.html_url}`);
@@ -805,11 +827,10 @@ export const githubModule: ToolModule = {
             labels,
             assignees,
           });
-          logger.info(
-            { repo, number: issue.number },
-            "github_create_issue ok",
-          );
-          const lines = [`Created issue #${String(issue.number)}: ${issue.title}`];
+          logger.info({ repo, number: issue.number }, "github_create_issue ok");
+          const lines = [
+            `Created issue #${String(issue.number)}: ${issue.title}`,
+          ];
           if (issue.html_url) {
             lines.push(`web: ${issue.html_url}`);
           }
@@ -893,7 +914,9 @@ export const githubModule: ToolModule = {
             { repo, number: pr.number },
             "github_create_pull_request ok",
           );
-          const lines = [`Created pull request #${String(pr.number)}: ${pr.title}`];
+          const lines = [
+            `Created pull request #${String(pr.number)}: ${pr.title}`,
+          ];
           if (pr.html_url) {
             lines.push(`web: ${pr.html_url}`);
           }
@@ -935,10 +958,7 @@ export const githubModule: ToolModule = {
             branch,
             fromRef: from_ref,
           });
-          logger.info(
-            { repo, ref: created.ref },
-            "github_create_branch ok",
-          );
+          logger.info({ repo, ref: created.ref }, "github_create_branch ok");
           return {
             content: [
               {

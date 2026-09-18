@@ -77,7 +77,9 @@ describe("createServer", () => {
     // instances in HTTP mode a duplicate would surface as runtime errors.
     const server = new McpServer({ name: "test", version: "0.0.0" });
     githubModule.register(server);
-    expect(() => { githubModule.register(server); }).toThrow();
+    expect(() => {
+      githubModule.register(server);
+    }).toThrow();
   });
 
   it("module names are unique", () => {
