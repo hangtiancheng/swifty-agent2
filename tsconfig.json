@@ -44,6 +44,7 @@
 
     "paths": {
       "#/*": ["./src/*"],
+      "#mcp/*": ["./mcp/src/*"],
       "#generated/*": ["./generated/*"],
       "#scripts/*": ["./scripts/*"],
       "#tests/*": ["./tests/*"]

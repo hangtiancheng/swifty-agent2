@@ -7,10 +7,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { loadConfig } from "../../shared/config.ts";
-import { logger } from "../../shared/logger.ts";
-import type { ToolModule } from "../types.ts";
-
 import {
   GitHubClient,
   type BranchEntry,
@@ -24,6 +20,11 @@ import {
   type TreeEntry,
 } from "./client.ts";
 import { errorMessage, resolveTransport } from "./transport.ts";
+
+import { loadConfig } from "#mcp/shared/config.ts";
+import { logger } from "#mcp/shared/logger.ts";
+import type { ToolModule } from "#mcp/tools/types.ts";
+
 
 const REPO_DESCRIPTION =
   'Repository as `owner/name` (e.g. "hangtiancheng/swifty-agent2").';

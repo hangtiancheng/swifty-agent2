@@ -11,13 +11,13 @@
 
 import { z } from "zod";
 
-import { logger } from "../../shared/logger.ts";
-
 import {
   GitHubError,
   errorMessage,
   type GitHubTransport,
 } from "./transport.ts";
+
+import { logger } from "#mcp//shared/logger.ts";
 
 /**
  * Validate an `owner/name` repository path and URL-encode it for API paths.

@@ -8,9 +8,9 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { describe, expect, it } from "vitest";
 
-import { SERVER_NAME, createServer } from "../src/server.ts";
-import { githubModule } from "../src/tools/github/tool.ts";
-import { modules } from "../src/tools/index.ts";
+import { SERVER_NAME, createServer } from "#mcp/server.ts";
+import { githubModule } from "#mcp/tools/github/tool.ts";
+import { modules } from "#mcp/tools/index.ts";
 
 async function connectClient(server: McpServer): Promise<Client> {
   const [clientTransport, serverTransport] =

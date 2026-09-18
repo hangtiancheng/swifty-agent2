@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "imports": {
     "#/*": "./src/*",
+    "#mcp/*": "./mcp/src/*",
     "#generated/*": "./generated/*",
     "#scripts/*": "./scripts/*",
     "#tests/*": "./tests/*"

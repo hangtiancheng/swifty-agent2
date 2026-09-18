@@ -7,8 +7,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { startHttpServer, type HttpServerHandle } from "../src/http.ts";
-import { SERVER_NAME } from "../src/server.ts";
+import { startHttpServer, type HttpServerHandle } from "#mcp/http.ts";
+import { SERVER_NAME } from "#mcp/server.ts";
 
 const INITIALIZE_REQUEST = {
   jsonrpc: "2.0",

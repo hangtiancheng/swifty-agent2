@@ -10,10 +10,17 @@ import { createServer, type Server } from "node:http";
 import { describe, expect, it } from "vitest";
 
 import {
+  isolateEnv,
+  makeTempDir,
+  stubFetchRoutes,
+  writeFakeGh,
+} from "./helpers.ts";
+
+import {
   GitHubClient,
   encodeRepo,
   validateBranchName,
-} from "../src/tools/github/client.ts";
+} from "#mcp/tools/github/client.ts";
 import {
   DEFAULT_API_BASE_URL,
   GhCliTransport,
@@ -23,14 +30,8 @@ import {
   resolveTransport,
   type GitHubRequestOptions,
   type GitHubTransport,
-} from "../src/tools/github/transport.ts";
+} from "#mcp/tools/github/transport.ts";
 
-import {
-  isolateEnv,
-  makeTempDir,
-  stubFetchRoutes,
-  writeFakeGh,
-} from "./helpers.ts";
 
 const REPO = "hangtiancheng/swifty-agent2";
 
