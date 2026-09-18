@@ -47,7 +47,14 @@ export interface EnterOptions {
 /** Animate an element in (opacity + optional travel/scale). The element's resting
     CSS state is "visible", so a dropped animation never leaves it hidden. */
 export function fxEnter(el: HTMLElement, opts: EnterOptions = {}): void {
-  const { delay = 0, duration = 0.35, y = 0, x = 0, scale = 0, ease = EASE_DECEL } = opts;
+  const {
+    delay = 0,
+    duration = 0.35,
+    y = 0,
+    x = 0,
+    scale = 0,
+    ease = EASE_DECEL,
+  } = opts;
   const keyframes: Record<string, number[]> = { opacity: [0, 1] };
   if (y !== 0) {
     keyframes.y = [y, 0];
@@ -76,7 +83,13 @@ export function enterOnce(el: Element | undefined, opts?: EnterOptions): void {
     remove it from the DOM/state afterwards. */
 export function fxOut(
   el: HTMLElement,
-  opts: { duration?: number; y?: number; x?: number; scale?: number; ease?: Bezier } = {},
+  opts: {
+    duration?: number;
+    y?: number;
+    x?: number;
+    scale?: number;
+    ease?: Bezier;
+  } = {},
 ): Promise<void> {
   const { duration = 0.2, y = 0, x = 0, scale = 1, ease = EASE_ACCEL } = opts;
   const keyframes: Record<string, number[]> = { opacity: [1, 0] };
@@ -107,7 +120,11 @@ export function fxWidth(
 }
 
 /** ref-callback friendly fxWidth for JSX use. */
-export function growOnce(el: Element | undefined, to: string, opts?: { duration?: number; delay?: number }): void {
+export function growOnce(
+  el: Element | undefined,
+  to: string,
+  opts?: { duration?: number; delay?: number },
+): void {
   if (el instanceof HTMLElement && !entered.has(el)) {
     entered.add(el);
     fxWidth(el, to, opts);

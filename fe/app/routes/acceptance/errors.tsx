@@ -94,7 +94,15 @@ const SEV_LABEL: Record<string, string> = {
 };
 
 /** Label legend: standard-missed → red, prediction-extra → amber, matched → green. */
-function LabelRow({ kind, labels, marks }: { kind: string; labels: string[]; marks: Record<string, string> }) {
+function LabelRow({
+  kind,
+  labels,
+  marks,
+}: {
+  kind: string;
+  labels: string[];
+  marks: Record<string, string>;
+}) {
   return (
     <div class="flex flex-wrap items-center gap-1.5 text-[12.5px]">
       <span class="text-on-surface-variant">{kind}</span>
@@ -103,10 +111,15 @@ function LabelRow({ kind, labels, marks }: { kind: string; labels: string[]; mar
           <span
             class={cn(
               "rounded-full px-2 py-0.5 text-xs",
-              marks[l] === "missed" && "bg-error-container text-on-error-container",
-              marks[l] === "extra" && "bg-warning-container text-on-warning-container",
+              marks[l] === "missed" &&
+                "bg-error-container text-on-error-container",
+              marks[l] === "extra" &&
+                "bg-warning-container text-on-warning-container",
               !marks[l] && "bg-success-container text-on-success-container",
-              marks[l] && marks[l] !== "missed" && marks[l] !== "extra" && "bg-surface-container-high text-on-surface",
+              marks[l] &&
+                marks[l] !== "missed" &&
+                marks[l] !== "extra" &&
+                "bg-surface-container-high text-on-surface",
             )}
           >
             {l}
@@ -137,7 +150,9 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
     if (this.loadError) {
       return (
         <PageShell title="Error Analysis" active="/acceptance/errors">
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         </PageShell>
       );
     }
@@ -163,19 +178,35 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
             <Stat label="Eval artifact" value="Not generated" tone="fail" />
           ) : (
             <>
-              <Stat label="Error cases" value={String(d.errors.length) + " cases"} />
-              <Stat label="Matrix entries" value={String(d.matrix_entries) + " entries"} />
+              <Stat
+                label="Error cases"
+                value={String(d.errors.length) + " cases"}
+              />
+              <Stat
+                label="Matrix entries"
+                value={String(d.matrix_entries) + " entries"}
+              />
               <Stat label="False alarms (FP)" value={String(d.total_fp)} />
               <Stat label="Misses (FN)" value={String(d.total_fn)} />
-              <Stat label="Test set" value={String(d.eval.test_size ?? 0) + " rows"} />
-              <Stat label="Evaluated at" value={fmtTime(d.eval.ran_at).slice(5, 16)} small />
+              <Stat
+                label="Test set"
+                value={String(d.eval.test_size ?? 0) + " rows"}
+              />
+              <Stat
+                label="Evaluated at"
+                value={fmtTime(d.eval.ran_at).slice(5, 16)}
+                small
+              />
             </>
           )}
         </GateBar>
 
         {!d.eval.present ? (
           <Panel title="Error case review">
-            <MissingBox>{d.eval.hint ?? "Eval artifact not generated yet — run make train-eval first"}</MissingBox>
+            <MissingBox>
+              {d.eval.hint ??
+                "Eval artifact not generated yet — run make train-eval first"}
+            </MissingBox>
             {jobSpecs["train-eval"] ? (
               <job-row
                 specs={[jobSpecs["train-eval"]]}
@@ -201,7 +232,9 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
                     class="bg-card border-outline-variant shadow-e1 min-w-50 flex-1 rounded-lg border px-3 py-2"
                   >
                     <div>
-                      <Pill tone={KIND_PILL[kind] ?? "info"}>{KIND_LABEL[kind] ?? kind}</Pill>{" "}
+                      <Pill tone={KIND_PILL[kind] ?? "info"}>
+                        {KIND_LABEL[kind] ?? kind}
+                      </Pill>{" "}
                       <span class="text-xl font-medium">{n} cases</span>
                     </div>
                     <div class="text-on-surface-variant mt-1 text-[11.5px] leading-6">
@@ -211,9 +244,10 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
                 ))}
               </div>
               <Tip>
-                {d.errors.length} error cases → {d.matrix_entries} matrix entries: {d.total_fp} false alarms,{" "}
-                {d.total_fn} misses. With only a handful so far, this is not worth retraining for — collect more
-                cases first; training has a cost.
+                {d.errors.length} error cases → {d.matrix_entries} matrix
+                entries: {d.total_fp} false alarms, {d.total_fn} misses. With
+                only a handful so far, this is not worth retraining for —
+                collect more cases first; training has a cost.
               </Tip>
             </Panel>
 
@@ -261,12 +295,15 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
                     </Tbl>
                   </TableScroll>
                   <Tip>
-                    Pairs seen 2+ times are marked red — those are stable, reproducible biases; add their
-                    contrastive sentences first.
+                    Pairs seen 2+ times are marked red — those are stable,
+                    reproducible biases; add their contrastive sentences first.
                   </Tip>
                 </>
               ) : (
-                <MissingBox>No misplaced errors this round — no classes are fighting over labels</MissingBox>
+                <MissingBox>
+                  No misplaced errors this round — no classes are fighting over
+                  labels
+                </MissingBox>
               )}
             </Panel>
 
@@ -287,23 +324,45 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
                 return (
                   <div
                     ref={(el: Element | undefined) => {
-                      enterOnce(el, { y: 8, duration: 0.35, delay: Math.min(i * 0.04, 0.25) });
+                      enterOnce(el, {
+                        y: 8,
+                        duration: 0.35,
+                        delay: Math.min(i * 0.04, 0.25),
+                      });
                     }}
                     class="bg-card border-outline-variant shadow-e1 mt-2.5 rounded-lg border px-3 py-2.5 first:mt-0"
                   >
                     <div class="flex flex-wrap items-center gap-2 text-[12.5px]">
-                      <Pill tone={KIND_PILL[e.kind] ?? "info"}>{KIND_LABEL[e.kind] ?? e.kind}</Pill>
-                      <span class="text-on-surface-variant">counts as {e.matrix_entries} matrix entries</span>
+                      <Pill tone={KIND_PILL[e.kind] ?? "info"}>
+                        {KIND_LABEL[e.kind] ?? e.kind}
+                      </Pill>
+                      <span class="text-on-surface-variant">
+                        counts as {e.matrix_entries} matrix entries
+                      </span>
                     </div>
-                    <div class="mt-1.5 text-[13.5px] leading-7 font-medium">“{e.text}”</div>
+                    <div class="mt-1.5 text-[13.5px] leading-7 font-medium">
+                      “{e.text}”
+                    </div>
                     <div class="mt-2 flex flex-col gap-1.5">
-                      {LabelRow({ kind: "Gold standard", labels: e.gold, marks: marksGold })}
-                      {LabelRow({ kind: "Prediction", labels: e.pred, marks: marksPred })}
+                      {LabelRow({
+                        kind: "Gold standard",
+                        labels: e.gold,
+                        marks: marksGold,
+                      })}
+                      {LabelRow({
+                        kind: "Prediction",
+                        labels: e.pred,
+                        marks: marksPred,
+                      })}
                     </div>
                     <div class="text-on-surface-variant mt-2 text-xs leading-6">
                       {[
-                        ...(e.missed.length ? ["Missed: " + e.missed.join(", ")] : []),
-                        ...(e.extra.length ? ["Extra: " + e.extra.join(", ")] : []),
+                        ...(e.missed.length
+                          ? ["Missed: " + e.missed.join(", ")]
+                          : []),
+                        ...(e.extra.length
+                          ? ["Extra: " + e.extra.join(", ")]
+                          : []),
                         "Fix: " + (d.recipes[e.kind] ?? "—"),
                       ].join(" | ")}
                     </div>

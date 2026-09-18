@@ -118,7 +118,11 @@ interface Overview {
   calibration: CalibrationBlock;
 }
 
-function Kpis({ items }: { items: { label: string; val: unknown; unit?: string; sub: unknown }[] }) {
+function Kpis({
+  items,
+}: {
+  items: { label: string; val: unknown; unit?: string; sub: unknown }[];
+}) {
   return (
     <div class="mt-1 grid grid-cols-2 gap-3 lg:grid-cols-4">
       {items.map((k) => (
@@ -128,7 +132,9 @@ function Kpis({ items }: { items: { label: string; val: unknown; unit?: string; 
             {k.val}
             {k.unit ? <small class="ml-0.5 text-[13px]">{k.unit}</small> : null}
           </div>
-          <div class="text-on-surface-variant text-[11.5px] leading-6">{k.sub}</div>
+          <div class="text-on-surface-variant text-[11.5px] leading-6">
+            {k.sub}
+          </div>
         </div>
       ))}
     </div>
@@ -182,13 +188,20 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
               label: "Most expensive intent",
               val: top?.intent ?? "—",
               sub: top
-                ? pctFmt(top.share) + " of spend · avg " + thousands(top.avg_tokens) + " tokens/request"
+                ? pctFmt(top.share) +
+                  " of spend · avg " +
+                  thousands(top.avg_tokens) +
+                  " tokens/request"
                 : "—",
             },
             {
               label: "Total tokens",
               val: thousands(d.total_tokens),
-              sub: String(d.total_requests ?? 0) + " questions · last " + String(m.days ?? "—") + " days",
+              sub:
+                String(d.total_requests ?? 0) +
+                " questions · last " +
+                String(m.days ?? "—") +
+                " days",
             },
             {
               label: "Intent routes",
@@ -223,7 +236,10 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
                   ref={(el: Element | undefined) => {
                     growOnce(el, `${String(Math.max(1.5, r.share * 100))}%`);
                   }}
-                  class={cn("block h-full rounded-full", top === r ? "bg-primary" : "bg-primary/40")}
+                  class={cn(
+                    "block h-full rounded-full",
+                    top === r ? "bg-primary" : "bg-primary/40",
+                  )}
                 />
               </div>
             </div>
@@ -258,19 +274,24 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
         </TableScroll>,
       );
       if (top) {
-        const most = d.rows.reduce<CostRow>((a, b) => (b.avg_tokens > a.avg_tokens ? b : a), d.rows[0]);
+        const most = d.rows.reduce<CostRow>(
+          (a, b) => (b.avg_tokens > a.avg_tokens ? b : a),
+          d.rows[0],
+        );
         body.push(
           <ReadNote
             note={d.read_note}
             fallback={
               <>
-                <b>{top.intent}</b> accounts for <b>{pctFmt(top.share)}</b> of total spend — to cut cost, trim its
-                prompt or move it to a smaller model first. The highest per-request average is{" "}
+                <b>{top.intent}</b> accounts for <b>{pctFmt(top.share)}</b> of
+                total spend — to cut cost, trim its prompt or move it to a
+                smaller model first. The highest per-request average is{" "}
                 <b>
                   {most.intent} {thousands(most.avg_tokens)}
                 </b>{" "}
-                tokens; a high average means one question triggers multiple model calls (multi-step ReAct tool
-                chains do this), so it reflects chain length, not question volume.
+                tokens; a high average means one question triggers multiple
+                model calls (multi-step ReAct tool chains do this), so it
+                reflects chain length, not question volume.
               </>
             }
           />,
@@ -304,7 +325,10 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
       const latest = runs[0];
       const prev = runs[1];
       const drops = prev
-        ? d.metric_names.filter((n) => (latest.metrics[n] ?? 0) < (prev.metrics[n] ?? 0) - DELTA_EPS)
+        ? d.metric_names.filter(
+            (n) =>
+              (latest.metrics[n] ?? 0) < (prev.metrics[n] ?? 0) - DELTA_EPS,
+          )
         : [];
       body.push(
         Kpis({
@@ -367,13 +391,19 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
                       const o = older ? older.metrics[n] : undefined;
                       let cls = "";
                       let arrow = "";
-                      if (v !== undefined && v !== null && o !== undefined && o !== null) {
+                      if (
+                        v !== undefined &&
+                        v !== null &&
+                        o !== undefined &&
+                        o !== null
+                      ) {
                         const delta = v - o;
                         if (delta > DELTA_EPS) {
                           cls = "text-success";
                           arrow = "↑";
                         } else if (delta < -DELTA_EPS) {
-                          cls = "bg-error-container font-medium text-on-error-container";
+                          cls =
+                            "bg-error-container font-medium text-on-error-container";
                           arrow = "⚠↓";
                         } else {
                           cls = "text-on-surface-variant";
@@ -400,15 +430,18 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
           fallback={
             drops.length ? (
               <>
-                Versus the previous run, <b>{drops.map((n) => METRIC_LABEL[n] ?? n).join(", ")}</b> are declining.
-                Check the recently approved items in the review queue first — a faithfulness drop is the classic
-                sign of dirty knowledge entering the base.
+                Versus the previous run,{" "}
+                <b>{drops.map((n) => METRIC_LABEL[n] ?? n).join(", ")}</b> are
+                declining. Check the recently approved items in the review queue
+                first — a faithfulness drop is the classic sign of dirty
+                knowledge entering the base.
               </>
             ) : (
               <>
-                No metric regressed versus the previous run. The value of trends is not the absolute score of one
-                run but <b>keeping the next run from dropping</b> — schedule it (cron, one run a day) so
-                regressions get seen.
+                No metric regressed versus the previous run. The value of trends
+                is not the absolute score of one run but{" "}
+                <b>keeping the next run from dropping</b> — schedule it (cron,
+                one run a day) so regressions get seen.
               </>
             )
           }
@@ -435,8 +468,9 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
     const w = d.weights;
     const wnote = (
       <NoteBox title="How confidence is computed">
-        Weighted from four signals: Top1 rerank score {w.top1} / valid evidence count {w.valid_count} / Top1–Top2
-        margin {w.margin} / key-clause hit {w.key_clause}. The weights are constants in code; calibration decides
+        Weighted from four signals: Top1 rerank score {w.top1} / valid evidence
+        count {w.valid_count} / Top1–Top2 margin {w.margin} / key-clause hit{" "}
+        {w.key_clause}. The weights are constants in code; calibration decides
         where to draw the line.
       </NoteBox>
     );
@@ -453,7 +487,10 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
             {
               label: "Recommended threshold",
               val: rec.threshold.toFixed(2),
-              sub: "Youden J " + fmt3(rec.youden_j) + " · the line that best separates the two groups",
+              sub:
+                "Youden J " +
+                fmt3(rec.youden_j) +
+                " · the line that best separates the two groups",
             },
             {
               label: "Threshold in use",
@@ -509,7 +546,9 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
           </Tbl>
         </TableScroll>,
       );
-      body.push(<SectionHead unit="0.05 → 0.95, step 0.01">Threshold scan</SectionHead>);
+      body.push(
+        <SectionHead unit="0.05 → 0.95, step 0.01">Threshold scan</SectionHead>,
+      );
       body.push(
         <div class="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
           {[
@@ -527,7 +566,11 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
       );
       body.push(
         <div>
-          <scan-line-chart scan={d.scan} pick={rec.threshold} inUse={d.in_use}></scan-line-chart>
+          <scan-line-chart
+            scan={d.scan}
+            pick={rec.threshold}
+            inUse={d.in_use}
+          ></scan-line-chart>
         </div>,
       );
       body.push(
@@ -535,11 +578,14 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
           note={d.read_note}
           fallback={
             <>
-              The red line drops steeply, then flattens: raising the threshold to <b>{rec.threshold.toFixed(2)}</b>{" "}
-              drives the should-refuse leak rate to zero — no out-of-scope question gets through — at the cost of{" "}
-              <b>{pctFmt(1 - rec.pass_rate)}</b> of answerable questions wrongly blocked. Blocked ones fall back
-              into the low-confidence pool, which is exactly flywheel fuel, so the trade pays off. To loosen it,
-              move the line left — but accept that some out-of-scope questions will get answered anyway.
+              The red line drops steeply, then flattens: raising the threshold
+              to <b>{rec.threshold.toFixed(2)}</b> drives the should-refuse leak
+              rate to zero — no out-of-scope question gets through — at the cost
+              of <b>{pctFmt(1 - rec.pass_rate)}</b> of answerable questions
+              wrongly blocked. Blocked ones fall back into the low-confidence
+              pool, which is exactly flywheel fuel, so the trade pays off. To
+              loosen it, move the line left — but accept that some out-of-scope
+              questions will get answered anyway.
             </>
           }
         />,
@@ -548,12 +594,14 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
         <div class="mt-3.5 grid gap-3.5 md:grid-cols-2">
           {wnote}
           <NoteBox title='What "wrongly blocked answerable" means'>
-            The base actually has the answer, but the evidence recalled that one time was too scattered (the base
-            says "cat bed cleaning & care instructions" while the user asks "can I toss it in the washing
-            machine?"), so the rerank score stays low and computed confidence falls under the line. The gate only
-            sees evidence scores, not that the base has an answer, so it treats the question as unanswerable. The
-            question lands in the pool, gets merged, reviewed, and added to the Knowledge Base — next time the same
-            phrasing recalls fine.
+            The base actually has the answer, but the evidence recalled that one
+            time was too scattered (the base says "cat bed cleaning & care
+            instructions" while the user asks "can I toss it in the washing
+            machine?"), so the rerank score stays low and computed confidence
+            falls under the line. The gate only sees evidence scores, not that
+            the base has an answer, so it treats the question as unanswerable.
+            The question lands in the pool, gets merged, reviewed, and added to
+            the Knowledge Base — next time the same phrasing recalls fine.
           </NoteBox>
         </div>,
       );
@@ -583,7 +631,9 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
         actions={this.refreshBtn()}
       >
         {this.loadError ? (
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         ) : this.data ? (
           <>
             {this.costPanel(this.data.cost)}

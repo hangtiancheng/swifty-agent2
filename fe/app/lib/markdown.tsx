@@ -90,7 +90,10 @@ function renderInline(s: string, opts: MarkdownOptions): unknown[] {
   return out;
 }
 
-export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[] {
+export function renderMarkdown(
+  md: string,
+  opts: MarkdownOptions = {},
+): unknown[] {
   const lines = md.split("\n");
   const out: unknown[] = [];
 
@@ -125,7 +128,9 @@ export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[
       i++;
       out.push(
         <pre class="scroll-slim bg-surface-container-high my-3 overflow-x-auto rounded-md p-3.5">
-          <code class="text-on-surface font-mono text-[12.5px] leading-relaxed">{buf.join("\n")}</code>
+          <code class="text-on-surface font-mono text-[12.5px] leading-relaxed">
+            {buf.join("\n")}
+          </code>
         </pre>,
       );
       continue;
@@ -163,18 +168,27 @@ export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[
       const headers = splitRow(line);
       i += 2;
       const rows: string[][] = [];
-      while (i < lines.length && (lines[i] ?? "").includes("|") && (lines[i] ?? "").trim() !== "") {
+      while (
+        i < lines.length &&
+        (lines[i] ?? "").includes("|") &&
+        (lines[i] ?? "").trim() !== ""
+      ) {
         rows.push(splitRow(lines[i] ?? ""));
         i++;
       }
       const thCls =
         "border-outline-variant bg-surface-container-low text-on-surface-variant border-b px-2.5 py-1.5 text-left text-label-medium";
-      const tdCls = "border-outline-variant text-on-surface border-b px-2.5 py-1.5 text-left";
+      const tdCls =
+        "border-outline-variant text-on-surface border-b px-2.5 py-1.5 text-left";
       out.push(
         <div class="scroll-slim border-outline-variant my-3 overflow-x-auto rounded-md border">
           <table class="w-full border-collapse text-[13px]">
             <thead>
-              <tr>{headers.map((c) => <th class={thCls}>{renderInline(c, opts)}</th>)}</tr>
+              <tr>
+                {headers.map((c) => (
+                  <th class={thCls}>{renderInline(c, opts)}</th>
+                ))}
+              </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
@@ -194,7 +208,11 @@ export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[
       // Unordered list
       const items: unknown[] = [];
       while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i] ?? "")) {
-        items.push(<li class="my-0.5">{renderInline((lines[i] ?? "").replace(/^\s*[-*+]\s+/, ""), opts)}</li>);
+        items.push(
+          <li class="my-0.5">
+            {renderInline((lines[i] ?? "").replace(/^\s*[-*+]\s+/, ""), opts)}
+          </li>,
+        );
         i++;
       }
       out.push(<ul class="my-1.5 list-disc pl-5">{items}</ul>);
@@ -204,7 +222,11 @@ export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[
       // Ordered list
       const items: unknown[] = [];
       while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? "")) {
-        items.push(<li class="my-0.5">{renderInline((lines[i] ?? "").replace(/^\s*\d+\.\s+/, ""), opts)}</li>);
+        items.push(
+          <li class="my-0.5">
+            {renderInline((lines[i] ?? "").replace(/^\s*\d+\.\s+/, ""), opts)}
+          </li>,
+        );
         i++;
       }
       out.push(<ol class="my-1.5 list-decimal pl-5">{items}</ol>);
@@ -235,7 +257,11 @@ export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[
     }
     // Paragraph
     const para: string[] = [];
-    while (i < lines.length && (lines[i] ?? "").trim() !== "" && !isSpecial(lines[i] ?? "", lines[i + 1])) {
+    while (
+      i < lines.length &&
+      (lines[i] ?? "").trim() !== "" &&
+      !isSpecial(lines[i] ?? "", lines[i + 1])
+    ) {
       para.push(lines[i] ?? "");
       i++;
     }
@@ -261,9 +287,19 @@ export interface MarkdownProps {
 }
 
 /** Bot bubble body: markdown rendering + optional citation superscripts */
-export function Markdown({ text, citations, onCite, class: cls }: MarkdownProps) {
+export function Markdown({
+  text,
+  citations,
+  onCite,
+  class: cls,
+}: MarkdownProps) {
   return (
-    <div class={cn("[&_p:last-child]:mb-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", cls)}>
+    <div
+      class={cn(
+        "[&_p:last-child]:mb-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        cls,
+      )}
+    >
       {renderMarkdown(text, { citations, onCite })}
     </div>
   );

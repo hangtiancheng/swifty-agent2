@@ -22,7 +22,9 @@ export abstract class ModalShell extends LightElement {
     }
   };
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (!changed.has("open")) {
       return;
     }
@@ -35,7 +37,11 @@ export abstract class ModalShell extends LightElement {
           fxEnter(backdrop, { duration: 0.2 });
         }
         if (card) {
-          animate(card, { opacity: [0, 1], scale: [0.92, 1], y: [20, 0] }, { duration: 0.3, ease: EASE_DECEL });
+          animate(
+            card,
+            { opacity: [0, 1], scale: [0.92, 1], y: [20, 0] },
+            { duration: 0.3, ease: EASE_DECEL },
+          );
         }
       });
       document.addEventListener("keydown", this.keyHandler);
@@ -59,9 +65,11 @@ export abstract class ModalShell extends LightElement {
     }
     if (card) {
       outs.push(
-        animate(card, { opacity: [1, 0], scale: [1, 0.95], y: [0, 10] }, { duration: 0.2, ease: EASE_ACCEL }).then(
-          () => undefined,
-        ),
+        animate(
+          card,
+          { opacity: [1, 0], scale: [1, 0.95], y: [0, 10] },
+          { duration: 0.2, ease: EASE_ACCEL },
+        ).then(() => undefined),
       );
     }
     await Promise.all(outs);
@@ -99,8 +107,12 @@ export abstract class ModalShell extends LightElement {
             this.cardMaxW,
           )}
         >
-          <h3 class="text-headline-small text-on-surface font-medium">{this.dialogTitle()}</h3>
-          <p class="text-body-medium text-on-surface-variant mt-2 mb-5 leading-6">{this.dialogSub()}</p>
+          <h3 class="text-headline-small text-on-surface font-medium">
+            {this.dialogTitle()}
+          </h3>
+          <p class="text-body-medium text-on-surface-variant mt-2 mb-5 leading-6">
+            {this.dialogSub()}
+          </p>
           {this.dialogBody()}
         </div>
       </div>

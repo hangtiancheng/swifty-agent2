@@ -21,11 +21,13 @@ const BTN_SIZE: Record<BtnSize, string> = {
   sm: "h-8 px-3.5 text-label-medium",
 };
 const BTN_VARIANT: Record<BtnVariant, string> = {
-  default: "border border-outline text-primary hover:bg-primary/8 active:bg-primary/12",
+  default:
+    "border border-outline text-primary hover:bg-primary/8 active:bg-primary/12",
   go: "bg-primary text-on-primary shadow-e1 hover:bg-primary-hover hover:shadow-e2 active:bg-primary-pressed",
   no: "bg-error text-on-error shadow-e1 hover:bg-error-hover hover:shadow-e2 active:bg-error-pressed",
   ok: "bg-success text-on-success shadow-e1 hover:bg-success-hover hover:shadow-e2",
-  tonal: "bg-secondary-container text-on-secondary-container hover:bg-secondary-container-hover",
+  tonal:
+    "bg-secondary-container text-on-secondary-container hover:bg-secondary-container-hover",
   text: "px-3.5 text-primary hover:bg-primary/8 active:bg-primary/12",
 };
 
@@ -41,9 +43,19 @@ export interface BtnProps {
 }
 
 export function Btn(props: BtnProps) {
-  const { variant = "default", size = "md", class: cls, children, ...rest } = props;
+  const {
+    variant = "default",
+    size = "md",
+    class: cls,
+    children,
+    ...rest
+  } = props;
   return (
-    <button type="button" class={cn(BTN_BASE, BTN_SIZE[size], BTN_VARIANT[variant], cls)} {...rest}>
+    <button
+      type="button"
+      class={cn(BTN_BASE, BTN_SIZE[size], BTN_VARIANT[variant], cls)}
+      {...rest}
+    >
       {children}
     </button>
   );
@@ -58,11 +70,23 @@ export interface BtnLinkProps {
 }
 
 /** Button-styled link (in-app navigation; the Router intercepts the click) */
-export function BtnLink({ to, variant = "default", size = "md", class: cls, children }: BtnLinkProps) {
+export function BtnLink({
+  to,
+  variant = "default",
+  size = "md",
+  class: cls,
+  children,
+}: BtnLinkProps) {
   return (
     <a
       href={to}
-      class={cn(BTN_BASE, BTN_SIZE[size], BTN_VARIANT[variant], "no-underline", cls)}
+      class={cn(
+        BTN_BASE,
+        BTN_SIZE[size],
+        BTN_VARIANT[variant],
+        "no-underline",
+        cls,
+      )}
     >
       {children}
     </a>
@@ -125,13 +149,24 @@ export interface PanelProps {
   children?: unknown;
 }
 
-export function Panel({ title, pill, lede, tight, class: cls, children }: PanelProps) {
+export function Panel({
+  title,
+  pill,
+  lede,
+  tight,
+  class: cls,
+  children,
+}: PanelProps) {
   return (
     <section
       ref={(el: Element | undefined) => {
         enterOnce(el, { y: 14 });
       }}
-      class={cn("bg-card shadow-e1 mt-4 rounded-lg p-4 sm:px-5 sm:py-4.5", tight && "pb-4", cls)}
+      class={cn(
+        "bg-card shadow-e1 mt-4 rounded-lg p-4 sm:px-5 sm:py-4.5",
+        tight && "pb-4",
+        cls,
+      )}
     >
       {title ? (
         <h2 class="text-title-small text-on-surface flex flex-wrap items-center gap-2.5">
@@ -140,7 +175,9 @@ export function Panel({ title, pill, lede, tight, class: cls, children }: PanelP
         </h2>
       ) : null}
       {lede ? (
-        <p class="text-body-small text-on-surface-variant mt-1 mb-3 leading-relaxed">{lede}</p>
+        <p class="text-body-small text-on-surface-variant mt-1 mb-3 leading-relaxed">
+          {lede}
+        </p>
       ) : null}
       {children}
     </section>
@@ -159,7 +196,9 @@ export function TopBar({ title, sub, children }: TopBarProps) {
       <h1 class="text-title-large text-on-surface sm:text-headline-small font-medium tracking-normal sm:font-medium">
         {title}
       </h1>
-      {sub ? <span class="text-body-small text-on-surface-variant">{sub}</span> : null}
+      {sub ? (
+        <span class="text-body-small text-on-surface-variant">{sub}</span>
+      ) : null}
       <span class="flex-1" />
       {children}
     </div>
@@ -177,9 +216,21 @@ export interface PageShellProps {
 
 /** Shared shell for admin pages: top bar + nav + content (with entrance animation).
     Content spans the full viewport width; pass maxW to constrain and center it. */
-export function PageShell({ title, sub, active, actions, maxW, children }: PageShellProps) {
+export function PageShell({
+  title,
+  sub,
+  active,
+  actions,
+  maxW,
+  children,
+}: PageShellProps) {
   return (
-    <div class={cn("w-full px-3 pt-5 pb-16 sm:px-5 lg:px-8", maxW && cn("mx-auto", maxW))}>
+    <div
+      class={cn(
+        "w-full px-3 pt-5 pb-16 sm:px-5 lg:px-8",
+        maxW && cn("mx-auto", maxW),
+      )}
+    >
       <TopBar title={title} sub={sub}>
         {actions}
       </TopBar>
@@ -200,8 +251,10 @@ export interface StatProps {
 
 export function Stat({ label, value, tone, small }: StatProps) {
   return (
-    <div class="bg-card shadow-e1 min-w-[112px] rounded-lg px-4 py-2.5">
-      <span class="text-label-medium text-on-surface-variant block">{label}</span>
+    <div class="bg-card shadow-e1 min-w-28 rounded-lg px-4 py-2.5">
+      <span class="text-label-medium text-on-surface-variant block">
+        {label}
+      </span>
       <b
         class={cn(
           "text-headline-small mt-0.5 block leading-8 font-medium tabular-nums",
@@ -254,26 +307,50 @@ export function MissingBox({ children, class: cls }: MissingBoxProps) {
         cls,
       )}
     >
-      {children ?? "Artifact not generated yet — run the corresponding make target first"}
+      {children ??
+        "Artifact not generated yet — run the corresponding make target first"}
     </div>
   );
 }
 
 /* ---------- Table primitives ---------- */
 
-export function TableScroll({ children, class: cls }: { children?: unknown; class?: string }) {
+export function TableScroll({
+  children,
+  class: cls,
+}: {
+  children?: unknown;
+  class?: string;
+}) {
   return <div class={cn("scroll-slim overflow-x-auto", cls)}>{children}</div>;
 }
 
-export function Tbl({ children, class: cls }: { children?: unknown; class?: string }) {
+export function Tbl({
+  children,
+  class: cls,
+}: {
+  children?: unknown;
+  class?: string;
+}) {
   return (
-    <table class={cn("text-body-small w-full border-collapse [&_tbody_tr:last-child_td]:border-b-0", cls)}>
+    <table
+      class={cn(
+        "text-body-small w-full border-collapse [&_tbody_tr:last-child_td]:border-b-0",
+        cls,
+      )}
+    >
       {children}
     </table>
   );
 }
 
-export function Th({ children, class: cls }: { children?: unknown; class?: string }) {
+export function Th({
+  children,
+  class: cls,
+}: {
+  children?: unknown;
+  class?: string;
+}) {
   return (
     <th
       class={cn(
@@ -297,7 +374,11 @@ export function Td({ children, class: cls, num, colSpan }: TdProps) {
   return (
     <td
       colSpan={colSpan}
-      class={cn("border-outline-variant text-on-surface border-b px-3 py-2.5 text-left align-middle", num && "num", cls)}
+      class={cn(
+        "border-outline-variant text-on-surface border-b px-3 py-2.5 text-left align-middle",
+        num && "num",
+        cls,
+      )}
     >
       {children}
     </td>
@@ -337,14 +418,23 @@ export interface ScoreCellProps {
 export function ScoreCell({ v, redLine }: ScoreCellProps) {
   const width = Math.max(3, Math.round((v ?? 0) * 100));
   const hasLine = redLine !== null && redLine !== undefined;
-  const tone = !hasLine ? "bg-primary" : (v ?? 0) >= redLine ? "bg-success" : "bg-error";
+  const tone = !hasLine
+    ? "bg-primary"
+    : (v ?? 0) >= redLine
+      ? "bg-success"
+      : "bg-error";
   return (
     <Td num>
       <div class="flex items-center justify-end gap-2">
-        <span class="tabular-nums">{v === null || v === undefined ? "—" : v.toFixed(3)}</span>
+        <span class="tabular-nums">
+          {v === null || v === undefined ? "—" : v.toFixed(3)}
+        </span>
         <span class="bg-surface-container-highest h-1.5 w-14 shrink-0 overflow-hidden rounded-full">
           <span
-            class={cn("ease-decel block h-full rounded-full transition-[width] duration-500", tone)}
+            class={cn(
+              "ease-decel block h-full rounded-full transition-[width] duration-500",
+              tone,
+            )}
             style={{ width: `${width}%` }}
           />
         </span>
@@ -358,7 +448,9 @@ export function ScoreCell({ v, redLine }: ScoreCellProps) {
 export function KvBox({ label, value }: { label: unknown; value: unknown }) {
   return (
     <div class="bg-surface-container-high text-on-surface-variant text-label-small min-w-[88px] rounded-md px-3 py-2">
-      <b class="text-title-medium text-on-surface block font-medium tabular-nums">{value}</b>
+      <b class="text-title-medium text-on-surface block font-medium tabular-nums">
+        {value}
+      </b>
       {label}
     </div>
   );
@@ -381,7 +473,9 @@ export function SectionHead({ children, unit, class: cls }: SectionHeadProps) {
     <div class={cn("text-title-small text-on-surface mt-5 mb-1.5", cls)}>
       {children}
       {unit ? (
-        <span class="text-on-surface-variant text-label-small ml-1.5 font-normal">{unit}</span>
+        <span class="text-on-surface-variant text-label-small ml-1.5 font-normal">
+          {unit}
+        </span>
       ) : null}
     </div>
   );
@@ -392,8 +486,15 @@ export function SectionHead({ children, unit, class: cls }: SectionHeadProps) {
 export function PageLoading({ label }: { label?: string }) {
   return (
     <div class="flex flex-col items-center justify-center gap-2 py-14">
-      <lottie-anim src="/lottie/yarn.lottie" loop autoplay class="h-16 w-16"></lottie-anim>
-      <p class="text-body-small text-on-surface-variant">{label ?? "Loading…"}</p>
+      <lottie-anim
+        src="/lottie/yarn.lottie"
+        loop
+        autoplay
+        class="h-16 w-16"
+      ></lottie-anim>
+      <p class="text-body-small text-on-surface-variant">
+        {label ?? "Loading…"}
+      </p>
     </div>
   );
 }

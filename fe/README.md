@@ -1,87 +1,76 @@
-# Welcome to React Router!
+# MeowMeow Select — Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+CSR-only SPA for the MeowMeow Select customer-support agent console: an AI chat
+page plus the admin pages (Knowledge Base, RAG eval, review queue,
+observability, topics, classifier acceptance).
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Stack
 
-## Features
+| Concern              | Choice                                                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Components           | [Lit](https://lit.dev) + [`@swifty.js/lit-jsx`](https://www.npmjs.com/package/@swifty.js/lit-jsx) (React-style JSX that compiles to lit-html templates) |
+| Routing              | [`@lit-labs/router`](https://www.npmjs.com/package/@lit-labs/router) (pathname routes; query strings ride `location.search`)                            |
+| Styling              | [Tailwind CSS v4](https://tailwindcss.com) (`@tailwindcss/vite`), Material-style design tokens in `app/app.css`, class-based dark mode                  |
+| Animation            | [`motion`](https://motion.dev) framework-agnostic `animate()` (see `app/lib/motion.ts`)                                                                 |
+| Charts               | [Chart.js](https://www.chartjs.org) (`app/components/charts.tsx`)                                                                                       |
+| Decorative animation | [LottieFiles dotLottie](https://lottiefiles.com) via `@lottiefiles/dotlottie-web`; assets in `public/lottie/`, self-hosted WASM in `public/wasm/`       |
+| Icons                | [`lucide-static`](https://lucide.dev) raw SVGs (`app/lib/icons.ts`)                                                                                     |
+| Build                | [Vite](https://vite.dev) (no SSR, no server bundle)                                                                                                     |
 
-- Server-side rendering
-- Hot Module Replacement (HMR)
-- Asset bundling and optimization
-- Data loading and mutations
-- TypeScript by default
-- TailwindCSS for styling
-- [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
+## Getting started
 
 ```bash
-npm run dev
+pnpm install        # from the repo root (pnpm workspace)
+pnpm --filter fe dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The dev server runs on http://localhost:5173 and proxies `/api/*` to the
+backend at `http://127.0.0.1:8000` (override with `BACKEND_URL`). Start the
+backend from the repo root with `pnpm dev`.
 
-## Building for Production
+## Scripts (in `fe/`)
 
-Create a production build:
+| Script           | Purpose                       |
+| ---------------- | ----------------------------- |
+| `pnpm dev`       | Vite dev server with HMR      |
+| `pnpm build`     | Production build into `dist/` |
+| `pnpm preview`   | Serve the production build    |
+| `pnpm start`     | `vite preview` on port 3000   |
+| `pnpm typecheck` | `tsc --noEmit`                |
 
-```bash
-npm run build
-```
+Deploy `dist/` behind any static file server with an SPA fallback (all paths →
+`index.html`).
 
-## Deployment
+## Architecture notes
 
-### Docker Deployment
+- **Light DOM everywhere.** Every element extends `LightElement`
+  (`app/lib/light-element.ts`), which renders into the light DOM so the global
+  Tailwind stylesheet applies (shadow roots would not see it).
+- **Pages are self-loading elements.** `DataLoaderElement`
+  (`app/lib/page-element.tsx`) replaces React Router's `clientLoader` +
+  `useRevalidator`: load on connect, `reload()` for the Refresh button and
+  job-finish callbacks, `loading`/`loadError`/`data` drive the three UI states.
+- **Routing & query strings.** `@lit-labs/router` matches pathnames only; its
+  click interceptor pushes the full href but feeds `goto()` the pathname.
+  Pages that depend on the query string (`/review?status=`,
+  `/topics/questions?label=&page=`) receive `location.search` as a `search`
+  property from their route render callback (`app/components/app-shell.tsx`)
+  and reload when it changes. Programmatic navigation goes through
+  `navigate()` in `app/lib/router.ts`.
+- **Inputs are uncontrolled.** lit-jsx commits props as property writes, so a
+  controlled `value` binding would re-write `.value` on every keystroke and
+  reset the caret. Text inputs/textareas keep state in the DOM; element state
+  mirrors it via `onInput`, and programmatic edits (presets, resets) write
+  through `createRef` refs.
+- **Chat.** `app/routes/chat.tsx` owns the conversation state (SSE streaming,
+  interrupts, actions, feedback) that the React version kept in the `useChat`
+  hook; `<message-bubble>` elements only re-render when their own `msg` object
+  changes (Lit property identity = React.memo).
+- **Theme.** Class-based `.dark` on `<html>`; an inline script in `index.html`
+  applies it before first paint; `app/lib/theme.ts` is the store.
 
-To build and run using Docker:
+## Routes
 
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+`/` chat · `/admin` console · `/kb` knowledge base · `/rag-eval` · `/review`
+· `/observability` · `/topics` · `/topics/questions` · `/acceptance`
+(+ `/eval`, `/data`, `/errors`) · anything else → 404 page.

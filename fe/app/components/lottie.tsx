@@ -16,7 +16,9 @@ export class LottieAnim extends LightElement {
   private player?: DotLottie;
   private canvasRef = createRef<HTMLCanvasElement>();
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (!this.player) {
       const canvas = this.canvasRef.value;
       if (!canvas || !this.src) {

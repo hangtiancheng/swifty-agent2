@@ -31,7 +31,9 @@ export interface BarSeries {
 const fmt2 = (v: number) => v.toFixed(2);
 
 function cssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
 }
 
 /** Series colors arrive as "var(--chart-n)" strings (theme-aware); Chart.js needs
@@ -143,12 +145,16 @@ abstract class ChartElement extends LightElement {
 export class GroupedBarChartEl extends ChartElement {
   @property({ attribute: false }) groups: BarGroup[] = [];
   @property({ attribute: false }) series: BarSeries[] = [];
-  @property({ attribute: false }) getVal: (seriesKey: string, groupKey: string) => number | null | undefined =
-    () => null;
+  @property({ attribute: false }) getVal: (
+    seriesKey: string,
+    groupKey: string,
+  ) => number | null | undefined = () => null;
   @property() ariaLabel = "Grouped bar chart";
 
   protected override shouldRebuild(changed: PropertyValues): boolean {
-    return changed.has("groups") || changed.has("series") || changed.has("getVal");
+    return (
+      changed.has("groups") || changed.has("series") || changed.has("getVal")
+    );
   }
 
   protected override build(): void {
@@ -198,7 +204,12 @@ export class GroupedBarChartEl extends ChartElement {
             return v === undefined || v === null ? null : v;
           }),
           backgroundColor: resolveColor(s.color),
-          borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
+          borderRadius: {
+            topLeft: 5,
+            topRight: 5,
+            bottomLeft: 0,
+            bottomRight: 0,
+          },
           borderSkipped: false,
           maxBarThickness: 34,
           categoryPercentage: 0.78,
@@ -241,7 +252,11 @@ export class GroupedBarChartEl extends ChartElement {
   protected override render() {
     return (
       <div class="scroll-slim overflow-x-auto">
-        <div class="relative h-[348px] min-w-[560px]" role="img" aria-label={this.ariaLabel}>
+        <div
+          class="relative h-87 min-w-140"
+          role="img"
+          aria-label={this.ariaLabel}
+        >
           <canvas ref={this.canvasRef} />
         </div>
       </div>
@@ -285,7 +300,12 @@ export class ScanLineChartEl extends ChartElement {
         const xs = chart.scales.x;
         const area = chart.chartArea;
         const ctx = chart.ctx;
-        const draw = (t: number, color: string, dash: number[], label?: string) => {
+        const draw = (
+          t: number,
+          color: string,
+          dash: number[],
+          label?: string,
+        ) => {
           const x = xs.getPixelForValue(t);
           if (x < area.left - 1 || x > area.right + 1) {
             return;
@@ -361,7 +381,9 @@ export class ScanLineChartEl extends ChartElement {
               callback: (v: string | number) => fmt2(Number(v)),
             },
             afterBuildTicks(axis) {
-              axis.ticks = [0.05, 0.2, 0.4, 0.6, 0.8, 0.95].map((v) => ({ value: v }));
+              axis.ticks = [0.05, 0.2, 0.4, 0.6, 0.8, 0.95].map((v) => ({
+                value: v,
+              }));
             },
             title: {
               display: true,
@@ -388,7 +410,8 @@ export class ScanLineChartEl extends ChartElement {
           tooltip: {
             ...tooltipStyle(),
             callbacks: {
-              title: (items) => (items.length ? "Threshold " + fmt2(items[0].parsed.x ?? 0) : ""),
+              title: (items) =>
+                items.length ? "Threshold " + fmt2(items[0].parsed.x ?? 0) : "",
             },
           },
         },
@@ -400,7 +423,11 @@ export class ScanLineChartEl extends ChartElement {
   protected override render() {
     return (
       <div class="scroll-slim overflow-x-auto">
-        <div class="relative h-[300px] min-w-[560px]" role="img" aria-label="Threshold scan line chart">
+        <div
+          class="relative h-75 min-w-140"
+          role="img"
+          aria-label="Threshold scan line chart"
+        >
           <canvas ref={this.canvasRef} />
         </div>
       </div>
@@ -434,7 +461,10 @@ export class RingGaugeEl extends ChartElement {
         datasets: [
           {
             data: [clamped, 1 - clamped],
-            backgroundColor: [cssVar("--success"), cssVar("--surface-container-highest")],
+            backgroundColor: [
+              cssVar("--success"),
+              cssVar("--surface-container-highest"),
+            ],
             borderWidth: 0,
             borderRadius: 6,
           },
@@ -457,14 +487,16 @@ export class RingGaugeEl extends ChartElement {
     const pct = Math.round(Math.max(0, Math.min(1, this.rate)) * 100);
     return (
       <div class="bg-surface-container-low flex flex-col items-center justify-center rounded-lg p-4 text-center">
-        <div class="relative h-[124px] w-[124px]">
+        <div class="relative h-31 w-31">
           <canvas ref={this.canvasRef} />
           <div class="absolute inset-0 flex flex-col items-center justify-center">
             <span class="text-headline-medium text-on-surface font-medium tabular-nums">
               {pct}
               <small class="text-on-surface-variant text-[11px]">%</small>
             </span>
-            <span class="text-on-surface-variant text-label-small">Refusal rate</span>
+            <span class="text-on-surface-variant text-label-small">
+              Refusal rate
+            </span>
           </div>
         </div>
         <div class="text-body-small text-on-surface-variant [&_b]:text-on-surface mt-2.5 leading-6 [&_b]:font-semibold">

@@ -36,7 +36,6 @@ export class ChatPage extends LightElement {
   @state() private busy = false;
   @state() private conversations: ConversationItem[] = [];
   @state() private conversationId: number | null = null;
-  @state() private input = "";
   @state() private drawer = false;
   @state() private cite: CiteTarget | null = null;
   @state() private ticketFor: number | null = null;
@@ -67,7 +66,9 @@ export class ChatPage extends LightElement {
     },
     onPickOrderResume: (msgId, o) => {
       this.markDecided(msgId);
-      void this.resume("I choose order " + o.order_id, { order_id: o.order_id });
+      void this.resume("I choose order " + o.order_id, {
+        order_id: o.order_id,
+      });
     },
     onPickOrderAsk: (msgId, o) => {
       this.markDecided(msgId);
@@ -75,7 +76,10 @@ export class ChatPage extends LightElement {
     },
     onConfirmTicket: (msgId, confirmed) => {
       this.markDecided(msgId);
-      void this.resume(confirmed ? "Confirm ticket submission" : "Cancel ticket creation", { confirmed });
+      void this.resume(
+        confirmed ? "Confirm ticket submission" : "Cancel ticket creation",
+        { confirmed },
+      );
     },
   };
 
@@ -89,7 +93,9 @@ export class ChatPage extends LightElement {
     void this.loadConversations();
   }
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     // Scroll to the bottom after every message update
     if (changed.has("messages")) {
       const el = this.listRef.value;
@@ -101,13 +107,17 @@ export class ChatPage extends LightElement {
     if (changed.has("busy") && !this.busy) {
       this.inputRef.value?.focus();
     }
-    // Auto-grow the textarea to fit its content
-    if (changed.has("input")) {
-      const el = this.inputRef.value;
-      if (el) {
-        el.style.height = "auto";
-        el.style.height = `${String(Math.min(el.scrollHeight, 128))}px`;
-      }
+  }
+
+  /** The composer textarea is uncontrolled (no value binding): lit-jsx commits
+      props as property writes, and re-writing .value on every keystroke would
+      reset the caret. State lives in the DOM; we only touch it programmatically
+      to clear after send. */
+  private growInput(): void {
+    const el = this.inputRef.value;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${String(Math.min(el.scrollHeight, 128))}px`;
     }
   }
 
@@ -134,7 +144,9 @@ export class ChatPage extends LightElement {
   }
 
   private updateBot(id: number, fn: (m: BotMsg) => BotMsg): void {
-    this.messages = this.messages.map((m) => (m.id === id && m.role === "bot" ? fn(m) : m));
+    this.messages = this.messages.map((m) =>
+      m.id === id && m.role === "bot" ? fn(m) : m,
+    );
   }
 
   private mkBot(): BotMsg {
@@ -151,7 +163,10 @@ export class ChatPage extends LightElement {
 
   /** Render one SSE stream into the given bot message; on interrupt, store the
       conversation id so it can be resumed */
-  private async streamInto(botId: number, doFetch: () => Promise<Response>): Promise<void> {
+  private async streamInto(
+    botId: number,
+    doFetch: () => Promise<Response>,
+  ): Promise<void> {
     try {
       const resp = await doFetch();
       await readSSEStream(resp, {
@@ -172,7 +187,11 @@ export class ChatPage extends LightElement {
           if (data.conversation_id) {
             this.persistConvId(data.conversation_id);
           }
-          this.updateBot(botId, (m) => ({ ...m, interrupt: data, streaming: false }));
+          this.updateBot(botId, (m) => ({
+            ...m,
+            interrupt: data,
+            streaming: false,
+          }));
         },
         done: (cid) => {
           this.persistConvId(cid);
@@ -221,7 +240,10 @@ export class ChatPage extends LightElement {
   }
 
   /** Resume the graph suspended by an interrupt (pick order / confirm ticket) */
-  private async resume(userText: string, payload: Record<string, unknown>): Promise<void> {
+  private async resume(
+    userText: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     if (this.busyFlag) {
       return;
     }
@@ -338,7 +360,9 @@ export class ChatPage extends LightElement {
     this.persistConvId(cid);
     this.messages = [];
     try {
-      const d = await api<{ items: HistoryMessage[] }>("/api/conversations/" + String(cid) + "/messages");
+      const d = await api<{ items: HistoryMessage[] }>(
+        "/api/conversations/" + String(cid) + "/messages",
+      );
       const msgs: Msg[] = [];
       for (const m of d.items ?? []) {
         if (!m.content) {
@@ -354,7 +378,7 @@ export class ChatPage extends LightElement {
             raw: m.content,
             tools: [],
             citations: [],
-            actions: hit ? hit.actions : ([]),
+            actions: hit ? hit.actions : [],
             streaming: false,
           });
         }
@@ -373,11 +397,15 @@ export class ChatPage extends LightElement {
   }
 
   private submit(preset?: string): void {
-    const message = (preset ?? this.input).trim();
+    const el = this.inputRef.value;
+    const message = (preset ?? el?.value ?? "").trim();
     if (!message || this.busy) {
       return;
     }
-    this.input = "";
+    if (el) {
+      el.value = "";
+      this.growInput();
+    }
     void this.send(message);
   }
 
@@ -392,7 +420,12 @@ export class ChatPage extends LightElement {
           }}
           class="bg-primary-container shadow-e2 mb-5 grid h-28 w-28 place-items-center overflow-hidden rounded-3xl"
         >
-          <lottie-anim src="/lottie/cat-hero.lottie" loop autoplay class="h-24 w-24"></lottie-anim>
+          <lottie-anim
+            src="/lottie/cat-hero.lottie"
+            loop
+            autoplay
+            class="h-24 w-24"
+          ></lottie-anim>
         </div>
         <h1
           ref={(el: Element | undefined) => {
@@ -408,16 +441,21 @@ export class ChatPage extends LightElement {
           }}
           class="text-body-medium text-on-surface-variant mt-2 max-w-sm leading-6"
         >
-          MeowMeow Select's AI Assistant — ask me about products, orders, and after-sales support.
+          MeowMeow Select's AI Assistant — ask me about products, orders, and
+          after-sales support.
         </p>
         <div class="mt-6 flex max-w-110 flex-wrap justify-center gap-2">
           {SUGGESTIONS.map((s, i) => (
             <button
               type="button"
               ref={(el: Element | undefined) => {
-                enterOnce(el, { y: 14, duration: 0.35, delay: 0.18 + 0.06 * i });
+                enterOnce(el, {
+                  y: 14,
+                  duration: 0.35,
+                  delay: 0.18 + 0.06 * i,
+                });
               }}
-              class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface text-body-small shadow-e1 hover:-translate-y-0.5 cursor-pointer rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-[0.97]"
+              class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface text-body-small shadow-e1 cursor-pointer rounded-xl px-4 py-2.5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
               onClick={() => {
                 if (!this.busy) {
                   this.submit(s);
@@ -457,10 +495,16 @@ export class ChatPage extends LightElement {
               <Icon name="menu" class="h-5 w-5" />
             </button>
             <div class="bg-primary-container grid h-11 w-11 shrink-0 place-items-center rounded-2xl">
-              <Icon name="cat" class="text-primary h-6.5 w-6.5" strokeWidth={1.5} />
+              <Icon
+                name="cat"
+                class="text-primary h-6.5 w-6.5"
+                strokeWidth={1.5}
+              />
             </div>
             <div class="flex min-w-0 flex-col leading-tight">
-              <span class="text-title-medium text-on-surface truncate">Meow · AI Assistant</span>
+              <span class="text-title-medium text-on-surface truncate">
+                Meow · AI Assistant
+              </span>
               <span class="text-label-small text-on-surface-variant flex items-center gap-1.5">
                 <span class="bg-success h-2 w-2 rounded-full" />
                 Online · MeowMeow Select
@@ -484,7 +528,9 @@ export class ChatPage extends LightElement {
             <div class="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-5 px-3 pt-5 pb-2 sm:px-5">
               {this.messages.length === 0
                 ? this.emptyState()
-                : this.messages.map((m) => <message-bubble key={m.id} msg={m} cb={this.cb} />)}
+                : this.messages.map((m) => (
+                    <message-bubble key={m.id} msg={m} cb={this.cb} />
+                  ))}
             </div>
           </div>
 
@@ -494,12 +540,10 @@ export class ChatPage extends LightElement {
                 <textarea
                   ref={this.inputRef}
                   rows={1}
-                  value={this.input}
                   disabled={this.busy}
                   placeholder="Type a message… (Enter to send, Shift+Enter for a new line)"
-                  onInput={(e: Event) => {
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    this.input = (e.target as HTMLTextAreaElement).value;
+                  onInput={() => {
+                    this.growInput();
                   }}
                   onKeyDown={(e: KeyboardEvent) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -522,8 +566,8 @@ export class ChatPage extends LightElement {
                 </button>
               </div>
               <p class="text-on-surface-variant text-label-small mt-2.5 text-center">
-                Meow is an AI assistant. For questions about specific orders, we'll transfer you to a human agent to
-                verify.
+                Meow is an AI assistant. For questions about specific orders,
+                we'll transfer you to a human agent to verify.
               </p>
             </div>
           </footer>

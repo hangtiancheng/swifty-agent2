@@ -22,10 +22,18 @@ export class NotFoundPage extends LightElement {
           }}
           class="bg-card shadow-e3 w-full max-w-md rounded-xl p-8 text-center"
         >
-          <lottie-anim src="/lottie/notfound.lottie" loop autoplay class="mx-auto h-40 w-40"></lottie-anim>
-          <h1 class="text-headline-medium text-on-surface mt-2 font-medium">404</h1>
+          <lottie-anim
+            src="/lottie/notfound.lottie"
+            loop
+            autoplay
+            class="mx-auto h-40 w-40"
+          ></lottie-anim>
+          <h1 class="text-headline-medium text-on-surface mt-2 font-medium">
+            404
+          </h1>
           <p class="text-body-medium text-on-surface-variant mt-2 leading-6">
-            This page does not exist. Ask the AI Assistant on the chat page, or head back to the Admin Console.
+            This page does not exist. Ask the AI Assistant on the chat page, or
+            head back to the Admin Console.
           </p>
           <div class="mt-7 flex flex-wrap justify-center gap-2.5">
             <BtnLink to="/" variant="go">

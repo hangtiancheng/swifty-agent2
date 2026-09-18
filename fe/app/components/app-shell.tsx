@@ -28,7 +28,10 @@ const routes: RouteConfig[] = [
   { path: "/rag-eval", render: () => <rageval-page /> },
   { path: "/review", render: () => <review-page search={location.search} /> },
   { path: "/observability", render: () => <observability-page /> },
-  { path: "/topics/questions", render: () => <topic-questions-page search={location.search} /> },
+  {
+    path: "/topics/questions",
+    render: () => <topic-questions-page search={location.search} />,
+  },
   { path: "/topics", render: () => <topics-page /> },
   { path: "/acceptance", render: () => <acceptance-page /> },
   { path: "/acceptance/eval", render: () => <acceptance-eval-page /> },

@@ -1,4 +1,4 @@
-import { customElement, property, state } from "@swifty.js/lit-jsx";
+import { createRef, customElement, property, state } from "@swifty.js/lit-jsx";
 
 import { ModalShell } from "~/components/modal-shell";
 import { toast } from "~/components/toast";
@@ -15,7 +15,9 @@ const FIELD_INPUT =
   "border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary w-full rounded-sm border bg-transparent px-3.5 py-2.5 text-body-medium outline-none transition-[border-color,box-shadow] duration-200 focus:ring-1";
 
 function FieldError({ text }: { text: string }) {
-  return <div class="text-error text-label-medium -mt-1 mb-2.5 min-h-4">{text}</div>;
+  return (
+    <div class="text-error text-label-medium -mt-1 mb-2.5 min-h-4">{text}</div>
+  );
 }
 
 @customElement("ticket-modal")
@@ -27,8 +29,12 @@ export class TicketModal extends ModalShell {
   @state() private desc = "";
   @state() private err = "";
   @state() private submitting = false;
+  /** Uncontrolled textarea (see chat.tsx for why); the open-reset writes through the ref */
+  private descRef = createRef<HTMLTextAreaElement>();
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     super.updated(changed);
     // Reset on every open: no preselected category, empty description — the user fills it in
     if (changed.has("open") && this.open) {
@@ -36,6 +42,11 @@ export class TicketModal extends ModalShell {
       this.desc = "";
       this.err = "";
       this.submitting = false;
+      void this.updateComplete.then(() => {
+        if (this.descRef.value) {
+          this.descRef.value.value = "";
+        }
+      });
     }
   }
 
@@ -102,10 +113,10 @@ export class TicketModal extends ModalShell {
             Description <span class="text-error">*</span>
           </label>
           <textarea
+            ref={this.descRef}
             id="ticketDesc"
             class={FIELD_INPUT + " min-h-22 resize-y"}
             placeholder="Describe the issue you're facing…"
-            value={this.desc}
             onInput={(e: Event) => {
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               this.desc = (e.target as HTMLTextAreaElement).value;
@@ -142,7 +153,9 @@ export class RefundModal extends ModalShell {
   @state() private err = "";
   @state() private submitting = false;
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     super.updated(changed);
     // Same as TicketModal: reset the moment it opens
     if (changed.has("open") && this.open) {
@@ -162,7 +175,11 @@ export class RefundModal extends ModalShell {
     try {
       const d = await api<{ ticket_no: string }>(
         "/api/actions/create-refund",
-        jsonPost({ conversation_id: this.conversationId, order_id: this.order, reason: this.reason }),
+        jsonPost({
+          conversation_id: this.conversationId,
+          order_id: this.order,
+          reason: this.reason,
+        }),
       );
       this.onSuccess?.(d.ticket_no);
     } catch {

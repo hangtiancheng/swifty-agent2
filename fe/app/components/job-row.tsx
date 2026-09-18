@@ -146,7 +146,9 @@ export class JobButton extends LightElement {
           '" is a minutes-long heavy job (' +
           spec.cmd +
           ").\n" +
-          (spec.needs && spec.needs !== "—" ? "Prerequisite: " + spec.needs + "\n" : "") +
+          (spec.needs && spec.needs !== "—"
+            ? "Prerequisite: " + spec.needs + "\n"
+            : "") +
           "Run it now?",
       )
     ) {
@@ -182,9 +184,15 @@ export class JobButton extends LightElement {
         onClick={() => {
           void this.start();
         }}
-        title={spec.cmd + (spec.needs && spec.needs !== "—" ? "(" + spec.needs + ")" : "")}
+        title={
+          spec.cmd +
+          (spec.needs && spec.needs !== "—" ? "(" + spec.needs + ")" : "")
+        }
       >
-        <Icon name={running ? "loader-circle" : "rotate-cw"} class={cn("h-3.5 w-3.5", running && "animate-spin")} />
+        <Icon
+          name={running ? "loader-circle" : "rotate-cw"}
+          class={cn("h-3.5 w-3.5", running && "animate-spin")}
+        />
         {label}
       </Btn>
     );
@@ -243,7 +251,11 @@ export class JobRow extends LightElement {
               onFinish={this.onFinish}
             />
           ))}
-          {this.note ? <span class="text-on-surface-variant text-label-small">{this.note}</span> : null}
+          {this.note ? (
+            <span class="text-on-surface-variant text-label-small">
+              {this.note}
+            </span>
+          ) : null}
         </div>
         {this.log ? (
           <pre

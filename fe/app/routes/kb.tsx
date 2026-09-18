@@ -1,4 +1,4 @@
-import { customElement, state } from "@swifty.js/lit-jsx";
+import { createRef, customElement, state } from "@swifty.js/lit-jsx";
 
 import "~/components/job-row";
 import { toast } from "~/components/toast";
@@ -137,12 +137,19 @@ const STAGING_LABEL: Record<StagingKey, string> = {
   approved: "Approved into the KB",
   rejected: "Rejected",
 };
-const STAGING_ORDER: StagingKey[] = ["kept", "extracted", "discarded", "approved", "rejected"];
+const STAGING_ORDER: StagingKey[] = [
+  "kept",
+  "extracted",
+  "discarded",
+  "approved",
+  "rejected",
+];
 
 const FIELD =
   "rounded-sm border border-outline bg-transparent px-3.5 py-2.5 text-body-medium text-on-surface outline-none transition-[border-color,box-shadow] duration-200 focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant";
 
-const ANSWER_CELL = "scroll-slim max-h-32 overflow-auto text-xs leading-7 whitespace-pre-wrap break-words";
+const ANSWER_CELL =
+  "scroll-slim max-h-32 overflow-auto text-xs leading-7 whitespace-pre-wrap break-words";
 
 @customElement("kb-page")
 export class KbPage extends DataLoaderElement<KbOverview> {
@@ -161,6 +168,11 @@ export class KbPage extends DataLoaderElement<KbOverview> {
   @state() private hits: KbHit[] | null = null;
   @state() private hitStrategy = "";
   @state() private searching = false;
+
+  /* Uncontrolled text inputs (see chat.tsx for why): state mirrors the DOM for
+     logic, programmatic edits go through the refs. */
+  private textRef = createRef<HTMLTextAreaElement>();
+  private qRef = createRef<HTMLInputElement>();
 
   protected override pageTitle = "MeowMeow Select · Knowledge Base Entry";
 
@@ -186,7 +198,8 @@ export class KbPage extends DataLoaderElement<KbOverview> {
       toast("Paste some body text first", true);
       return;
     }
-    const n = this.preview?.source === "manual entry" ? this.preview.total : null;
+    const n =
+      this.preview?.source === "manual entry" ? this.preview.total : null;
     if (
       !window.confirm(
         "Ingest this text into the Knowledge Base?" +
@@ -195,7 +208,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
               String(n) +
               " chunks" +
               (this.preview?.duplicates
-                ? ", " + String(this.preview.duplicates) + " already in the KB will be skipped"
+                ? ", " +
+                  String(this.preview.duplicates) +
+                  " already in the KB will be skipped"
                 : "")
             : "") +
           (this.vecAfter
@@ -208,7 +223,11 @@ export class KbPage extends DataLoaderElement<KbOverview> {
     this.ingesting = true;
     try {
       const ct = this.ctype || this.data?.content_types[0]?.key || "";
-      const r = await api<{ inserted: number; skipped: number; vectorized: number | null }>(
+      const r = await api<{
+        inserted: number;
+        skipped: number;
+        vectorized: number | null;
+      }>(
         "/api/kb/ingest",
         jsonPost({ text: body, content_type: ct, vectorize: this.vecAfter }),
       );
@@ -217,7 +236,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
           String(r.inserted) +
           " chunks" +
           (r.skipped ? ", skipped " + String(r.skipped) + " duplicates" : "") +
-          (r.vectorized !== null ? ", vectorized " + String(r.vectorized) + " chunks" : "(not vectorized)"),
+          (r.vectorized !== null
+            ? ", vectorized " + String(r.vectorized) + " chunks"
+            : "(not vectorized)"),
       );
       void this.reload();
       if (r.inserted) {
@@ -242,7 +263,10 @@ export class KbPage extends DataLoaderElement<KbOverview> {
   }
 
   /** Approve / reject: the only way mined knowledge enters the KB — writes knowledge_chunks on click */
-  private async reviewAction(kind: "approve" | "reject", id: number): Promise<void> {
+  private async reviewAction(
+    kind: "approve" | "reject",
+    id: number,
+  ): Promise<void> {
     try {
       const r = await api<{ approved?: number; rejected?: number }>(
         "/api/kb/staging/" + kind,
@@ -256,17 +280,22 @@ export class KbPage extends DataLoaderElement<KbOverview> {
       await this.loadStaging(); // Refetch: this row moves from pending review to approved/rejected
       void this.reload();
     } catch (e) {
-      toast((kind === "approve" ? "Approval" : "Rejection") + " failed: " + errMsg(e), true);
+      toast(
+        (kind === "approve" ? "Approval" : "Rejection") +
+          " failed: " +
+          errMsg(e),
+        true,
+      );
     }
   }
 
   private async doVectorize(): Promise<void> {
     this.vectorizing = true;
     try {
-      const r = await api<{ vectorized: number; chunk_stats: { pending: number | null } }>(
-        "/api/kb/vectorize",
-        jsonPost(),
-      );
+      const r = await api<{
+        vectorized: number;
+        chunk_stats: { pending: number | null };
+      }>("/api/kb/vectorize", jsonPost());
       toast(
         "Vectorized " +
           String(r.vectorized) +
@@ -306,7 +335,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
     if (this.loadError) {
       return (
         <PageShell title="Knowledge Base Entry" active="/kb">
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         </PageShell>
       );
     }
@@ -319,11 +350,15 @@ export class KbPage extends DataLoaderElement<KbOverview> {
     }
     const d = this.data;
     const jobSpecs = Object.fromEntries(d.jobs.map((j) => [j.name, j]));
-    const pick = (names: string[]) => names.map((n) => jobSpecs[n]).filter((x): x is JobSpec => Boolean(x));
+    const pick = (names: string[]) =>
+      names.map((n) => jobSpecs[n]).filter((x): x is JobSpec => Boolean(x));
     const ct = this.ctype || d.content_types[0]?.key || "";
     const ctDesc = d.content_types.find((x) => x.key === ct)?.desc ?? "";
     const c = d.chunks;
-    const totalSources = d.sources.reduce((acc, s) => acc + (s.present ? (s.chunks ?? 0) : 0), 0);
+    const totalSources = d.sources.reduce(
+      (acc, s) => acc + (s.present ? (s.chunks ?? 0) : 0),
+      0,
+    );
 
     return (
       <PageShell
@@ -335,7 +370,11 @@ export class KbPage extends DataLoaderElement<KbOverview> {
         {/* Top gate bar */}
         <GateBar>
           <Stat label="Chunks (MySQL)" value={c.total ?? "—"} />
-          <Stat label="Pending vectorization" value={c.pending ?? "—"} tone={c.pending ? "fail" : "pass"} />
+          <Stat
+            label="Pending vectorization"
+            value={c.pending ?? "—"}
+            tone={c.pending ? "fail" : "pass"}
+          />
           <Stat
             label="Milvus rows"
             value={d.milvus.online ? (d.milvus.count ?? "—") : "Offline"}
@@ -344,18 +383,30 @@ export class KbPage extends DataLoaderElement<KbOverview> {
           <Stat label="Key clauses" value={c.key_clause ?? "—"} />
           <Stat
             label="Dual-write"
-            value={d.consistent === null ? "Can't read" : d.consistent ? "Consistent" : "Mismatched"}
-            tone={d.consistent === null ? undefined : d.consistent ? "pass" : "fail"}
+            value={
+              d.consistent === null
+                ? "Can't read"
+                : d.consistent
+                  ? "Consistent"
+                  : "Mismatched"
+            }
+            tone={
+              d.consistent === null ? undefined : d.consistent ? "pass" : "fail"
+            }
           />
-          {d.db_error ? <Stat label="MySQL" value={d.db_error} tone="fail" /> : null}
+          {d.db_error ? (
+            <Stat label="MySQL" value={d.db_error} tone="fail" />
+          ) : null}
         </GateBar>
 
         <Tip>
-          Two paths: <b>manual entry</b> — paste body text on this page and what you preview is exactly what gets
-          ingested; <b>offline build</b> — hand the materials in data/kb/ to the make target, and the page button
-          runs the same command you would type in the terminal. Both paths share one chunking logic and dual-write
-          order — write to MySQL first as "pending", then into Milvus and mark "done"; if it dies mid-way, re-run
-          to pick up the pending chunks and catch up.
+          Two paths: <b>manual entry</b> — paste body text on this page and what
+          you preview is exactly what gets ingested; <b>offline build</b> — hand
+          the materials in data/kb/ to the make target, and the page button runs
+          the same command you would type in the terminal. Both paths share one
+          chunking logic and dual-write order — write to MySQL first as
+          "pending", then into Milvus and mark "done"; if it dies mid-way,
+          re-run to pick up the pending chunks and catch up.
         </Tip>
 
         {/* ① Manual entry */}
@@ -382,12 +433,17 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                   <option value={t.key}>{t.key}</option>
                 ))}
               </select>
-              <span class="text-on-surface-variant text-[11.5px]">{ctDesc}</span>
+              <span class="text-on-surface-variant text-[11.5px]">
+                {ctDesc}
+              </span>
               <span class="flex-1" />
               <Btn
                 size="sm"
                 onClick={() => {
                   this.text = SAMPLE;
+                  if (this.textRef.value) {
+                    this.textRef.value.value = SAMPLE;
+                  }
                 }}
               >
                 Fill in a sample
@@ -396,6 +452,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                 size="sm"
                 onClick={() => {
                   this.text = "";
+                  if (this.textRef.value) {
+                    this.textRef.value.value = "";
+                  }
                   this.preview = null;
                 }}
               >
@@ -403,9 +462,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
               </Btn>
             </div>
             <textarea
+              ref={this.textRef}
               class={cn(FIELD, "min-h-44 w-full resize-y leading-7")}
               placeholder="Paste Markdown. It works best with # / ## heading levels — for policy manuals without natural questions, questions fall back to section titles and category to the parent path."
-              value={this.text}
               onInput={(e: Event) => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 this.text = (e.target as HTMLTextAreaElement).value;
@@ -449,9 +508,12 @@ export class KbPage extends DataLoaderElement<KbOverview> {
               <div class="flex flex-wrap gap-2">
                 <Pill tone="info">Source: {this.preview.source}</Pill>
                 <Pill tone="info">
-                  Total: {this.preview.total} chunks / {this.preview.features.sections} sections
+                  Total: {this.preview.total} chunks /{" "}
+                  {this.preview.features.sections} sections
                 </Pill>
-                <Pill tone={this.preview.features.table_split ? "pass" : "missing"}>
+                <Pill
+                  tone={this.preview.features.table_split ? "pass" : "missing"}
+                >
                   {this.preview.features.table_split
                     ? "Table row-split triggered"
                     : "Table row-split not triggered"}
@@ -467,11 +529,15 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                 {this.preview.dedup_known ? (
                   <Pill tone={this.preview.duplicates ? "fail" : "pass"}>
                     {this.preview.duplicates
-                      ? "Already in the KB: " + String(this.preview.duplicates) + " chunks — they will be skipped on ingest"
+                      ? "Already in the KB: " +
+                        String(this.preview.duplicates) +
+                        " chunks — they will be skipped on ingest"
                       : "No duplicates, safe to ingest"}
                   </Pill>
                 ) : (
-                  <Pill tone="missing">Dedup unknown (MySQL can't be read)</Pill>
+                  <Pill tone="missing">
+                    Dedup unknown (MySQL can't be read)
+                  </Pill>
                 )}
               </div>
               <TableScroll class="mt-3">
@@ -507,7 +573,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                               Table chunk
                             </Pill>
                           ) : null}
-                          {ch.duplicate ? <Pill tone="missing">Duplicate</Pill> : null}
+                          {ch.duplicate ? (
+                            <Pill tone="missing">Duplicate</Pill>
+                          ) : null}
                         </Td>
                       </Tr>
                     ))}
@@ -566,7 +634,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                               Overlap
                             </Pill>
                           ) : null}
-                          <Pill tone="missing">{s.features?.sections ?? 0} sections</Pill>
+                          <Pill tone="missing">
+                            {s.features?.sections ?? 0} sections
+                          </Pill>
                         </Td>
                         <Td>
                           <Btn
@@ -601,7 +671,10 @@ export class KbPage extends DataLoaderElement<KbOverview> {
             <Pill tone="info">
               {d.staging
                 ? d.staging.total
-                  ? "Total " + String(d.staging.total) + " rows, latest batch " + (d.staging.latest_batch ?? "—")
+                  ? "Total " +
+                    String(d.staging.total) +
+                    " rows, latest batch " +
+                    (d.staging.latest_batch ?? "—")
                   : "Nothing mined yet"
                 : "Can't read"}
             </Pill>
@@ -611,19 +684,26 @@ export class KbPage extends DataLoaderElement<KbOverview> {
           {d.staging ? (
             <div class="flex flex-wrap gap-2">
               {[
-                { label: "Extracted, awaiting dedup", v: d.staging.counts.extracted },
+                {
+                  label: "Extracted, awaiting dedup",
+                  v: d.staging.counts.extracted,
+                },
                 { label: "Kept after dedup (in KB)", v: d.staging.counts.kept },
                 { label: "Discarded by dedup", v: d.staging.counts.discarded },
                 { label: "Batches", v: d.staging.batches },
               ].map(({ label, v }) => (
                 <div class="bg-surface-container-high text-on-surface-variant min-w-21 rounded-md px-2.5 py-1 text-[11.5px]">
-                  <b class="text-on-surface block text-[17px] leading-snug font-medium tabular-nums">{v}</b>
+                  <b class="text-on-surface block text-[17px] leading-snug font-medium tabular-nums">
+                    {v}
+                  </b>
                   {label}
                 </div>
               ))}
             </div>
           ) : (
-            <MissingBox>MySQL can't be read, so staging counts are unavailable</MissingBox>
+            <MissingBox>
+              MySQL can't be read, so staging counts are unavailable
+            </MissingBox>
           )}
           <job-row
             specs={pick(["seed-conv", "kb-mine"])}
@@ -657,9 +737,11 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                     </h3>
                     {st === "kept" ? (
                       <p class="text-on-surface-variant mb-2 text-[12.5px] leading-6">
-                        These were summarized by the model from historical conversations and quality varies. Review
-                        each row before approving: anything that only applies to a single order, carries an order
-                        number, or answers the wrong question should not enter the Knowledge Base.
+                        These were summarized by the model from historical
+                        conversations and quality varies. Review each row before
+                        approving: anything that only applies to a single order,
+                        carries an order number, or answers the wrong question
+                        should not enter the Knowledge Base.
                       </p>
                     ) : null}
                     <TableScroll>
@@ -713,8 +795,13 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                   </div>
                 );
               })}
-              {STAGING_ORDER.every((st) => (this.stagingRows?.rows[st] ?? []).length === 0) ? (
-                <MissingBox>The staging table is empty — run conversation mining once first</MissingBox>
+              {STAGING_ORDER.every(
+                (st) => (this.stagingRows?.rows[st] ?? []).length === 0,
+              ) ? (
+                <MissingBox>
+                  The staging table is empty — run conversation mining once
+                  first
+                </MissingBox>
               ) : null}
             </div>
           ) : null}
@@ -738,7 +825,10 @@ export class KbPage extends DataLoaderElement<KbOverview> {
             {[
               { label: "Pending", v: c.pending },
               { label: "Done (vectorized)", v: c.done },
-              { label: "Milvus rows", v: d.milvus.online ? d.milvus.count : null },
+              {
+                label: "Milvus rows",
+                v: d.milvus.online ? d.milvus.count : null,
+              },
               { label: "Collection", v: d.milvus.collection ?? "knowledge" },
             ].map(({ label, v }) => (
               <div class="bg-surface-container-high text-on-surface-variant min-w-21 rounded-md px-2.5 py-1 text-[11.5px]">
@@ -782,10 +872,10 @@ export class KbPage extends DataLoaderElement<KbOverview> {
         >
           <div class="flex flex-wrap items-center gap-2.5">
             <input
+              ref={this.qRef}
               type="text"
               class={cn(FIELD, "min-w-55 flex-1")}
               placeholder="How much is postage?"
-              value={this.q}
               onInput={(e: Event) => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 this.q = (e.target as HTMLInputElement).value;
@@ -822,7 +912,7 @@ export class KbPage extends DataLoaderElement<KbOverview> {
               min="1"
               max="20"
               class={cn(FIELD, "w-18")}
-              value={String(this.topk)}
+              value="5"
               onInput={(e: Event) => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 this.topk = Number((e.target as HTMLInputElement).value) || 5;
@@ -850,6 +940,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                 size="sm"
                 onClick={() => {
                   this.q = preset;
+                  if (this.qRef.value) {
+                    this.qRef.value.value = preset;
+                  }
                   void this.runSearch(preset);
                 }}
               >
@@ -861,7 +954,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
             <div class="mt-3">
               <div class="flex flex-wrap gap-2">
                 <Pill tone="info">Strategy: {this.hitStrategy}</Pill>
-                <Pill tone={this.hits.length ? "pass" : "fail"}>Retrieved {this.hits.length} chunks</Pill>
+                <Pill tone={this.hits.length ? "pass" : "fail"}>
+                  Retrieved {this.hits.length} chunks
+                </Pill>
               </div>
               {this.hits.length ? (
                 <div class="mt-2.5 grid gap-2.5">
@@ -869,7 +964,9 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                     <div
                       class={cn(
                         "bg-card rounded-lg border px-3 py-2 text-[12.5px]",
-                        i === 0 ? "border-primary shadow-e2" : "border-outline-variant",
+                        i === 0
+                          ? "border-primary shadow-e2"
+                          : "border-outline-variant",
                       )}
                     >
                       <div class="flex flex-wrap items-center gap-2">
@@ -877,22 +974,34 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                         <span class="font-semibold">{h.question}</span>
                         <span class="flex-1" />
                         {h.score !== null && h.score !== undefined ? (
-                          <Pill tone="info">score {Number(h.score).toFixed(4)}</Pill>
+                          <Pill tone="info">
+                            score {Number(h.score).toFixed(4)}
+                          </Pill>
                         ) : null}
-                        {h.rerank_score !== null && h.rerank_score !== undefined ? (
-                          <Pill tone="info">rerank {Number(h.rerank_score).toFixed(4)}</Pill>
+                        {h.rerank_score !== null &&
+                        h.rerank_score !== undefined ? (
+                          <Pill tone="info">
+                            rerank {Number(h.rerank_score).toFixed(4)}
+                          </Pill>
                         ) : null}
                       </div>
-                      <div class="mt-1.5 leading-7 whitespace-pre-wrap">{h.answer}</div>
+                      <div class="mt-1.5 leading-7 whitespace-pre-wrap">
+                        {h.answer}
+                      </div>
                       <div class="text-on-surface-variant mt-1.5 text-[11.5px]">
-                        {[h.section_path ?? "—", h.content_type ?? "—", "id " + String(h.id ?? "—")].join(" · ")}
+                        {[
+                          h.section_path ?? "—",
+                          h.content_type ?? "—",
+                          "id " + String(h.id ?? "—"),
+                        ].join(" · ")}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <MissingBox class="mt-2.5">
-                  No hits at all: the KB may still be empty, or pending chunks have not been vectorized yet
+                  No hits at all: the KB may still be empty, or pending chunks
+                  have not been vectorized yet
                 </MissingBox>
               )}
             </div>
@@ -928,17 +1037,23 @@ export class KbPage extends DataLoaderElement<KbOverview> {
                         <div class={ANSWER_CELL}>{r.answer}</div>
                       </Td>
                       <Td class="whitespace-nowrap">
-                        <Pill tone={r.status === "done" ? "pass" : "fail"} class="mr-1">
+                        <Pill
+                          tone={r.status === "done" ? "pass" : "fail"}
+                          class="mr-1"
+                        >
                           {r.status === "done" ? "Vectorized" : "Pending"}
                         </Pill>
-                        {r.is_key_clause ? <Pill tone="fail">Key clause</Pill> : null}
+                        {r.is_key_clause ? (
+                          <Pill tone="fail">Key clause</Pill>
+                        ) : null}
                       </Td>
                     </Tr>
                   ))
                 ) : (
                   <Tr>
                     <Td colSpan={6}>
-                      No chunks in the KB yet. Paste some text above to ingest it, or run the offline build once.
+                      No chunks in the KB yet. Paste some text above to ingest
+                      it, or run the offline build once.
                     </Td>
                   </Tr>
                 )}

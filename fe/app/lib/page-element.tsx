@@ -53,7 +53,10 @@ export abstract class DataLoaderElement<T> extends LightElement {
         }}
         disabled={this.loading}
       >
-        <Icon name="refresh-cw" class={cn("h-4 w-4", this.loading && "animate-spin")} />
+        <Icon
+          name="refresh-cw"
+          class={cn("h-4 w-4", this.loading && "animate-spin")}
+        />
         Refresh
       </Btn>
     );

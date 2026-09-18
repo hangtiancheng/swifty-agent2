@@ -33,7 +33,10 @@ function TypingDots() {
   return (
     <span class="flex items-center gap-1.5 py-1.5">
       {[0, 1, 2].map((i) => (
-        <span class="typing-dot bg-primary h-2 w-2 rounded-full" style={{ animationDelay: `${String(i * 0.16)}s` }} />
+        <span
+          class="typing-dot bg-primary h-2 w-2 rounded-full"
+          style={{ animationDelay: `${String(i * 0.16)}s` }}
+        />
       ))}
     </span>
   );
@@ -126,7 +129,11 @@ export class MessageBubble extends LightElement {
   /* ---------- Order picker cards (interrupt missing order id → pick in the chat
      flow; also offered after a rejection so the user can re-ask) ---------- */
 
-  private orderCards(orders: Order[], decided: boolean | undefined, onPick: (o: Order) => void) {
+  private orderCards(
+    orders: Order[],
+    decided: boolean | undefined,
+    onPick: (o: Order) => void,
+  ) {
     const locked = decided || this.pickedOrder !== null;
     return (
       <div>
@@ -155,7 +162,9 @@ export class MessageBubble extends LightElement {
                 }}
               >
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-title-small text-on-surface">Order {o.order_id}</span>
+                  <span class="text-title-small text-on-surface">
+                    Order {o.order_id}
+                  </span>
                   {this.pickedOrder === o.order_id ? (
                     <span
                       ref={(el: Element | undefined) => {
@@ -167,7 +176,9 @@ export class MessageBubble extends LightElement {
                     </span>
                   ) : null}
                 </div>
-                <div class="text-body-small text-on-surface mt-0.5">{o.product ?? ""}</div>
+                <div class="text-body-small text-on-surface mt-0.5">
+                  {o.product ?? ""}
+                </div>
                 <div class="text-label-small text-on-surface-variant mt-0.5">
                   {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
                 </div>
@@ -181,7 +192,11 @@ export class MessageBubble extends LightElement {
 
   /* ---------- Ticket preview confirm card (interrupt confirm_ticket → resume) ---------- */
 
-  private ticketConfirm(preview: TicketPreview, decided: boolean | undefined, m: BotMsg) {
+  private ticketConfirm(
+    preview: TicketPreview,
+    decided: boolean | undefined,
+    m: BotMsg,
+  ) {
     return (
       <div
         class={cn(
@@ -198,12 +213,16 @@ export class MessageBubble extends LightElement {
         <div class="text-body-small flex gap-2">
           <span class="text-on-surface-variant shrink-0">Ticket type</span>
           <span class="text-on-surface">
-            {preview.ticket_type ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type) : "Inquiry"}
+            {preview.ticket_type
+              ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type)
+              : "Inquiry"}
           </span>
         </div>
         <div class="text-body-small mt-1.5 flex gap-2">
           <span class="text-on-surface-variant shrink-0">Description</span>
-          <span class="text-on-surface wrap-break-word">{preview.description ?? ""}</span>
+          <span class="text-on-surface wrap-break-word">
+            {preview.description ?? ""}
+          </span>
         </div>
         <div class="mt-3.5 flex gap-2">
           <Btn
@@ -314,7 +333,7 @@ export class MessageBubble extends LightElement {
     if (msg.role === "user") {
       return (
         <div class="flex items-end justify-end">
-          <div class="bg-primary-container text-on-primary-container max-w-[85%] rounded-lg rounded-br-md px-4 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap sm:max-w-[74%]">
+          <div class="bg-primary-container text-on-primary-container max-w-[85%] rounded-lg rounded-br-md px-4 py-2.5 text-[14.5px] leading-relaxed wrap-break-word whitespace-pre-wrap sm:max-w-[74%]">
             {msg.text}
           </div>
         </div>
@@ -322,7 +341,9 @@ export class MessageBubble extends LightElement {
     }
     const m = msg;
     const citeMap =
-      !m.streaming && m.citations.length ? new Map(m.citations.map((c) => [String(c.n), c])) : undefined;
+      !m.streaming && m.citations.length
+        ? new Map(m.citations.map((c) => [String(c.n), c]))
+        : undefined;
     return (
       <div class="flex items-start justify-start gap-2.5">
         <div class="bg-primary-container hidden h-9 w-9 shrink-0 place-items-center rounded-full sm:grid">
@@ -331,7 +352,9 @@ export class MessageBubble extends LightElement {
         <div
           class={cn(
             "max-w-[85%] rounded-lg rounded-bl-md px-4 py-3 text-[14.5px] leading-relaxed sm:max-w-[78%]",
-            m.error ? "bg-error-container text-on-error-container" : "bg-surface-container-low text-on-surface",
+            m.error
+              ? "bg-error-container text-on-error-container"
+              : "bg-surface-container-low text-on-surface",
           )}
         >
           {m.error ??
@@ -355,11 +378,17 @@ export class MessageBubble extends LightElement {
                   </div>
                 ) : null}
                 {m.interrupt ? (
-                  m.interrupt.kind === "confirm_ticket"
-                    ? this.ticketConfirm(m.interrupt.preview ?? {}, m.decided, m)
-                    : this.orderCards(m.interrupt.orders ?? [], m.decided, (o) => {
+                  m.interrupt.kind === "confirm_ticket" ? (
+                    this.ticketConfirm(m.interrupt.preview ?? {}, m.decided, m)
+                  ) : (
+                    this.orderCards(
+                      m.interrupt.orders ?? [],
+                      m.decided,
+                      (o) => {
                         this.cb?.onPickOrderResume(m.id, o);
-                      })
+                      },
+                    )
+                  )
                 ) : (
                   <>
                     {m.streaming && m.raw === "" ? (
@@ -375,7 +404,9 @@ export class MessageBubble extends LightElement {
                         }}
                       />
                     )}
-                    {!m.streaming && m.actions.length ? this.actionBar(m) : null}
+                    {!m.streaming && m.actions.length
+                      ? this.actionBar(m)
+                      : null}
                     {!m.streaming && m.raw !== "" ? this.feedbackBar(m) : null}
                   </>
                 )}

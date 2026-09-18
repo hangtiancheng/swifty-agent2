@@ -121,7 +121,10 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
   protected override pageTitle = "MeowMeow Select · Acceptance Data";
 
   protected override async load(): Promise<PageData> {
-    const [d, j] = await Promise.all([api<DataDetail>("/api/acceptance/data"), api<{ jobs: JobSpec[] }>("/api/jobs")]);
+    const [d, j] = await Promise.all([
+      api<DataDetail>("/api/acceptance/data"),
+      api<{ jobs: JobSpec[] }>("/api/jobs"),
+    ]);
     return { d, jobs: j.jobs };
   }
 
@@ -129,7 +132,9 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
     if (this.loadError) {
       return (
         <PageShell title="Acceptance Data" active="/acceptance/data">
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         </PageShell>
       );
     }
@@ -142,7 +147,8 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
     }
     const { d, jobs } = this.data;
     const jobSpecs = Object.fromEntries(jobs.map((j) => [j.name, j]));
-    const pick = (names: string[]) => names.map((n) => jobSpecs[n]).filter((x): x is JobSpec => Boolean(x));
+    const pick = (names: string[]) =>
+      names.map((n) => jobSpecs[n]).filter((x): x is JobSpec => Boolean(x));
     const ds = d.dataset;
     const sp = ds.splits;
     const ex = d.onnx.report;
@@ -156,12 +162,24 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
         actions={this.refreshBtn()}
       >
         <GateBar>
-          <Stat label="Corpus total" value={(labeled?.present ? String(labeled.lines ?? "—") : "—") + " rows"} />
+          <Stat
+            label="Corpus total"
+            value={
+              (labeled?.present ? String(labeled.lines ?? "—") : "—") + " rows"
+            }
+          />
           {SPLIT_KEYS.map((k) => (
             <Stat label={SPLIT_LABEL[k]} value={String(sp[k].size) + " rows"} />
           ))}
-          <Stat label="Exam leaks" value={ds.clean ? "0 rows" : "found"} tone={ds.clean ? "pass" : "fail"} />
-          <Stat label="Threshold in use" value={String(d.model.threshold ?? "—")} />
+          <Stat
+            label="Exam leaks"
+            value={ds.clean ? "0 rows" : "found"}
+            tone={ds.clean ? "pass" : "fail"}
+          />
+          <Stat
+            label="Threshold in use"
+            value={String(d.model.threshold ?? "—")}
+          />
         </GateBar>
 
         {/* ① Corpus lineage */}
@@ -183,31 +201,43 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
                     !s.present && "text-on-surface-variant",
                   )}
                 >
-                  <div class="text-on-surface-variant text-[11.5px]">{s.stage}</div>
+                  <div class="text-on-surface-variant text-[11.5px]">
+                    {s.stage}
+                  </div>
                   <b class="text-headline-small block font-medium tabular-nums">
                     {s.present ? String(s.lines ?? "—") : "Missing"}
                   </b>
                   <div class="mt-0.5 text-[11.5px] leading-5">{s.desc}</div>
-                  <div class="text-on-surface-variant mt-1 text-[11px] break-all">{s.path}</div>
+                  <div class="text-on-surface-variant mt-1 text-[11px] break-all">
+                    {s.path}
+                  </div>
                 </div>
-                <div class="text-on-surface-variant self-center text-xl font-medium">→</div>
+                <div class="text-on-surface-variant self-center text-xl font-medium">
+                  →
+                </div>
               </div>
             ))}
             <div class="bg-surface-container-high min-w-36 flex-1 rounded-md px-3 py-2">
-              <div class="text-on-surface-variant text-[11.5px]">Stratified split 80/10/10</div>
+              <div class="text-on-surface-variant text-[11.5px]">
+                Stratified split 80/10/10
+              </div>
               <b class="text-headline-small block font-medium tabular-nums">
                 {SPLIT_KEYS.map((k) => String(sp[k].size)).join(" / ")}
               </b>
               <div class="mt-0.5 text-[11.5px] leading-5">
-                Train / validation / test; the training set also gets augmentation and targeted additions
+                Train / validation / test; the training set also gets
+                augmentation and targeted additions
               </div>
-              <div class="text-on-surface-variant mt-1 text-[11px] break-all">data/train/dataset/*.jsonl</div>
+              <div class="text-on-surface-variant mt-1 text-[11px] break-all">
+                data/train/dataset/*.jsonl
+              </div>
             </div>
           </div>
           {FileTable({ rows: [...d.lineage, d.sample_review] })}
           <Tip>
-            The manual spot-check file sample_review.md is the human-readable copy (full real pool + 5 simulated
-            samples per class). If you spot a wrong label, fix the corpus — never edit the exam papers to game the
+            The manual spot-check file sample_review.md is the human-readable
+            copy (full real pool + 5 simulated samples per class). If you spot a
+            wrong label, fix the corpus — never edit the exam papers to game the
             score.
           </Tip>
           <job-row
@@ -221,7 +251,13 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
         {/* ② Three exam papers + leak self-check */}
         <Panel
           title="The three exam papers and the leak self-check"
-          pill={ds.clean ? <Pill tone="pass">Zero overlap</Pill> : <Pill tone="fail">Overlap found — scores void</Pill>}
+          pill={
+            ds.clean ? (
+              <Pill tone="pass">Zero overlap</Pill>
+            ) : (
+              <Pill tone="fail">Overlap found — scores void</Pill>
+            )
+          }
           lede="Augmentation only expands the training set — validation/test are exam questions and must never change to match the practice material. Overlap must be 0: once the training set has seen an exam question, every score afterwards is void, so this check is a hard gate, not a hint."
         >
           <div class="flex flex-wrap gap-3">
@@ -232,10 +268,17 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
                 { k: "val_test", label: "Validation ∩ test" },
               ] satisfies { k: keyof typeof ds.leaks; label: string }[]
             ).map(({ k, label }) => (
-              <Stat label={label} value={String(ds.leaks[k]) + " rows"} tone={ds.leaks[k] === 0 ? "pass" : "fail"} />
+              <Stat
+                label={label}
+                value={String(ds.leaks[k]) + " rows"}
+                tone={ds.leaks[k] === 0 ? "pass" : "fail"}
+              />
             ))}
             {SPLIT_KEYS.map((k) => (
-              <Stat label={SPLIT_LABEL[k] + " multi-label"} value={String(sp[k].multi_label) + " rows"} />
+              <Stat
+                label={SPLIT_LABEL[k] + " multi-label"}
+                value={String(sp[k].multi_label) + " rows"}
+              />
             ))}
           </div>
           <TableScroll class="mt-3">
@@ -263,12 +306,18 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
                             <span class="bg-surface-container-highest h-2.25 min-w-10 flex-1 overflow-hidden rounded-full">
                               <span
                                 ref={(el: Element | undefined) => {
-                                  growOnce(el, `${String(Math.round((cnt / maxOf) * 100))}%`, { duration: 0.4 });
+                                  growOnce(
+                                    el,
+                                    `${String(Math.round((cnt / maxOf) * 100))}%`,
+                                    { duration: 0.4 },
+                                  );
                                 }}
                                 class="bg-primary block h-full rounded-full"
                               />
                             </span>
-                            <span class="w-10 text-right tabular-nums">{cnt}</span>
+                            <span class="w-10 text-right tabular-nums">
+                              {cnt}
+                            </span>
                           </div>
                         </Td>
                       );
@@ -279,21 +328,29 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
             </Tbl>
           </TableScroll>
           <Tip>
-            Label counts are hit-based: a multi-label sentence counts once for each class it hits, so column totals
-            can exceed the row count.
+            Label counts are hit-based: a multi-label sentence counts once for
+            each class it hits, so column totals can exceed the row count.
           </Tip>
         </Panel>
 
         {/* ③ Training artifacts */}
         <Panel
           title="The training artifact trio"
-          pill={d.model.trio_ok ? <Pill tone="pass">Trio complete</Pill> : <Pill tone="fail">Trio incomplete</Pill>}
+          pill={
+            d.model.trio_ok ? (
+              <Pill tone="pass">Trio complete</Pill>
+            ) : (
+              <Pill tone="fail">Trio incomplete</Pill>
+            )
+          }
           lede="Weights + tokenizer + threshold.json. The threshold and the validation-set score live in that few-dozen-byte file; both eval and service startup read it — it is the other half of the shipped classifier."
         >
           {FileTable({ rows: d.model.files })}
           <Tip>
-            <b>threshold.json</b> holds the decision threshold in use: {String(d.model.threshold)}; written at{" "}
-            {fmtTime(d.model.threshold_file.mtime)}, {fmtBytes(d.model.threshold_file.bytes)}.
+            <b>threshold.json</b> holds the decision threshold in use:{" "}
+            {String(d.model.threshold)}; written at{" "}
+            {fmtTime(d.model.threshold_file.mtime)},{" "}
+            {fmtBytes(d.model.threshold_file.bytes)}.
           </Tip>
           <job-row
             specs={pick(["train-train"])}
@@ -323,8 +380,9 @@ export class AcceptanceDataPage extends DataLoaderElement<PageData> {
           {FileTable({ rows: d.onnx.files })}
           {ex.present ? (
             <Tip>
-              Checked {ex.checked} rows, {ex.mismatch} mismatches; opset {ex.opset}, model.onnx{" "}
-              {fmtBytes(ex.onnx_bytes)}, exported at {fmtTime(ex.ran_at)}.
+              Checked {ex.checked} rows, {ex.mismatch} mismatches; opset{" "}
+              {ex.opset}, model.onnx {fmtBytes(ex.onnx_bytes)}, exported at{" "}
+              {fmtTime(ex.ran_at)}.
             </Tip>
           ) : (
             <MissingBox class="mt-2.5">{ex.hint}</MissingBox>

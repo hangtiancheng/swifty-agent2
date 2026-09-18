@@ -20,7 +20,8 @@ export interface ToastItem {
 export type ToastFn = (msg: string, isErr?: boolean) => void;
 
 type ToastListener = (event: ToastEvent) => void;
-type ToastEvent = { type: "push"; item: ToastItem } | { type: "dismiss"; id: number };
+type ToastEvent =
+  { type: "push"; item: ToastItem } | { type: "dismiss"; id: number };
 
 const listeners = new Set<ToastListener>();
 let nextId = 1;
@@ -82,7 +83,7 @@ export class ToastHost extends LightElement {
 
   protected override render() {
     return (
-      <div class="pointer-events-none fixed inset-x-0 bottom-7 z-[99] flex flex-col items-center gap-2 px-4">
+      <div class="pointer-events-none fixed inset-x-0 bottom-7 z-99 flex flex-col items-center gap-2 px-4">
         {this.items.map((t) => (
           <div
             ref={(el: Element | undefined) => {
@@ -103,7 +104,10 @@ export class ToastHost extends LightElement {
                 : "bg-inverse-surface text-inverse-on-surface",
             )}
           >
-            <Icon name={t.kind === "error" ? "circle-alert" : "circle-check"} class="h-4.5 w-4.5 shrink-0" />
+            <Icon
+              name={t.kind === "error" ? "circle-alert" : "circle-check"}
+              class="h-4.5 w-4.5 shrink-0"
+            />
             {t.msg}
           </div>
         ))}

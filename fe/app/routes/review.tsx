@@ -91,7 +91,8 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
   if (!chunks.length) {
     return (
       <div class="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
-        Retrieval ran with zero hits — the Knowledge Base truly has no relevant content
+        Retrieval ran with zero hits — the Knowledge Base truly has no relevant
+        content
       </div>
     );
   }
@@ -108,7 +109,9 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
               <span class="bg-surface-container-highest h-1.5 w-35 shrink-0 overflow-hidden rounded-full">
                 <span
                   class="bg-primary block h-full rounded-full"
-                  style={{ width: `${String(Math.min(100, Math.round(score * 100)))}%` }}
+                  style={{
+                    width: `${String(Math.min(100, Math.round(score * 100)))}%`,
+                  }}
                 />
               </span>
               {c.section_path ? <span>{c.section_path}</span> : null}
@@ -135,13 +138,20 @@ export class ApproveDialog extends ModalShell {
 
   protected override cardMaxW = "max-w-[560px]";
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     super.updated(changed);
     if (changed.has("open") && this.open) {
       this.answer = this.item?.ai_suggested_answer ?? "";
       this.submitting = false;
       void this.updateComplete.then(() => {
-        this.textareaRef.value?.focus();
+        const el = this.textareaRef.value;
+        if (el) {
+          // Uncontrolled textarea (see chat.tsx): seed the prefilled suggestion via the ref
+          el.value = this.answer;
+          el.focus();
+        }
       });
     }
   }
@@ -156,8 +166,13 @@ export class ApproveDialog extends ModalShell {
     }
     this.submitting = true;
     try {
-      await api("/api/review/" + String(this.item.id) + "/approve", jsonPost({ approved_answer: this.answer.trim() }));
-      toast("Written back to the Knowledge Base — similar questions will now recall directly ✓");
+      await api(
+        "/api/review/" + String(this.item.id) + "/approve",
+        jsonPost({ approved_answer: this.answer.trim() }),
+      );
+      toast(
+        "Written back to the Knowledge Base — similar questions will now recall directly ✓",
+      );
       this.onApproved?.();
     } catch (e) {
       toast("Failed to write back: " + errMsg(e), true);
@@ -180,7 +195,6 @@ export class ApproveDialog extends ModalShell {
           ref={this.textareaRef}
           class="border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary text-body-medium min-h-32 w-full resize-y rounded-sm border bg-transparent px-3.5 py-2.5 transition-[border-color,box-shadow] duration-200 outline-none focus:ring-1"
           placeholder="Approved answer (prefilled with the AI suggestion — review it before submitting)"
-          value={this.answer}
           onInput={(e: Event) => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             this.answer = (e.target as HTMLTextAreaElement).value;
@@ -221,7 +235,9 @@ export class ReviewPage extends DataLoaderElement<Queue> {
   private searchReady = false;
   private detailRef = createRef<HTMLDivElement>();
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (changed.has("search")) {
       if (this.searchReady) {
         void this.reload();
@@ -232,7 +248,8 @@ export class ReviewPage extends DataLoaderElement<Queue> {
   }
 
   protected override async load(): Promise<Queue> {
-    const status = new URLSearchParams(this.search).get("status") ?? "pending_review";
+    const status =
+      new URLSearchParams(this.search).get("status") ?? "pending_review";
     const qs = status ? "?status=" + encodeURIComponent(status) : "";
     return api<Queue>("/api/review/queue" + qs);
   }
@@ -255,7 +272,11 @@ export class ReviewPage extends DataLoaderElement<Queue> {
     void this.updateComplete.then(() => {
       const el = this.detailRef.value;
       if (el) {
-        void animate(el, { height: [0, "auto"], opacity: [0, 1] }, { duration: 0.2, ease: EASE_STANDARD }).then(() => {
+        void animate(
+          el,
+          { height: [0, "auto"], opacity: [0, 1] },
+          { duration: 0.2, ease: EASE_STANDARD },
+        ).then(() => {
           // Let the box size naturally again — the detail fetch below changes its height
           el.style.height = "";
         });
@@ -289,7 +310,8 @@ export class ReviewPage extends DataLoaderElement<Queue> {
   }
 
   protected override render() {
-    const curStatus = new URLSearchParams(this.search).get("status") ?? "pending_review";
+    const curStatus =
+      new URLSearchParams(this.search).get("status") ?? "pending_review";
     return (
       <PageShell
         title="Review Queue"
@@ -309,7 +331,11 @@ export class ReviewPage extends DataLoaderElement<Queue> {
                       : "text-on-surface-variant hover:bg-on-surface/8",
                   )}
                   onClick={() => {
-                    navigate(st ? "/review?status=" + encodeURIComponent(st) : "/review");
+                    navigate(
+                      st
+                        ? "/review?status=" + encodeURIComponent(st)
+                        : "/review",
+                    );
                   }}
                 >
                   {label}
@@ -321,10 +347,13 @@ export class ReviewPage extends DataLoaderElement<Queue> {
         }
       >
         <div class="bg-secondary-container text-on-secondary-container mt-4 rounded-lg px-4 py-3 text-[12.5px] leading-[1.8] [&_b]:font-semibold">
-          Run three gates before reviewing: <b>① Spam filter</b> gibberish, stray test input, inappropriate content →
-          reject; <b>② Timeliness</b> time-sensitive questions (promo deadlines) expire as soon as they are filled —
-          do not persist them → reject; <b>③ Frequency</b> rare, niche questions are not worth Knowledge Base space
-          or human time → reject. What remains is a real gap: fill in the approved answer and click Approve.
+          Run three gates before reviewing: <b>① Spam filter</b> gibberish,
+          stray test input, inappropriate content → reject; <b>② Timeliness</b>{" "}
+          time-sensitive questions (promo deadlines) expire as soon as they are
+          filled — do not persist them → reject; <b>③ Frequency</b> rare, niche
+          questions are not worth Knowledge Base space or human time → reject.
+          What remains is a real gap: fill in the approved answer and click
+          Approve.
         </div>
 
         {this.loadError ? (
@@ -362,14 +391,17 @@ export class ReviewPage extends DataLoaderElement<Queue> {
                     >
                       ×{it.occurrence_count}
                     </span>
-                    <div class="min-w-60 flex-1 text-[14.5px] font-medium">{it.normalized_question}</div>
+                    <div class="min-w-60 flex-1 text-[14.5px] font-medium">
+                      {it.normalized_question}
+                    </div>
                     <div class="text-on-surface-variant hidden max-w-80 truncate text-xs lg:block">
                       {it.ai_suggested_answer ?? "(no suggested answer)"}
                     </div>
                     <span
                       class={cn(
                         "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
-                        ST_CLS[it.review_status] ?? "bg-surface-container-high text-on-surface-variant",
+                        ST_CLS[it.review_status] ??
+                          "bg-surface-container-high text-on-surface-variant",
                       )}
                     >
                       {ST_LABEL[it.review_status] ?? it.review_status}
@@ -404,17 +436,26 @@ export class ReviewPage extends DataLoaderElement<Queue> {
                     ) : null}
                   </div>
                   {open ? (
-                    <div ref={this.detailRef} class="border-outline-variant overflow-hidden border-t">
+                    <div
+                      ref={this.detailRef}
+                      class="border-outline-variant overflow-hidden border-t"
+                    >
                       <div class="bg-surface-container-low px-4 py-3.5">
                         {this.loadingId === it.id && !detail ? (
-                          <div class="text-on-surface-variant text-xs">Loading details…</div>
+                          <div class="text-on-surface-variant text-xs">
+                            Loading details…
+                          </div>
                         ) : this.detailErr[it.id] ? (
-                          <div class="text-error text-xs">Failed to load details: {this.detailErr[it.id]}</div>
+                          <div class="text-error text-xs">
+                            Failed to load details: {this.detailErr[it.id]}
+                          </div>
                         ) : detail ? (
                           <>
                             <div class="text-on-surface-variant mb-2.5 text-xs">
-                              Judge from the snapshots: is the Knowledge Base truly missing this, or does it have
-                              the answer but fail to recall it? Merged original questions: {detail.raws.length} ↓
+                              Judge from the snapshots: is the Knowledge Base
+                              truly missing this, or does it have the answer but
+                              fail to recall it? Merged original questions:{" "}
+                              {detail.raws.length} ↓
                             </div>
                             {detail.raws.length ? (
                               detail.raws.map((r) => (
@@ -423,22 +464,28 @@ export class ReviewPage extends DataLoaderElement<Queue> {
                                     <span
                                       class={cn(
                                         "text-label-small rounded-full px-2.5 py-0.5",
-                                        SRC_CLS[r.source] ?? "bg-surface-container-high text-on-surface-variant",
+                                        SRC_CLS[r.source] ??
+                                          "bg-surface-container-high text-on-surface-variant",
                                       )}
                                     >
                                       {SRC_LABEL[r.source] ?? r.source}
                                     </span>
                                     <span class="text-on-surface-variant text-[11.5px]">
-                                      {(r.created_at ?? "").replace("T", " ").slice(0, 16)}
+                                      {(r.created_at ?? "")
+                                        .replace("T", " ")
+                                        .slice(0, 16)}
                                     </span>
                                   </div>
-                                  <div class="mb-2 text-[13.5px]">“{r.raw_question}”</div>
+                                  <div class="mb-2 text-[13.5px]">
+                                    “{r.raw_question}”
+                                  </div>
                                   {Snapshots({ chunks: r.retrieved_chunks })}
                                 </div>
                               ))
                             ) : (
                               <div class="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
-                                No merged originals yet (backfilled after the flywheel batch runs)
+                                No merged originals yet (backfilled after the
+                                flywheel batch runs)
                               </div>
                             )}
                           </>

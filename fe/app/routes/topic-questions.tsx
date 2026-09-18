@@ -2,7 +2,14 @@ import { customElement, property } from "@swifty.js/lit-jsx";
 
 import type { TopicDistribution } from "./topics";
 
-import { Btn, BtnLink, MissingBox, PageLoading, PageShell, Pill } from "~/components/ui";
+import {
+  Btn,
+  BtnLink,
+  MissingBox,
+  PageLoading,
+  PageShell,
+  Pill,
+} from "~/components/ui";
 import { api, errMsg } from "~/lib/api";
 import { cn } from "~/lib/cn";
 import { fmtTime } from "~/lib/format";
@@ -52,14 +59,26 @@ interface QuestionsPage {
 
 type PageData =
   | { kind: "nolabel"; dist: TopicDistribution | null }
-  | { kind: "ok"; label: string; d: QuestionsPage; dist: TopicDistribution | null }
-  | { kind: "error"; label: string; error: string; dist: TopicDistribution | null };
+  | {
+      kind: "ok";
+      label: string;
+      d: QuestionsPage;
+      dist: TopicDistribution | null;
+    }
+  | {
+      kind: "error";
+      label: string;
+      error: string;
+      dist: TopicDistribution | null;
+    };
 
 function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
   return (
     <div class="bg-card border-outline-variant shadow-e1 mt-2.5 rounded-lg border p-3">
       <div class="text-[13.5px] leading-6 font-medium">
-        <span class="text-on-surface-variant mr-1.5 text-[11px] font-normal">#{it.question_id}</span>
+        <span class="text-on-surface-variant mr-1.5 text-[11px] font-normal">
+          #{it.question_id}
+        </span>
         {it.text}
       </div>
       <div class="text-on-surface-variant mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px]">
@@ -76,28 +95,40 @@ function QuestionRow({ it, label }: { it: QuestionItem; label: string }) {
           </span>
         ))}
         <span>
-          Source <b class="text-on-surface font-medium">{SOURCE_LABEL[it.source] ?? it.source}</b>
+          Source{" "}
+          <b class="text-on-surface font-medium">
+            {SOURCE_LABEL[it.source] ?? it.source}
+          </b>
         </span>
         <span>
           Synonym merge{" "}
           <b class="text-on-surface font-medium">
-            {it.occurrence_count ? String(it.occurrence_count) + " originals" : "not merged"}
+            {it.occurrence_count
+              ? String(it.occurrence_count) + " originals"
+              : "not merged"}
           </b>
         </span>
         <span>
           Review{" "}
           <b class="text-on-surface font-medium">
-            {it.review_status ? (REVIEW_LABEL[it.review_status] ?? it.review_status) : "Not queued"}
+            {it.review_status
+              ? (REVIEW_LABEL[it.review_status] ?? it.review_status)
+              : "Not queued"}
           </b>
         </span>
         <span>
-          Classified at <b class="text-on-surface font-medium">{fmtTime(it.classified_at).slice(5, 16)}</b>
+          Classified at{" "}
+          <b class="text-on-surface font-medium">
+            {fmtTime(it.classified_at).slice(5, 16)}
+          </b>
         </span>
       </div>
       {/* Merged questions show the normalized phrasing; keep the user's original wording visible so the entry's origin stays clear */}
       {it.normalized && it.raw_question && it.raw_question !== it.text ? (
         <div class="text-on-surface-variant mt-1.5 text-xs leading-6">
-          <span class="text-on-surface-variant block text-[10.5px]">Original wording</span>
+          <span class="text-on-surface-variant block text-[10.5px]">
+            Original wording
+          </span>
           {it.raw_question}
         </div>
       ) : null}
@@ -113,7 +144,9 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
   protected override pageTitle = "MeowMeow Select · Topic Questions";
   private searchReady = false;
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (changed.has("search")) {
       if (this.searchReady) {
         void this.reload();
@@ -128,13 +161,20 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
     const label = url.get("label") ?? "";
     const page = Math.max(1, Number.parseInt(url.get("page") ?? "1", 10) || 1);
     // The class picker fails independently: if the distribution fetch fails, only the picker is missing
-    const dist = await api<TopicDistribution>("/api/topics/distribution").catch(() => null);
+    const dist = await api<TopicDistribution>("/api/topics/distribution").catch(
+      () => null,
+    );
     if (!label) {
       return { kind: "nolabel", dist };
     }
     try {
       const d = await api<QuestionsPage>(
-        "/api/topics/questions?label=" + encodeURIComponent(label) + "&page=" + String(page) + "&size=" + String(SIZE),
+        "/api/topics/questions?label=" +
+          encodeURIComponent(label) +
+          "&page=" +
+          String(page) +
+          "&size=" +
+          String(SIZE),
       );
       return { kind: "ok", label, d, dist };
     } catch (e) {
@@ -156,7 +196,11 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
         title={data?.kind === "ok" ? data.d.label : "Topic Questions"}
         sub={
           data?.kind === "ok"
-            ? "Questions the classifier grouped under “" + data.d.label + "” — " + String(data.d.total) + " in total"
+            ? "Questions the classifier grouped under “" +
+              data.d.label +
+              "” — " +
+              String(data.d.total) +
+              " in total"
             : "Questions the classifier grouped under this class, paginated"
         }
         active="/topics"
@@ -170,47 +214,60 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
       >
         {dist ? (
           <div class="mt-3 flex flex-wrap gap-1.5">
-            {[...dist.classes].sort((a, b) => b.count - a.count).map((c) => (
-              <a
-                href={"/topics/questions?label=" + encodeURIComponent(c.label) + "&page=1"}
-                class={cn(
-                  "shadow-e1 hover:shadow-e2 text-label-small cursor-pointer rounded-full px-3 py-1 no-underline transition-all duration-200 active:scale-[0.97]",
-                  c.label === label
-                    ? "bg-primary-container text-on-primary-container font-medium"
-                    : "bg-card text-on-surface hover:bg-card-hover",
-                  c.count === 0 && "opacity-45",
-                )}
-              >
-                {c.label}
-                <span
+            {[...dist.classes]
+              .sort((a, b) => b.count - a.count)
+              .map((c) => (
+                <a
+                  href={
+                    "/topics/questions?label=" +
+                    encodeURIComponent(c.label) +
+                    "&page=1"
+                  }
                   class={cn(
-                    "ml-1.5",
-                    c.label === label ? "text-on-primary-container" : "text-on-surface-variant",
+                    "shadow-e1 hover:shadow-e2 text-label-small cursor-pointer rounded-full px-3 py-1 no-underline transition-all duration-200 active:scale-[0.97]",
+                    c.label === label
+                      ? "bg-primary-container text-on-primary-container font-medium"
+                      : "bg-card text-on-surface hover:bg-card-hover",
+                    c.count === 0 && "opacity-45",
                   )}
                 >
-                  {c.count}
-                </span>
-              </a>
-            ))}
+                  {c.label}
+                  <span
+                    class={cn(
+                      "ml-1.5",
+                      c.label === label
+                        ? "text-on-primary-container"
+                        : "text-on-surface-variant",
+                    )}
+                  >
+                    {c.count}
+                  </span>
+                </a>
+              ))}
           </div>
         ) : null}
 
         {!data ? (
           this.loadError ? (
-            <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+            <MissingBox class="mt-4">
+              Failed to load data: {this.loadError}
+            </MissingBox>
           ) : (
             <PageLoading />
           )
         ) : data.kind === "nolabel" ? (
           <MissingBox class="mt-4">
-            No class specified. Go back to Topic Distribution and click a class name to get here.
+            No class specified. Go back to Topic Distribution and click a class
+            name to get here.
           </MissingBox>
         ) : data.kind === "error" ? (
-          <MissingBox class="mt-4">Failed to load data: {data.error}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {data.error}
+          </MissingBox>
         ) : data.d.total === 0 ? (
           <MissingBox class="mt-4">
-            No questions have been classified into this class yet. Try another class, or run the bypass batch
-            classification first.
+            No questions have been classified into this class yet. Try another
+            class, or run the bypass batch classification first.
           </MissingBox>
         ) : (
           <div class="bg-card shadow-e1 mt-4 rounded-lg p-3.5 sm:p-4">
@@ -221,9 +278,10 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
               </Pill>
             </h2>
             <p class="text-on-surface-variant mt-1 mb-1 text-[12.5px] leading-7">
-              Lists the questions the classifier grouped into this class; multi-label questions appear under every
-              class they hit. The phrasing shown is the normalized question from the merge stage — the original
-              wording is on the line below.
+              Lists the questions the classifier grouped into this class;
+              multi-label questions appear under every class they hit. The
+              phrasing shown is the normalized question from the merge stage —
+              the original wording is on the line below.
             </p>
             {data.d.items.map((it) => (
               <QuestionRow it={it} label={data.d.label} />
@@ -248,9 +306,10 @@ export class TopicQuestionsPage extends DataLoaderElement<PageData> {
                 Next →
               </Btn>
               <span class="text-[12.5px]">
-                Page <b class="font-medium tabular-nums">{data.d.page}</b>/ {data.d.pages} ·{" "}
-                <b class="font-medium tabular-nums">{data.d.total}</b> questions in this class · {data.d.size} per
-                page
+                Page <b class="font-medium tabular-nums">{data.d.page}</b>/{" "}
+                {data.d.pages} ·{" "}
+                <b class="font-medium tabular-nums">{data.d.total}</b> questions
+                in this class · {data.d.size} per page
               </span>
             </div>
           </div>

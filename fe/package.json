@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "format": "pnpm --dir ../ format",
+    "lint": "pnpm --dir ../ lint",
     "preview": "vite preview",
     "start": "vite preview --host --port 3000",
     "typecheck": "tsc"

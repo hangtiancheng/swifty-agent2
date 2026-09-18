@@ -1,4 +1,4 @@
-import { customElement, property, state } from "@swifty.js/lit-jsx";
+import { createRef, customElement, property, state } from "@swifty.js/lit-jsx";
 
 import "~/components/charts";
 import "~/components/job-row";
@@ -160,7 +160,8 @@ interface FaithCasesData {
   hallucination: Hallucination;
 }
 
-const fmt2 = (v?: number | null): string => (v === null || v === undefined ? "—" : v.toFixed(2));
+const fmt2 = (v?: number | null): string =>
+  v === null || v === undefined ? "—" : v.toFixed(2);
 
 /* ---------- Value getters: one accessor per metric ---------- */
 
@@ -206,7 +207,9 @@ function KpiBox({ d }: { d: Overview }) {
       ? {
           label: "Answer coverage (rerank)",
           val: fmt2(valFn(d, "Answer Coverage")("hybrid_rerank", "overall")),
-          sub: "BM25 alone only reaches " + fmt2(valFn(d, "Answer Coverage")("bm25", "overall")),
+          sub:
+            "BM25 alone only reaches " +
+            fmt2(valFn(d, "Answer Coverage")("bm25", "overall")),
         }
       : {
           label: "End-to-end answer coverage",
@@ -240,8 +243,12 @@ function KpiBox({ d }: { d: Overview }) {
       {items.map((k) => (
         <div class="bg-card shadow-e1 rounded-lg px-3.5 pt-3 pb-3.5">
           <div class="text-on-surface-variant text-[11.5px]">{k.label}</div>
-          <div class="text-2xl leading-snug font-medium tabular-nums">{k.val}</div>
-          <div class="text-on-surface-variant text-[11.5px] leading-6">{k.sub}</div>
+          <div class="text-2xl leading-snug font-medium tabular-nums">
+            {k.val}
+          </div>
+          <div class="text-on-surface-variant text-[11.5px] leading-6">
+            {k.sub}
+          </div>
         </div>
       ))}
     </div>
@@ -322,7 +329,12 @@ export class RetrievalPanel extends LightElement {
         </div>
         <div class="mt-2.5 mb-0.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
           {STRAT.map((s) => (
-            <span class={cn("inline-flex items-center gap-1.5", s.key === d.best.strategy && "font-medium")}>
+            <span
+              class={cn(
+                "inline-flex items-center gap-1.5",
+                s.key === d.best.strategy && "font-medium",
+              )}
+            >
               <i class="h-3 w-3 rounded-xs" style={{ background: s.color }} />
               {s.label}
               {s.key === d.best.strategy ? " (best)" : ""}
@@ -335,7 +347,10 @@ export class RetrievalPanel extends LightElement {
           getVal={valFn(d, metric)}
           ariaLabel={"Retrieval quality: " + metric}
         ></grouped-bar-chart>
-        <ReadNote note={d.read_notes?.[NOTE_KIND[metric] ?? ""]} fallback={READ[metric]?.() ?? ""} />
+        <ReadNote
+          note={d.read_notes?.[NOTE_KIND[metric] ?? ""]}
+          fallback={READ[metric]?.() ?? ""}
+        />
       </Panel>
     );
   }
@@ -348,8 +363,9 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
   if (!cases.length) {
     return (
       <div class="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
-        ✓ All <b class="font-semibold">{R.total}</b> evaluated out-of-KB questions were{" "}
-        <b class="font-semibold">correctly refused</b> — no should-refuse leaks.
+        ✓ All <b class="font-semibold">{R.total}</b> evaluated out-of-KB
+        questions were <b class="font-semibold">correctly refused</b> — no
+        should-refuse leaks.
       </div>
     );
   }
@@ -360,13 +376,15 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
         Should-refuse leaks
         <Pill tone="sev-medium">{cases.length} cases</Pill>
         <span class="text-on-surface-variant font-normal">
-          Open to see which questions slipped through, and what evidence fooled the gates
+          Open to see which questions slipped through, and what evidence fooled
+          the gates
         </span>
       </summary>
       <div class="px-3 pt-1 pb-3">
         <p class="text-on-surface-variant my-2 text-xs leading-7">
-          These out-of-KB questions should have been refused, but both evidence gates waved them through. Check
-          which section got mistaken for an answer, then tighten the threshold or add an explicit "not supported"
+          These out-of-KB questions should have been refused, but both evidence
+          gates waved them through. Check which section got mistaken for an
+          answer, then tighten the threshold or add an explicit "not supported"
           knowledge entry.
         </p>
         {cases.map((c) => (
@@ -376,15 +394,23 @@ function RefusalCases({ R }: { R: Generation["refusal"] }) {
                 {c.id}
               </span>
               <span class="text-[13px] font-medium">{c.query}</span>
-              <span class="text-on-surface-variant text-[11px]">Out-of-KB bucket</span>
+              <span class="text-on-surface-variant text-[11px]">
+                Out-of-KB bucket
+              </span>
             </div>
             <div class="mt-1.5 text-[12.5px] leading-7">
-              <span class="text-on-surface-variant block text-[10.5px]">Section mistaken for the answer</span>
+              <span class="text-on-surface-variant block text-[10.5px]">
+                Section mistaken for the answer
+              </span>
               {c.section_path ?? "—"}
             </div>
             <div class="mt-1.5 text-[12.5px] leading-7">
-              <span class="text-on-surface-variant block text-[10.5px]">The evidence (verbatim)</span>
-              <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">{c.evidence ?? ""}</div>
+              <span class="text-on-surface-variant block text-[10.5px]">
+                The evidence (verbatim)
+              </span>
+              <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
+                {c.evidence ?? ""}
+              </div>
             </div>
           </div>
         ))}
@@ -403,8 +429,9 @@ function GenerationPanel({ d }: { d: Overview }) {
         lede="Each strategy feeds its retrieved evidence to the same model, an answer is generated, and an LLM judge counts how many gold-answer points it covers — the end-to-end proof that better retrieval yields fuller answers. Below: faithfulness of the production pipeline, and whether out-of-KB questions were properly refused."
       >
         <MissingBox>
-          The generation stage didn't finish — the judge model's upstream was unavailable, so these numbers are
-          missing. Once it recovers, press "Re-run RAG evaluation" and they will fill in; retrieval scores are
+          The generation stage didn't finish — the judge model's upstream was
+          unavailable, so these numbers are missing. Once it recovers, press
+          "Re-run RAG evaluation" and they will fill in; retrieval scores are
           unaffected.
         </MissingBox>
       </Panel>
@@ -419,16 +446,25 @@ function GenerationPanel({ d }: { d: Overview }) {
       pill={<Pill tone="info">Scored by LLM judge</Pill>}
       lede="Each strategy feeds its retrieved evidence to the same model, an answer is generated, and an LLM judge counts how many gold-answer points it covers — the end-to-end proof that better retrieval yields fuller answers. Below: faithfulness of the production pipeline, and whether out-of-KB questions were properly refused."
     >
-      <SectionHead unit="Share of gold-answer points covered by the generated answer · LLM-judged" class="mt-0">
+      <SectionHead
+        unit="Share of gold-answer points covered by the generated answer · LLM-judged"
+        class="mt-0"
+      >
         Answer coverage by strategy
       </SectionHead>
-      <grouped-bar-chart groups={BUCKETS} series={STRAT} getVal={ac} ariaLabel="Answer coverage by strategy"></grouped-bar-chart>
+      <grouped-bar-chart
+        groups={BUCKETS}
+        series={STRAT}
+        getVal={ac}
+        ariaLabel="Answer coverage by strategy"
+      ></grouped-bar-chart>
       <ReadNote
         note={d.read_notes?.rag_answer_coverage}
         fallback={
           <>
-            Same generation prompt, only the retrieval strategy changes: hybrid + rerank reaches <b>{fmt2(acR)}</b>{" "}
-            answer coverage overall, while BM25 alone manages just <b>{fmt2(acB)}</b>. Weaker retrieval means
+            Same generation prompt, only the retrieval strategy changes: hybrid
+            + rerank reaches <b>{fmt2(acR)}</b> answer coverage overall, while
+            BM25 alone manages just <b>{fmt2(acB)}</b>. Weaker retrieval means
             missing evidence, and the answer drops gold points.
           </>
         }
@@ -436,7 +472,10 @@ function GenerationPanel({ d }: { d: Overview }) {
 
       <div class="mt-3.5 grid gap-3.5 md:grid-cols-[1.45fr_1fr]">
         <div>
-          <SectionHead unit="Hybrid + rerank · does the answer fabricate?" class="mt-0">
+          <SectionHead
+            unit="Hybrid + rerank · does the answer fabricate?"
+            class="mt-0"
+          >
             Faithfulness
           </SectionHead>
           <div class="mt-2 flex flex-col gap-3">
@@ -454,16 +493,24 @@ function GenerationPanel({ d }: { d: Overview }) {
                         {b.key} · {f.answered} evaluated
                       </span>
                     </div>
-                    <div class="font-medium tabular-nums">{has ? v.toFixed(2) : "—"}</div>
+                    <div class="font-medium tabular-nums">
+                      {has ? v.toFixed(2) : "—"}
+                    </div>
                   </div>
                   <div class="bg-surface-container-highest mt-1 h-2 overflow-hidden rounded-full">
                     <span
                       class={cn(
                         "ease-decel block h-full rounded-full transition-[width] duration-500",
-                        v >= 0.9 ? "bg-success" : v >= 0.7 ? "bg-warning" : "bg-error",
+                        v >= 0.9
+                          ? "bg-success"
+                          : v >= 0.7
+                            ? "bg-warning"
+                            : "bg-error",
                         !has && "opacity-25",
                       )}
-                      style={{ width: `${String(Math.max(2, Math.round(v * 100)))}%` }}
+                      style={{
+                        width: `${String(Math.max(2, Math.round(v * 100)))}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -477,7 +524,8 @@ function GenerationPanel({ d }: { d: Overview }) {
             <>
               <b>D_absent bucket</b> · out-of-KB questions
               <br />
-              {G.refusal.correct} / {G.refusal.total} correct refusals, logged to the low-confidence pool
+              {G.refusal.correct} / {G.refusal.total} correct refusals, logged
+              to the low-confidence pool
             </>
           }
         ></ring-gauge>
@@ -485,10 +533,13 @@ function GenerationPanel({ d }: { d: Overview }) {
       {RefusalCases({ R: G.refusal })}
       {G.skipped ? (
         <div class="bg-surface-container-low text-on-surface-variant mt-3 rounded-lg p-3 text-xs leading-7">
-          Note: {G.skipped} judge calls timed out or failed this round and were skipped (upstream instability);
-          rates are computed from the available samples.
+          Note: {G.skipped} judge calls timed out or failed this round and were
+          skipped (upstream instability); rates are computed from the available
+          samples.
           {(G.refusal.skipped_ids ?? []).length
-            ? " Skipped out-of-KB ids: " + (G.refusal.skipped_ids ?? []).join(", ") + "."
+            ? " Skipped out-of-KB ids: " +
+              (G.refusal.skipped_ids ?? []).join(", ") +
+              "."
             : ""}
         </div>
       ) : null}
@@ -503,7 +554,8 @@ function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
     return (
       <div class="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
         ✓ No generated answer from this round's production pipeline was{" "}
-        <b class="font-semibold">judged "fabricated"</b> — every factual claim is backed by the retrieved evidence.
+        <b class="font-semibold">judged "fabricated"</b> — every factual claim
+        is backed by the retrieved evidence.
       </div>
     );
   }
@@ -515,12 +567,15 @@ function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
         <span class="before:content-['▸'] group-open:before:content-['▾']" />
         Fabricated cases
         <Pill tone="sev-medium">{cases.length} cases</Pill>
-        <span class="text-on-surface-variant font-normal">Open for the question / generated answer / judge rationale</span>
+        <span class="text-on-surface-variant font-normal">
+          Open for the question / generated answer / judge rationale
+        </span>
       </summary>
       <div class="px-3 pt-1 pb-3">
         <p class="text-on-surface-variant my-2 text-xs leading-7">
-          These generated answers from the production pipeline were judged to contain claims the retrieved evidence
-          doesn't support. Look at which sentence was fabricated, then patch the Knowledge Base or adjust the
+          These generated answers from the production pipeline were judged to
+          contain claims the retrieved evidence doesn't support. Look at which
+          sentence was fabricated, then patch the Knowledge Base or adjust the
           judging criteria.
         </p>
         {cases.map((c) => (
@@ -530,15 +585,23 @@ function FaithCasesInline({ cases }: { cases: FaithCaseInline[] }) {
                 {c.id}
               </span>
               <span class="text-[13px] font-medium">{c.query}</span>
-              <span class="text-on-surface-variant text-[11px]">{(BMAP[c.bucket] ?? c.bucket) + " bucket"}</span>
+              <span class="text-on-surface-variant text-[11px]">
+                {(BMAP[c.bucket] ?? c.bucket) + " bucket"}
+              </span>
             </div>
             <div class="mt-1.5 text-[12.5px] leading-7">
-              <span class="text-on-surface-variant block text-[10.5px]">Judge rationale</span>
+              <span class="text-on-surface-variant block text-[10.5px]">
+                Judge rationale
+              </span>
               {c.reason ?? "—"}
             </div>
             <div class="mt-1.5 text-[12.5px] leading-7">
-              <span class="text-on-surface-variant block text-[10.5px]">Generated answer (verbatim)</span>
-              <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">{c.answer ?? ""}</div>
+              <span class="text-on-surface-variant block text-[10.5px]">
+                Generated answer (verbatim)
+              </span>
+              <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
+                {c.answer ?? ""}
+              </div>
             </div>
           </div>
         ))}
@@ -573,19 +636,41 @@ function TablePanel({ d }: { d: Overview }) {
           </thead>
           <tbody>
             {STRAT.map((s) => (
-              <Tr class={s.key === d.best.strategy ? "bg-primary-container/45" : undefined}>
+              <Tr
+                class={
+                  s.key === d.best.strategy
+                    ? "bg-primary-container/45"
+                    : undefined
+                }
+              >
                 <Td class="whitespace-nowrap">
-                  <i class="mr-1.5 inline-block h-2.5 w-2.5 rounded-xs align-baseline" style={{ background: s.color }} />
+                  <i
+                    class="mr-1.5 inline-block h-2.5 w-2.5 rounded-xs align-baseline"
+                    style={{ background: s.color }}
+                  />
                   {s.label}
                 </Td>
-                {["A_policy", "B_model", "C_colloquial", "E_multi", "overall"].map((b) => (
+                {[
+                  "A_policy",
+                  "B_model",
+                  "C_colloquial",
+                  "E_multi",
+                  "overall",
+                ].map((b) => (
                   <Td num>{(mrr(s.key, b) ?? 0).toFixed(2)}</Td>
                 ))}
                 <Td num class="border-outline-variant border-l">
                   {(cov(s.key, "overall") ?? 0).toFixed(2)}
                 </Td>
-                <Td num class={d.generation_done ? undefined : "text-on-surface-variant"}>
-                  {d.generation_done ? (ac(s.key, "overall") ?? 0).toFixed(2) : "—"}
+                <Td
+                  num
+                  class={
+                    d.generation_done ? undefined : "text-on-surface-variant"
+                  }
+                >
+                  {d.generation_done
+                    ? (ac(s.key, "overall") ?? 0).toFixed(2)
+                    : "—"}
                 </Td>
               </Tr>
             ))}
@@ -593,8 +678,8 @@ function TablePanel({ d }: { d: Overview }) {
         </Tbl>
       </TableScroll>
       <Tip>
-        <b>D_absent</b> out-of-KB questions (should be refused) have no gold answers, so they don't appear in the
-        table above.
+        <b>D_absent</b> out-of-KB questions (should be refused) have no gold
+        answers, so they don't appear in the table above.
         {G
           ? " They run through the production pipeline and are graded on refusal only: " +
             String(G.refusal.correct) +
@@ -628,7 +713,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 /** Two hallucination rates: judge-flagged (a lead volume, includes over-strict calls) and confirmed (only cases a human reviewed and fixed) */
 function HallucBox({ h }: { h: Hallucination }) {
-  const pct = (v: number | null) => (v === null || v === undefined ? "—" : (v * 100).toFixed(1));
+  const pct = (v: number | null) =>
+    v === null || v === undefined ? "—" : (v * 100).toFixed(1);
   // Both hallucination kinds count: answerable questions "answered but fabricated" + out-of-KB questions "should-refuse leaks" (answered without evidence)
   const split = (cases: number) => (
     <>
@@ -644,36 +730,46 @@ function HallucBox({ h }: { h: Hallucination }) {
         </div>
         <div class="text-2xl leading-snug font-medium tabular-nums">
           {pct(h.confirmed_rate)}
-          <small class="text-on-surface-variant ml-0.5 text-[13px] font-normal">%</small>
+          <small class="text-on-surface-variant ml-0.5 text-[13px] font-normal">
+            %
+          </small>
         </div>
         <div class="text-on-surface-variant text-[11.5px] leading-6 [&_b]:font-semibold">
-          <b>{h.confirmed}</b> / {h.evaluated ?? "—"} evaluated questions ({split(h.cases_confirmed)}). The
-          fabricated part only counts cases marked "Resolved" — confirmed real and fixed.{" "}
+          <b>{h.confirmed}</b> / {h.evaluated ?? "—"} evaluated questions (
+          {split(h.cases_confirmed)}). The fabricated part only counts cases
+          marked "Resolved" — confirmed real and fixed.{" "}
           {h.pending ? (
             <>
-              <b>{h.pending}</b> cases are still awaiting review this round, so this is a lower bound and can only
-              go up.{" "}
+              <b>{h.pending}</b> cases are still awaiting review this round, so
+              this is a lower bound and can only go up.{" "}
             </>
           ) : (
             "Everything flagged this round has been reviewed — the books are settled. "
           )}
-          Should-refuse leaks need no human confirmation: answering an out-of-KB question is answering without
-          evidence.
+          Should-refuse leaks need no human confirmation: answering an out-of-KB
+          question is answering without evidence.
         </div>
       </div>
       <div class="bg-card border-outline-variant shadow-e1 rounded-lg border p-3.5">
-        <div class="text-on-surface-variant text-[11.5px]">Judge-flagged rate this round (a lead volume, not a verdict)</div>
+        <div class="text-on-surface-variant text-[11.5px]">
+          Judge-flagged rate this round (a lead volume, not a verdict)
+        </div>
         <div class="text-2xl leading-snug font-medium tabular-nums">
           {pct(h.judged_rate)}
-          <small class="text-on-surface-variant ml-0.5 text-[13px] font-normal">%</small>
+          <small class="text-on-surface-variant ml-0.5 text-[13px] font-normal">
+            %
+          </small>
         </div>
         <div class="text-on-surface-variant text-[11.5px] leading-6 [&_b]:font-semibold">
-          <b>{h.judged}</b> / {h.evaluated ?? "—"} questions ({split(h.cases_judged)}). Of the fabricated ones,{" "}
-          <b>{h.dismissed}</b> were reviewed as over-strict judge calls (marked "Dismissed"). Denominator ={" "}
-          {h.graded ?? "—"} answerable + {h.absent ?? "—"} out-of-KB questions. The ledger holds{" "}
-          <b>{lg.total ?? "—"}</b> cases across all rounds (Unresolved {lg.unresolved ?? "—"} · Resolved{" "}
-          {lg.resolved ?? "—"} · Dismissed {lg.dismissed ?? "—"}) — a cross-round management view; don't divide it
-          by one round's question count.
+          <b>{h.judged}</b> / {h.evaluated ?? "—"} questions (
+          {split(h.cases_judged)}). Of the fabricated ones, <b>{h.dismissed}</b>{" "}
+          were reviewed as over-strict judge calls (marked "Dismissed").
+          Denominator = {h.graded ?? "—"} answerable + {h.absent ?? "—"}{" "}
+          out-of-KB questions. The ledger holds <b>{lg.total ?? "—"}</b> cases
+          across all rounds (Unresolved {lg.unresolved ?? "—"} · Resolved{" "}
+          {lg.resolved ?? "—"} · Dismissed {lg.dismissed ?? "—"}) — a
+          cross-round management view; don't divide it by one round's question
+          count.
         </div>
       </div>
     </div>
@@ -688,6 +784,22 @@ export class LedgerCaseCard extends LightElement {
   @state() private noteFor: string | null = null;
   @state() private note = "";
   @state() private posting = false;
+  /** Uncontrolled input (see chat.tsx for why); seeded/cleared when noteFor changes */
+  private noteRef = createRef<HTMLInputElement>();
+
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
+    if (changed.has("noteFor") && this.noteFor) {
+      void this.updateComplete.then(() => {
+        const el = this.noteRef.value;
+        if (el) {
+          el.value = this.note;
+          el.focus();
+        }
+      });
+    }
+  }
 
   private async post(st: string, resolution: string | null): Promise<void> {
     const c = this.c;
@@ -696,7 +808,10 @@ export class LedgerCaseCard extends LightElement {
     }
     this.posting = true;
     try {
-      await api("/api/rag-eval/faith-cases/" + String(c.id) + "/status", jsonPost({ status: st, resolution }));
+      await api(
+        "/api/rag-eval/faith-cases/" + String(c.id) + "/status",
+        jsonPost({ status: st, resolution }),
+      );
       toast(c.eval_id + " → " + (STATUS_LABEL[st] ?? st));
       this.onChanged?.();
     } catch (e) {
@@ -765,21 +880,29 @@ export class LedgerCaseCard extends LightElement {
             (c.judge_model ? " · judge " + c.judge_model : "")}
         </div>
         <div class="mt-1.5 text-[12.5px] leading-7">
-          <span class="text-on-surface-variant block text-[10.5px]">Judge rationale</span>
+          <span class="text-on-surface-variant block text-[10.5px]">
+            Judge rationale
+          </span>
           {c.reason ?? "—"}
         </div>
         {/* Resolution note: marking resolved/dismissed requires an explanation (the two fields most worth revisiting, kept together) */}
         {c.resolution ? (
           <div class="mt-1.5 text-[12.5px] leading-7">
             <span class="text-on-surface-variant block text-[10.5px]">
-              {c.status === "resolved" ? "How it was resolved" : "Why no fix is needed"}
+              {c.status === "resolved"
+                ? "How it was resolved"
+                : "Why no fix is needed"}
             </span>
             {c.resolution}
           </div>
         ) : null}
         <div class="mt-1.5 text-[12.5px] leading-7">
-          <span class="text-on-surface-variant block text-[10.5px]">Generated answer (verbatim)</span>
-          <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">{c.answer ?? ""}</div>
+          <span class="text-on-surface-variant block text-[10.5px]">
+            Generated answer (verbatim)
+          </span>
+          <div class="bg-card mt-0.5 rounded-md p-2 whitespace-pre-wrap">
+            {c.answer ?? ""}
+          </div>
         </div>
 
         <details class="bg-card mt-2 overflow-hidden rounded-md">
@@ -789,7 +912,10 @@ export class LedgerCaseCard extends LightElement {
                 String(n) +
                 " chunks — everything fed to the model this round" +
                 (used.length
-                  ? " · the answer cited " + String(used.length) + " of them: " + used.map((x) => "[" + String(x) + "]").join("")
+                  ? " · the answer cited " +
+                    String(used.length) +
+                    " of them: " +
+                    used.map((x) => "[" + String(x) + "]").join("")
                   : " · the answer cited none")
               : "Evidence (verbatim) — no snapshot was recorded when this case entered the ledger"}
           </summary>
@@ -822,7 +948,8 @@ export class LedgerCaseCard extends LightElement {
                 </div>
                 <div class="mt-1 whitespace-pre-wrap">{x.answer ?? ""}</div>
                 <div class="text-on-surface-variant mt-0.5 text-[10.5px]">
-                  {(x.section_path ?? "") + (x.chunk_id ? " · chunk id " + String(x.chunk_id) : "")}
+                  {(x.section_path ?? "") +
+                    (x.chunk_id ? " · chunk id " + String(x.chunk_id) : "")}
                 </div>
               </div>
             );
@@ -870,16 +997,15 @@ export class LedgerCaseCard extends LightElement {
         {this.noteFor ? (
           <div class="mt-2 flex flex-wrap items-center gap-1.5">
             <input
+              ref={this.noteRef}
               type="text"
               maxLength={300}
-              autoFocus
               class="bg-card border-outline-variant focus:border-primary min-w-65 flex-1 rounded-sm border px-3 py-1.5 text-[12.5px] transition-colors outline-none"
               placeholder={
                 this.noteFor === "resolved"
                   ? 'How was it resolved? e.g. added "Lite waste bin holds ~5 days" to the Knowledge Base'
                   : "Why is no fix needed? e.g. the processing deadline is our payout deadline — the judge was too strict"
               }
-              value={this.note}
               onInput={(e: Event) => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 this.note = (e.target as HTMLInputElement).value;
@@ -931,7 +1057,9 @@ export class LedgerPanel extends LightElement {
     }
   }
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     // Refetch on tab/page change: the ledger is a cross-round management view, so it stays out of the route loader
     if (this.loaded && (changed.has("status") || changed.has("page"))) {
       void this.load();
@@ -944,7 +1072,9 @@ export class LedgerPanel extends LightElement {
       if (this.status) {
         qs.set("status", this.status);
       }
-      this.data = await api<FaithCasesData>("/api/rag-eval/faith-cases?" + qs.toString());
+      this.data = await api<FaithCasesData>(
+        "/api/rag-eval/faith-cases?" + qs.toString(),
+      );
       this.err = "";
     } catch (e) {
       this.err = errMsg(e);
@@ -954,7 +1084,10 @@ export class LedgerPanel extends LightElement {
   protected override render() {
     const h = this.data?.hallucination;
     const counts = this.data?.counts ?? {};
-    const all = (counts.unresolved ?? 0) + (counts.resolved ?? 0) + (counts.dismissed ?? 0);
+    const all =
+      (counts.unresolved ?? 0) +
+      (counts.resolved ?? 0) +
+      (counts.dismissed ?? 0);
     const data = this.data;
 
     return (
@@ -965,7 +1098,8 @@ export class LedgerPanel extends LightElement {
       >
         {this.err ? (
           <div class="bg-error-container text-on-error-container rounded-lg p-3 text-[12.5px]">
-            Failed to load ledger data: {this.err} (the FaithCase table needs its Prisma migration applied first)
+            Failed to load ledger data: {this.err} (the FaithCase table needs
+            its Prisma migration applied first)
           </div>
         ) : null}
         {h ? HallucBox({ h }) : null}
@@ -973,9 +1107,21 @@ export class LedgerPanel extends LightElement {
           <>
             <div class="mt-3 mb-0.5 flex flex-wrap items-center gap-2">
               {[
-                { label: "Unresolved", st: "unresolved", cnt: counts.unresolved ?? 0 },
-                { label: "Resolved", st: "resolved", cnt: counts.resolved ?? 0 },
-                { label: "Dismissed", st: "dismissed", cnt: counts.dismissed ?? 0 },
+                {
+                  label: "Unresolved",
+                  st: "unresolved",
+                  cnt: counts.unresolved ?? 0,
+                },
+                {
+                  label: "Resolved",
+                  st: "resolved",
+                  cnt: counts.resolved ?? 0,
+                },
+                {
+                  label: "Dismissed",
+                  st: "dismissed",
+                  cnt: counts.dismissed ?? 0,
+                },
                 { label: "All", st: "", cnt: all },
               ].map(({ label, st, cnt }) => (
                 <button
@@ -1090,7 +1236,9 @@ export class RagEvalPage extends DataLoaderElement<Overview> {
           note={
             "Artifact " +
             d.job.artifacts.json.path +
-            (d.job.artifacts.json.mtime ? " (written " + fmtTime(d.job.artifacts.json.mtime) + ")" : " (none yet)")
+            (d.job.artifacts.json.mtime
+              ? " (written " + fmtTime(d.job.artifacts.json.mtime) + ")"
+              : " (none yet)")
           }
         ></job-row>
       </Panel>
@@ -1101,7 +1249,9 @@ export class RagEvalPage extends DataLoaderElement<Overview> {
     if (this.loadError) {
       return (
         <PageShell title="RAG Eval" active="/rag-eval">
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         </PageShell>
       );
     }
@@ -1136,9 +1286,19 @@ export class RagEvalPage extends DataLoaderElement<Overview> {
         actions={this.refreshBtn()}
       >
         <GateBar>
-          <Stat label="Eval set" value={String(m.n_samples ?? "—") + " questions"} />
-          <Stat label="Knowledge Base" value={String(m.kb_chunks ?? "—") + " chunks"} />
-          <Stat label="Embedding / rerank" value="qwen3.7-text-embedding-flash · reranker-v2-m3" small />
+          <Stat
+            label="Eval set"
+            value={String(m.n_samples ?? "—") + " questions"}
+          />
+          <Stat
+            label="Knowledge Base"
+            value={String(m.kb_chunks ?? "—") + " chunks"}
+          />
+          <Stat
+            label="Embedding / rerank"
+            value="qwen3.7-text-embedding-flash · reranker-v2-m3"
+            small
+          />
           <Stat label="Judge model" value={m.chat_model ?? "—"} small />
           <Stat label="Last run" value={m.generated_at ?? "—"} small />
         </GateBar>
@@ -1148,7 +1308,10 @@ export class RagEvalPage extends DataLoaderElement<Overview> {
         {TablePanel({ d })}
         <ledger-panel></ledger-panel>
         {this.jobPanel(d)}
-        <Panel title="How to read this report" lede="Four ground rules so the scores don't get misread.">
+        <Panel
+          title="How to read this report"
+          lede="Four ground rules so the scores don't get misread."
+        >
           <div class="grid gap-3 md:grid-cols-2">
             {NOTES.map(([t, body]) => (
               <div class="bg-card border-outline-variant shadow-e1 rounded-lg border p-3.5">

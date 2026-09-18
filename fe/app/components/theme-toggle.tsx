@@ -1,12 +1,16 @@
 import { customElement, createRef, state } from "@swifty.js/lit-jsx";
 import { animate } from "motion";
 
-
 import { cn } from "~/lib/cn";
 import { Icon } from "~/lib/icons";
 import { LightElement } from "~/lib/light-element";
 import { EASE_STANDARD } from "~/lib/motion";
-import { currentTheme, subscribeTheme, toggleTheme, type Theme } from "~/lib/theme";
+import {
+  currentTheme,
+  subscribeTheme,
+  toggleTheme,
+  type Theme,
+} from "~/lib/theme";
 
 @customElement("theme-toggle")
 export class ThemeToggle extends LightElement {
@@ -27,13 +31,19 @@ export class ThemeToggle extends LightElement {
     this.unsub?.();
   }
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (changed.has("theme") && changed.get("theme") !== undefined) {
       // Swap-in: the new icon rotates/scales into place (the old one is gone
       // with the re-render — same feel as the AnimatePresence mode="wait" original)
       const el = this.iconRef.value;
       if (el) {
-        animate(el, { rotate: [-60, 0], opacity: [0, 1], scale: [0.7, 1] }, { duration: 0.22, ease: EASE_STANDARD });
+        animate(
+          el,
+          { rotate: [-60, 0], opacity: [0, 1], scale: [0.7, 1] },
+          { duration: 0.22, ease: EASE_STANDARD },
+        );
       }
     }
   }

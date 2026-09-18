@@ -58,7 +58,9 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
 
   protected override render() {
     const d = this.data;
-    const jobSpecs = d ? Object.fromEntries(d.jobs.map((j) => [j.name, j])) : {};
+    const jobSpecs = d
+      ? Object.fromEntries(d.jobs.map((j) => [j.name, j]))
+      : {};
     const evalBlock = d?.blocks.find((b) => b.key === "eval");
 
     return (
@@ -69,7 +71,9 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
         actions={this.refreshBtn()}
       >
         {this.loadError ? (
-          <MissingBox class="mt-4">Failed to load data: {this.loadError}</MissingBox>
+          <MissingBox class="mt-4">
+            Failed to load data: {this.loadError}
+          </MissingBox>
         ) : d ? (
           <>
             <GateBar>
@@ -85,26 +89,38 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
               />
               <Stat
                 label="Eval verdict"
-                value={!evalBlock || evalBlock.status === "missing" ? "—" : evalBlock.headline.split(" · ")[0]}
+                value={
+                  !evalBlock || evalBlock.status === "missing"
+                    ? "—"
+                    : evalBlock.headline.split(" · ")[0]
+                }
                 small
               />
             </GateBar>
 
             <Tip>
-              How to read this: <b>Pass</b> means the artifact exists and clears its bar; <b>Fail</b> means it ran
-              but missed the bar — go fix the data; <b>No artifact</b> means it has not run yet — use the buttons
-              on the card to run it now. The numbers here come from the same artifacts as terminal make — the API
-              never recomputes them, so there is no second source of truth.
+              How to read this: <b>Pass</b> means the artifact exists and clears
+              its bar; <b>Fail</b> means it ran but missed the bar — go fix the
+              data; <b>No artifact</b> means it has not run yet — use the
+              buttons on the card to run it now. The numbers here come from the
+              same artifacts as terminal make — the API never recomputes them,
+              so there is no second source of truth.
             </Tip>
 
             <div class="mt-4 grid [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))] gap-3.5">
               {d.blocks.map((blk, i) => {
                 const [tone, label] = PILL[blk.status] ?? ["plain", blk.status];
-                const specs = blk.jobs.map((n) => jobSpecs[n]).filter((x): x is JobSpec => Boolean(x));
+                const specs = blk.jobs
+                  .map((n) => jobSpecs[n])
+                  .filter((x): x is JobSpec => Boolean(x));
                 return (
                   <div
                     ref={(el: Element | undefined) => {
-                      enterOnce(el, { y: 12, duration: 0.22, delay: Math.min(i * 0.04, 0.3) });
+                      enterOnce(el, {
+                        y: 12,
+                        duration: 0.22,
+                        delay: Math.min(i * 0.04, 0.3),
+                      });
                     }}
                     class="bg-card shadow-e1 hover:shadow-e2 flex flex-col rounded-lg p-3.5 transition-shadow duration-200"
                   >
@@ -114,7 +130,8 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
                           "grid h-6.5 w-6.5 shrink-0 place-items-center rounded-full text-[13px] font-medium",
                           blk.status === "pass" && "bg-success text-on-success",
                           blk.status === "fail" && "bg-error text-on-error",
-                          blk.status === "missing" && "bg-surface-container-high text-on-surface-variant",
+                          blk.status === "missing" &&
+                            "bg-surface-container-high text-on-surface-variant",
                         )}
                       >
                         {blk.no}
@@ -132,7 +149,9 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
                       {blk.headline || "—"}
                     </div>
                     {blk.note ? (
-                      <div class="text-on-surface-variant mt-2 text-xs leading-6">{blk.note}</div>
+                      <div class="text-on-surface-variant mt-2 text-xs leading-6">
+                        {blk.note}
+                      </div>
                     ) : null}
                     {specs.length ? (
                       <div class="mt-auto pt-3">

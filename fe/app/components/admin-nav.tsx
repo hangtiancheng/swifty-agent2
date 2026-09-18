@@ -42,7 +42,10 @@ const NAV: NavModule[] = [
 /** Which module the current page belongs to: exact match first, then by prefix
     (/acceptance/eval falls under /acceptance). */
 function moduleOf(active: string): NavModule | undefined {
-  return NAV.find((m) => m.href === active) ?? NAV.find((m) => m.href !== "/" && active.startsWith(m.href + "/"));
+  return (
+    NAV.find((m) => m.href === active) ??
+    NAV.find((m) => m.href !== "/" && active.startsWith(m.href + "/"))
+  );
 }
 
 let lastMainHref: string | null = null;
@@ -81,15 +84,26 @@ export class AdminNav extends LightElement {
     const pill = this.pillRef.value;
     const bar = this.barRef.value;
     if (pill && bar) {
-      const link = bar.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      const link = bar.querySelector<HTMLAnchorElement>(
+        'a[aria-current="page"]',
+      );
       if (link) {
         const href = link.getAttribute("href") ?? "";
         const from =
           !instant && lastMainHref && lastMainHref !== href
-            ? bar.querySelector<HTMLAnchorElement>(`a[href="${CSS.escape(lastMainHref)}"]`)
+            ? bar.querySelector<HTMLAnchorElement>(
+                `a[href="${CSS.escape(lastMainHref)}"]`,
+              )
             : null;
         if (from && from !== link) {
-          animate(pill, { x: [from.offsetLeft, link.offsetLeft], width: [from.offsetWidth, link.offsetWidth] }, springTransition);
+          animate(
+            pill,
+            {
+              x: [from.offsetLeft, link.offsetLeft],
+              width: [from.offsetWidth, link.offsetWidth],
+            },
+            springTransition,
+          );
         } else {
           pill.style.transform = `translateX(${String(link.offsetLeft)}px)`;
           pill.style.width = `${String(link.offsetWidth)}px`;
@@ -101,19 +115,27 @@ export class AdminNav extends LightElement {
     const line = this.subLineRef.value;
     const sub = this.subRef.value;
     if (line && sub) {
-      const link = sub.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      const link = sub.querySelector<HTMLAnchorElement>(
+        'a[aria-current="page"]',
+      );
       if (link) {
         const href = link.getAttribute("href") ?? "";
         const from =
           !instant && lastSubHref && lastSubHref !== href
-            ? sub.querySelector<HTMLAnchorElement>(`a[href="${CSS.escape(lastSubHref)}"]`)
+            ? sub.querySelector<HTMLAnchorElement>(
+                `a[href="${CSS.escape(lastSubHref)}"]`,
+              )
             : null;
         const xOf = (el: HTMLAnchorElement) => el.offsetLeft + 14; // inset-x-3.5
         const wOf = (el: HTMLAnchorElement) => el.offsetWidth - 28;
         const y = link.offsetTop + link.offsetHeight - 2;
         line.style.top = `${String(y)}px`;
         if (from && from !== link) {
-          animate(line, { x: [xOf(from), xOf(link)], width: [wOf(from), wOf(link)] }, springTransition);
+          animate(
+            line,
+            { x: [xOf(from), xOf(link)], width: [wOf(from), wOf(link)] },
+            springTransition,
+          );
         } else {
           line.style.transform = `translateX(${String(xOf(link))}px)`;
           line.style.width = `${String(wOf(link))}px)`;
@@ -169,7 +191,10 @@ export class AdminNav extends LightElement {
           <theme-toggle className="relative z-10 mr-1 ml-0.5 shrink-0"></theme-toggle>
         </div>
         {mod?.children ? (
-          <div ref={this.subRef} class="scroll-slim relative mt-2 flex gap-1 overflow-x-auto px-1">
+          <div
+            ref={this.subRef}
+            class="scroll-slim relative mt-2 flex gap-1 overflow-x-auto px-1"
+          >
             <span
               ref={this.subLineRef}
               class="bg-primary absolute left-0 h-0.75 rounded-full"

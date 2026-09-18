@@ -62,7 +62,10 @@ export function Icon({ name, class: cls, strokeWidth }: IconProps) {
     .replace(/class="[^"]*"/, `class="${cls ?? "h-5 w-5"}"`)
     .replace("<svg", '<svg aria-hidden="true"');
   if (strokeWidth !== undefined) {
-    svg = svg.replace(/stroke-width="[\d.]+"/, `stroke-width="${String(strokeWidth)}"`);
+    svg = svg.replace(
+      /stroke-width="[\d.]+"/,
+      `stroke-width="${String(strokeWidth)}"`,
+    );
   }
   return unsafeHTML(svg);
 }

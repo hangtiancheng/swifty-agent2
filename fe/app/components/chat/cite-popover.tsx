@@ -1,4 +1,10 @@
-import { createRef, customElement, nothing, property, state } from "@swifty.js/lit-jsx";
+import {
+  createRef,
+  customElement,
+  nothing,
+  property,
+  state,
+} from "@swifty.js/lit-jsx";
 
 import { LightElement } from "~/lib/light-element";
 import { fxEnter } from "~/lib/motion";
@@ -17,7 +23,8 @@ export class CitePopover extends LightElement {
   @property({ attribute: false }) target: CiteTarget | null = null;
   @property({ attribute: false }) onClose?: () => void;
 
-  @state() private pos: { left: number; top: number; width: number } | null = null;
+  @state() private pos: { left: number; top: number; width: number } | null =
+    null;
   private popRef = createRef<HTMLDivElement>();
 
   private onDoc = (e: MouseEvent): void => {
@@ -36,7 +43,9 @@ export class CitePopover extends LightElement {
     this.onClose?.();
   };
 
-  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+  protected override updated(
+    changed: Map<string | number | symbol, unknown>,
+  ): void {
     if (!changed.has("target")) {
       return;
     }
@@ -103,7 +112,11 @@ export class CitePopover extends LightElement {
         class="scroll-slim border-outline-variant bg-card text-body-small text-on-surface shadow-e4 fixed z-50 max-h-[50vh] overflow-y-auto rounded-lg border p-4 leading-relaxed"
         style={
           pos
-            ? { left: `${String(pos.left)}px`, top: `${String(pos.top)}px`, width: `${String(pos.width)}px` }
+            ? {
+                left: `${String(pos.left)}px`,
+                top: `${String(pos.top)}px`,
+                width: `${String(pos.width)}px`,
+              }
             : { left: "0", top: "0", visibility: "hidden" }
         }
       >
@@ -112,12 +125,20 @@ export class CitePopover extends LightElement {
             {"Source [" + String(c.n) + "]"}
           </span>
           {c.content_type ? (
-            <span class="text-on-surface-variant text-label-small">{c.content_type}</span>
+            <span class="text-on-surface-variant text-label-small">
+              {c.content_type}
+            </span>
           ) : null}
         </div>
-        <div class="text-label-medium text-primary break-words">{c.section_path ?? "Source"}</div>
-        {c.question ? <div class="text-on-surface mt-2 font-medium">{c.question}</div> : null}
-        <div class="text-on-surface-variant mt-1.5 wrap-break-word whitespace-pre-wrap">{c.answer ?? ""}</div>
+        <div class="text-label-medium text-primary wrap-break-word">
+          {c.section_path ?? "Source"}
+        </div>
+        {c.question ? (
+          <div class="text-on-surface mt-2 font-medium">{c.question}</div>
+        ) : null}
+        <div class="text-on-surface-variant mt-1.5 wrap-break-word whitespace-pre-wrap">
+          {c.answer ?? ""}
+        </div>
       </div>
     );
   }
