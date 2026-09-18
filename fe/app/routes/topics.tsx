@@ -158,9 +158,9 @@ export class TopicsPage extends DataLoaderElement<TopicDistribution> {
                 ))}
               </div>
               <div class="text-on-surface-variant mt-2.5 text-xs">
-                Data comes from topic_classifications (make classify-pool runs
-                the bypass batch classification); multi-label questions count
-                toward every class they hit.
+                Data comes from topic_classifications (node main.js
+                classify-pool runs the bypass batch classification); multi-label
+                questions count toward every class they hit.
               </div>
             </div>
           </>

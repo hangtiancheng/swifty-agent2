@@ -1,6 +1,6 @@
 // Replays the train-time threshold scan (teaching demo): the validation set is scored once by the
 // ONNX service, then nine candidate lines (0.30~0.70 step 0.05) each replay the same score table and
-// the highest micro-F1 wins. Prereq: make classifier-up (:8110 online).
+// the highest micro-F1 wins. Prereq: node main.js classifier-up (:8110 online).
 // Writes reports/threshold_scan.json for the acceptance page (/acceptance/eval).
 import fs from "node:fs";
 import path from "node:path";
@@ -152,6 +152,8 @@ try {
   console.error(
     `Threshold scan failed: ${error instanceof Error ? error.message : String(error)}`,
   );
-  console.error("Is the classifier service running? make classifier-up");
+  console.error(
+    "Is the classifier service running? node main.js classifier-up",
+  );
   process.exitCode = 1;
 }

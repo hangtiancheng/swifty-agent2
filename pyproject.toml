@@ -8,7 +8,7 @@ dependencies = [
     # Not imported directly: transformers.Trainer (scripts/train/py/train.py)
     # pulls it in at runtime.
     "accelerate>=1.15.0",
-    # protoc + the grpc python plugins for `make milvus-proto`.
+    # protoc + the grpc python plugins for `node main.js milvus-proto`.
     "grpcio-tools>=1.84.0",
     # pymilvus's local-file backend (data/milvus/kb.db, no docker).
     "milvus-lite>=3.2.1",
@@ -36,11 +36,11 @@ dev = [
 
 # uv syncs the dependencies but never builds/installs this repo as a Python package (it is a Node
 # project). The remaining Python subtrees are scripts run in place, e.g. `uv run python
-# scripts/train/py/train.py` or `uv run python src/milvus/server.py` (see the Makefile targets).
+# scripts/train/py/train.py` or `uv run python src/milvus/server.py` (see the main.js tasks).
 [tool.uv]
 package = false
 
-# Generated protobuf/gRPC stubs (regenerate via `make milvus-proto`): machine-generated,
+# Generated protobuf/gRPC stubs (regenerate via `node main.js milvus-proto`): machine-generated,
 # never hand-edited, so ruff check/format must leave them byte-for-byte alone.
 # force-exclude: honor the exclusion even when the files are passed explicitly on the CLI.
 [tool.ruff]
@@ -67,7 +67,7 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "ASYNC"]
 python_version = "3.13"
 strict = true
 files = ["scripts/train/py", "src/milvus"]
-# The generated pb2 modules are machine-generated (`make milvus-proto`); mypy consumes the
+# The generated pb2 modules are machine-generated (`node main.js milvus-proto`); mypy consumes the
 # .pyi stubs generated next to them instead of type-checking the .py sources.
 exclude = ["src/milvus/pb/kb_store_pb2(_grpc)?\\.py$"]
 # server.py imports the generated modules flat (`import kb_store_pb2`), the way the

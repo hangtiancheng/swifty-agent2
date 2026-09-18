@@ -23,7 +23,7 @@ import { ReadNote } from "~/lib/read-note";
 import type { JobSpec } from "~/lib/types";
 
 /* Each of the three reports renders exactly what /api/observability/overview
-   serves: cost and calibration come from make-produced artifacts, trends from
+   serves: cost and calibration come from main.js-produced artifacts, trends from
    the eval_runs table — the page never recomputes a single number. Delta
    arrows are pairwise diffs over the same rows, not a separate dataset. */
 
@@ -48,7 +48,7 @@ interface CostBlock {
   present: boolean;
   status: string;
   job: JobSpec;
-  make: string;
+  task: string;
   hint: string | null;
   meta: { days?: number; generated_at?: string | null };
   rows: CostRow[];
@@ -70,7 +70,7 @@ interface TrendBlock {
   present: boolean;
   status: string;
   job: JobSpec;
-  make: string;
+  task: string;
   hint?: string;
   note?: string;
   metric_names: string[];
@@ -91,7 +91,7 @@ interface CalibrationBlock {
   present: boolean;
   status: string;
   job: JobSpec;
-  make: string;
+  task: string;
   hint?: string;
   weights: {
     top1: number;
@@ -158,8 +158,8 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
     return api<Overview>("/api/observability/overview");
   }
 
-  /** Footer shared by all three panels: re-run button + log output, invoking the same make as the terminal */
-  private jobFoot(block: { job: JobSpec; make: string }) {
+  /** Footer shared by all three panels: re-run button + log output, invoking the same task as the terminal */
+  private jobFoot(block: { job: JobSpec; task: string }) {
     return (
       <div>
         <SectionHead>Re-run from this page</SectionHead>
@@ -168,7 +168,7 @@ export class ObservabilityPage extends DataLoaderElement<Overview> {
           onFinish={() => {
             void this.reload();
           }}
-          note={block.make}
+          note={block.task}
         ></job-row>
       </div>
     );

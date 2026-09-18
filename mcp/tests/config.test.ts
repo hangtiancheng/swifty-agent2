@@ -3,11 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  DEFAULT_HOST,
-  DEFAULT_PORT,
-  loadConfig,
-} from "#mcp/shared/config.ts";
+import { DEFAULT_HOST, DEFAULT_PORT, loadConfig } from "#mcp/shared/config.ts";
 
 describe("github config", () => {
   it("defaults to unconfigured when the environment is empty", () => {

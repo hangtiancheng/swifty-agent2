@@ -205,7 +205,7 @@ export class AcceptanceErrorsPage extends DataLoaderElement<PageData> {
           <Panel title="Error case review">
             <MissingBox>
               {d.eval.hint ??
-                "Eval artifact not generated yet — run make train-eval first"}
+                "Eval artifact not generated yet — run node main.js train-eval first"}
             </MissingBox>
             {jobSpecs["train-eval"] ? (
               <job-row

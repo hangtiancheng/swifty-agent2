@@ -36,11 +36,11 @@ bridge — `src/milvus/server.py` wraps `pymilvus` behind `src/milvus/kb_store.p
 `src/kb/milvus-rpc.ts` is the Node client:
 
 ```bash
-make milvus-up                                  # start the bridge on 127.0.0.1:50051
+node main.js milvus-up                          # start the bridge on 127.0.0.1:50051
 echo 'MILVUS_RPC_URL=127.0.0.1:50051' >> .env   # then restart the Node server
-make kb-vectorize                               # re-embed: vectors now upsert into Milvus
+node main.js kb-vectorize                       # re-embed: vectors now upsert into Milvus
 node scripts/smoke-milvus.ts                    # end-to-end smoke (throwaway collection)
-make milvus-down                                # stop the bridge
+node main.js milvus-down                        # stop the bridge
 ```
 
 With `MILVUS_RPC_URL` set, Milvus is the authoritative dense store (the SQLite `embedding`
@@ -56,7 +56,7 @@ in `src/milvus/pb/` (machine-generated, never hand-edited; the `.pyi` stubs keep
 `src/milvus/server.py` mypy-strict clean):
 
 ```bash
-make milvus-proto
+node main.js milvus-proto
 # equivalent to:
 # uv run python -m grpc_tools.protoc -I src/milvus \
 #   --python_out=src/milvus/pb --grpc_python_out=src/milvus/pb \
@@ -101,8 +101,8 @@ branches and single-file commits. It prefers an authenticated `gh` CLI and falls
 `GITHUB_TOKEN` HTTP calls; with neither, each call answers with a clear unavailable error.
 
 ```bash
-make agent2-mcp        # stdio (default; wire into an MCP client)
-make agent2-mcp-http   # Streamable HTTP (POST /mcp) + legacy SSE on MCP_HOST:MCP_PORT
+node main.js agent2-mcp        # stdio (default; wire into an MCP client)
+node main.js agent2-mcp-http   # Streamable HTTP (POST /mcp) + legacy SSE on MCP_HOST:MCP_PORT
 ```
 
 Part of the root pnpm package, built on the official MCP SDK with h3 v2 for the HTTP
@@ -110,7 +110,7 @@ transports. See `mcp/README.md` for configuration and behaviour details.
 
 ## Offline jobs
 
-`make <target>` and the admin pages' "re-run" buttons share one job runner (`src/core/jobs.ts`); the
+`node main.js <command>` and the admin pages' "re-run" buttons share one job runner (`src/core/jobs.ts`); the
 front end can only submit a registered job name, never a shell fragment. Course acceptance/smoke
 scripts (`scripts/eval-*.ts`, `scripts/smoke-*.ts`, `scripts/validate-*.ts`, `scripts/bare-agent-loop.ts`)
 are offline tools that drive a running server or an upstream directly.

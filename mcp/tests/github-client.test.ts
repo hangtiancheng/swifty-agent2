@@ -32,7 +32,6 @@ import {
   type GitHubTransport,
 } from "#mcp/tools/github/transport.ts";
 
-
 const REPO = "hangtiancheng/swifty-agent2";
 
 interface RecordedRequest {

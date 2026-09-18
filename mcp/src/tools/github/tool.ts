@@ -25,7 +25,6 @@ import { loadConfig } from "#mcp/shared/config.ts";
 import { logger } from "#mcp/shared/logger.ts";
 import type { ToolModule } from "#mcp/tools/types.ts";
 
-
 const REPO_DESCRIPTION =
   'Repository as `owner/name` (e.g. "hangtiancheng/swifty-agent2").';
 const REF_DESCRIPTION =

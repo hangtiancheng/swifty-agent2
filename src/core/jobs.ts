@@ -27,7 +27,7 @@ const script = (name: string): string[] => [
   path.join("scripts", `${name}.ts`),
 ];
 // Train TS scripts live under scripts/train/; the torch-dependent steps stay in Python.
-// Classifier process management goes through make so PID-file handling stays in one place.
+// Classifier process management goes through main.js so PID-file handling stays in one place.
 const trainScript = (name: string, ...args: string[]): string[] => [
   process.execPath,
   path.join("scripts", "train", `${name}.ts`),
@@ -39,7 +39,11 @@ const pyScript = (name: string): string[] => [
   "python",
   path.join("scripts", "train", "py", `${name}.py`),
 ];
-const makeTarget = (...args: string[]): string[] => ["make", ...args];
+const taskRunner = (...args: string[]): string[] => [
+  process.execPath,
+  "main.js",
+  ...args,
+];
 
 function spec(
   name: string,
@@ -82,13 +86,13 @@ export const JOBS: Record<string, JobSpec> = Object.fromEntries(
     spec(
       "milvus-up",
       "Start the Milvus dense bridge",
-      makeTarget("milvus-up"),
+      taskRunner("milvus-up"),
       "Optional; then set MILVUS_RPC_URL=127.0.0.1:50051 to route dense retrieval through Milvus Lite",
     ),
     spec(
       "milvus-down",
       "Stop the Milvus dense bridge",
-      makeTarget("milvus-down"),
+      taskRunner("milvus-down"),
       "—",
     ),
     spec(
@@ -188,13 +192,13 @@ export const JOBS: Record<string, JobSpec> = Object.fromEntries(
     spec(
       "classifier-up",
       "Start the classifier service",
-      makeTarget("classifier-up"),
+      taskRunner("classifier-up"),
       "Requires exported ONNX",
     ),
     spec(
       "classifier-down",
       "Stop the classifier service",
-      makeTarget("classifier-down"),
+      taskRunner("classifier-down"),
       "—",
     ),
     spec(

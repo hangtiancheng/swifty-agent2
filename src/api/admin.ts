@@ -360,7 +360,7 @@ async function classifierCard(): Promise<Card> {
   }
   c.note =
     c.note ??
-    "The numbers on the page are the same artifacts the terminal make targets produce";
+    "The numbers on the page are the same artifacts the terminal task runner (node main.js) produces";
   return c;
 }
 

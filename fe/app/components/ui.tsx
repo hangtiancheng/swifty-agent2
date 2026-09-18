@@ -308,7 +308,7 @@ export function MissingBox({ children, class: cls }: MissingBoxProps) {
       )}
     >
       {children ??
-        "Artifact not generated yet — run the corresponding make target first"}
+        "Artifact not generated yet — run the corresponding node main.js command first"}
     </div>
   );
 }

@@ -186,7 +186,7 @@ export function overview(): Record<string, unknown> {
     return {
       present: false,
       job,
-      make: "make eval-rag",
+      task: "node main.js eval-rag",
       hint: 'No RAG evaluation run yet. Press "Re-run RAG evaluation" to run one round on the spot (four strategies × four buckets; requires the vector store + a built KB + chat upstream; takes minutes).',
     };
   }

@@ -23,7 +23,7 @@
   `package.json` of its own): stdio by default, `--http` (or `MCP_TRANSPORT=http`)
   adds Streamable HTTP (`POST /mcp`) + legacy SSE (`GET /sse`) on
   `MCP_HOST:MCP_PORT` (default `127.0.0.1:3300`), hosted by h3 v2. Run it as
-  `pnpm tsx mcp/src/main.ts` (or `make agent2-mcp` / `make agent2-mcp-http`);
+  `pnpm tsx mcp/src/main.ts` (or `node main.js agent2-mcp` / `node main.js agent2-mcp-http`);
   details in `mcp/README.md`.
 - TS gates: `pnpm typecheck`, `pnpm lint`, `pnpm test` (vitest picks up
   `mcp/tests/*.test.ts` together with the root `tests/`).
@@ -37,7 +37,7 @@ Milvus. This stack migrated the dense path instead of avoiding it:
   `@grpc/grpc-js` + `@grpc/proto-loader`) -> Python bridge (`src/milvus/server.py`,
   contract in `src/milvus/kb_store.proto`) -> Milvus Lite (`data/milvus/kb.db`, no docker).
 - Opt-in via `MILVUS_RPC_URL` (empty = legacy in-process cosine over SQLite embeddings).
-  When set, Milvus is the authoritative dense store; `make milvus-up/down`, smoke with
+  When set, Milvus is the authoritative dense store; `node main.js milvus-up/down`, smoke with
   `node scripts/smoke-milvus.ts`.
 - BM25 stays in-process (CJK bigrams over `knowledge_chunks` text); `hybrid` fuses dense +
   BM25 with reciprocal-rank fusion in Node. Collection dim is inferred from the first

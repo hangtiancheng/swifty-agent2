@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   console.log(`knowledge store count=${total}`);
   if (total === 0) {
     console.log(
-      "KB is empty — nothing to smoke. Run `make kb-build && make kb-vectorize` first.",
+      "KB is empty — nothing to smoke. Run `node main.js kb-build && node main.js kb-vectorize` first.",
     );
     return;
   }

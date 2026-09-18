@@ -10,8 +10,8 @@
       "transport": "sse"
     },
     "swifty-agent2-mcp": {
-      "command": "make",
-      "args": ["agent2-mcp"],
+      "command": "node",
+      "args": ["main.js", "agent2-mcp"],
       "enabled": false
     }
   }

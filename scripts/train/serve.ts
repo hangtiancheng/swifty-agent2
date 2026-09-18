@@ -1,5 +1,5 @@
 // train inference service: ONNX + a light runtime (onnxruntime-node + tokenizers), no torch.
-// Start/stop: make classifier-up / classifier-down (repo convention: nohup + pid file).
+// Start/stop: node main.js classifier-up / classifier-down (repo convention: detached spawn + pid file).
 //
 // NOTE on tokenizer fidelity: this uses @huggingface/tokenizers (pure-JS) to reproduce the
 // truncation(max_length=128) + padding(pad_id=0) the Python serve applied. The library has no
@@ -37,11 +37,11 @@ const tokenizerPath = path.join(DIR, "tokenizer.json");
 const thresholdPath = path.join(DIR, "threshold.json");
 if (!fs.existsSync(modelPath)) {
   fail(
-    `Missing ${modelPath}; run the train train + export pipeline first (make train-train && make train-export)`,
+    `Missing ${modelPath}; run the train + export pipeline first (node main.js train && node main.js train-export)`,
   );
 }
 if (!fs.existsSync(tokenizerPath)) {
-  fail(`Missing ${tokenizerPath}; run make train-export first`);
+  fail(`Missing ${tokenizerPath}; run node main.js train-export first`);
 }
 
 // tokenizer.json holds model/normalizer/pre_tokenizer/post_processor/decoder/added_tokens; the

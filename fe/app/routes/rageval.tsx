@@ -83,7 +83,7 @@ interface Generation {
 interface Overview {
   present: boolean;
   hint?: string;
-  make?: string;
+  task?: string;
   meta: {
     n_samples?: number;
     kb_chunks?: number;
@@ -1154,7 +1154,7 @@ export class LedgerPanel extends LightElement {
               <div class="bg-success-container text-on-success-container mt-3 rounded-lg p-3 text-[12.5px]">
                 {all
                   ? "No cases in this status yet."
-                  : "The ledger is still empty — run make eval-rag and the fabricated cases it flags are written here automatically."}
+                  : "The ledger is still empty — run node main.js eval-rag and the fabricated cases it flags are written here automatically."}
               </div>
             )}
             <div class="text-on-surface-variant mt-3 flex flex-wrap items-center gap-2.5 text-[11.5px]">
@@ -1226,7 +1226,7 @@ export class RagEvalPage extends DataLoaderElement<Overview> {
         title="Re-run in place"
         pill={<Pill tone="missing">Takes minutes</Pill>}
         tight
-        lede="This button runs the same make eval-rag as the terminal: one retrieval round per strategy, then the evidence goes to the judge for scoring. When it finishes, this page swaps in the new report — it only reads the artifact and never computes anything itself."
+        lede="This button runs the same node main.js eval-rag as the terminal: one retrieval round per strategy, then the evidence goes to the judge for scoring. When it finishes, this page swaps in the new report — it only reads the artifact and never computes anything itself."
       >
         <job-row
           specs={d.job.specs}

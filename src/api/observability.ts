@@ -49,16 +49,16 @@ function readJson(file: string): Record<string, unknown> | null {
 
 function block(
   job: string,
-  make: string,
+  task: string,
   hint: string,
 ): Record<string, unknown> {
-  return { present: false, status: "missing", job: jobStatus(job), make, hint };
+  return { present: false, status: "missing", job: jobStatus(job), task, hint };
 }
 
 function costBlock(): Record<string, unknown> {
   const base = block(
     COST_JOB,
-    "make cost-report",
+    "node main.js cost-report",
     'The cost ledger by intent has not run yet. Ask a few questions on the chat page to accumulate traces, then press "Re-run cost ledger by intent".',
   );
   const report = readJson(COST);
@@ -95,7 +95,7 @@ function trendNote(latestRunId: number | null): string | null {
 async function trendBlock(): Promise<Record<string, unknown>> {
   const base = block(
     TREND_JOB,
-    "make eval-flywheel",
+    "node main.js eval-flywheel",
     'The evaluation pipeline has not run yet. Press "Re-run evaluation pipeline" once, and this round becomes the first point of the trend.',
   );
   let runs: repository.EvalRunRow[];
@@ -127,7 +127,7 @@ async function trendBlock(): Promise<Record<string, unknown>> {
 function calibrationBlock(): Record<string, unknown> {
   const base = block(
     CALIB_JOB,
-    "make calibrate-confidence",
+    "node main.js calibrate-confidence",
     'No calibration yet. Press "Re-run confidence threshold calibration" to scan the rag eval set, so the threshold is no longer a guess.',
   );
   const withSettings = {

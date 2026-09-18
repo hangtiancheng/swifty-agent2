@@ -402,11 +402,11 @@ export class KbPage extends DataLoaderElement<KbOverview> {
         <Tip>
           Two paths: <b>manual entry</b> — paste body text on this page and what
           you preview is exactly what gets ingested; <b>offline build</b> — hand
-          the materials in data/kb/ to the make target, and the page button runs
-          the same command you would type in the terminal. Both paths share one
-          chunking logic and dual-write order — write to MySQL first as
-          "pending", then into Milvus and mark "done"; if it dies mid-way,
-          re-run to pick up the pending chunks and catch up.
+          the materials in data/kb/ to the node main.js task, and the page
+          button runs the same command you would type in the terminal. Both
+          paths share one chunking logic and dual-write order — write to MySQL
+          first as "pending", then into Milvus and mark "done"; if it dies
+          mid-way, re-run to pick up the pending chunks and catch up.
         </Tip>
 
         {/* ① Manual entry */}
@@ -851,7 +851,7 @@ export class KbPage extends DataLoaderElement<KbOverview> {
             </Btn>
             <span class="text-on-surface-variant text-[11.5px]">
               {d.milvus.online
-                ? "Runs in-process — the same function as make kb-vectorize"
+                ? "Runs in-process — the same function as node main.js kb-vectorize"
                 : "Milvus offline: " + (d.milvus.detail ?? "")}
             </span>
           </div>

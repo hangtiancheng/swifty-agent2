@@ -3,10 +3,10 @@
 //
 // Data comes in two kinds:
 //   1. On-disk artifacts (reports/*.json, dataset/*.jsonl, model/, onnx/) produced by the
-//      make targets. This API only reads them — the numbers on the page and in the terminal
+//      main.js tasks. This API only reads them — the numbers on the page and in the terminal
 //      must be the same artifact, never recomputed here into a second source of truth.
 //   2. Live probes (:8110 healthz, single-sentence classify, file stat): fetched on request.
-// A missing artifact is not an error: return present=false plus which make target to run, so
+// A missing artifact is not an error: return present=false plus which main.js command to run, so
 // the page grows a "re-run" button instead of a blank screen.
 import fs from "node:fs";
 import path from "node:path";
@@ -38,19 +38,19 @@ const LINEAGE = [
     file: "corpus_raw.jsonl",
     stage: "Pool fetch",
     desc: "Raw phrasings from the low-confidence pool (normalized phrasing preferred)",
-    make: "train-corpus",
+    task: "train-corpus",
   },
   {
     file: "corpus_clean.jsonl",
     stage: "Desensitize & dedup",
     desc: "Strip contacts/order numbers -> dedup -> LLM typo fix -> dedup again",
-    make: "train-corpus",
+    task: "train-corpus",
   },
   {
     file: "corpus_labeled.jsonl",
     stage: "Pre-label + simulate",
     desc: "LLM pre-labels real questions, then simulates up to 100 per class",
-    make: "train-corpus",
+    task: "train-corpus",
   },
 ] as const;
 const SPLITS = [
@@ -156,10 +156,10 @@ const classifyRunSchema = z.object({
   counts: z.record(z.string(), z.number()).default({}),
 });
 
-// An artifact is either present (parsed payload) or missing (a hint telling which make target to run).
+// An artifact is either present (parsed payload) or missing (a hint telling which main.js command to run).
 type Artifact<T> =
-  | ({ present: true; make: string } & T)
-  | { present: false; make: string; hint: string };
+  | ({ present: true; task: string } & T)
+  | { present: false; task: string; hint: string };
 
 function errMsg(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -167,24 +167,24 @@ function errMsg(error: unknown): string {
 
 function loadReport<S extends z.ZodType<object>>(
   name: string,
-  make: string,
+  task: string,
   schema: S,
 ): Artifact<z.infer<S>> {
   const file = path.join(REPORTS, name);
   if (!fs.existsSync(file)) {
     return {
       present: false,
-      make,
-      hint: `Artifact not generated yet; run make ${make} first`,
+      task,
+      hint: `Artifact not generated yet; run node main.js ${task} first`,
     };
   }
   try {
     const data = schema.parse(JSON.parse(fs.readFileSync(file, "utf8")));
-    return { present: true, make, ...data };
+    return { present: true, task, ...data };
   } catch (error) {
     return {
       present: false,
-      make,
+      task,
       hint: `Artifact failed to parse: ${errMsg(error)}`,
     };
   }
@@ -619,7 +619,7 @@ acceptanceRouter.get("/api/acceptance/data", (c) => {
     file: l.file,
     stage: l.stage,
     desc: l.desc,
-    make: l.make,
+    task: l.task,
     ...stat(path.join(TRAIN, l.file)),
   }));
   const modelFiles = fs.existsSync(MODEL)

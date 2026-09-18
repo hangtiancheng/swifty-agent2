@@ -1,5 +1,5 @@
 // train corpus pipeline: fetch pool -> desensitize/dedup -> LLM typo fix -> LLM pre-label ->
-// simulate to fill -> export human spot-review. Run: make train-corpus (requires DB + chat upstream).
+// simulate to fill -> export human spot-review. Run: node main.js train-corpus (requires DB + chat upstream).
 // Artifacts land in data/train/; the spot-review file is reviewed in the conversation.
 // Also writes data/train/taxonomy.json so the vendored Python training side reads the same
 // authoritative taxonomy (single source of truth = src/core/taxonomy.ts).

@@ -1,8 +1,8 @@
 // train bypass batch classification: low-confidence questions accumulate, and once a batch is full they
 // are grouped in one pass and the results written to topic_classifications. Not called from the live
-// conversation path. Run: make classify-pool (requires DB + classifier service :8110).
+// conversation path. Run: node main.js classify-pool (requires DB + classifier service :8110).
 // Idempotent: rows already classified (LEFT JOIN hit) are not re-classified. Cron example:
-//   0 3 * * * cd /path/to/repo && make classify-pool >> log/classify-pool.log 2>&1
+//   0 3 * * * cd /path/to/repo && node main.js classify-pool >> log/classify-pool.log 2>&1
 import fs from "node:fs";
 import path from "node:path";
 
@@ -135,7 +135,9 @@ try {
   console.error(
     `Bypass classification failed: ${error instanceof Error ? error.message : String(error)}`,
   );
-  console.error("Is the classifier service running? make classifier-up");
+  console.error(
+    "Is the classifier service running? node main.js classifier-up",
+  );
   process.exitCode = 1;
 } finally {
   await closeDb();

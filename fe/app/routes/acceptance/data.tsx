@@ -37,7 +37,7 @@ interface LineageStep extends FileStat {
   file: string;
   stage: string;
   desc: string;
-  make: string;
+  task: string;
 }
 
 interface SplitStat {

@@ -19,7 +19,7 @@ import { DataLoaderElement } from "~/lib/page-element";
 import type { JobSpec } from "~/lib/types";
 
 /* Classifier acceptance overview: all nine evidence checks run on this page — no terminal needed.
-   The numbers here come from the same artifacts as `make` in the terminal; the API never
+   The numbers here come from the same artifacts as `node main.js` in the terminal; the API never
    recomputes them, so there is no second source of truth. */
 
 interface Block {
@@ -103,8 +103,8 @@ export class AcceptancePage extends DataLoaderElement<Overview> {
               its bar; <b>Fail</b> means it ran but missed the bar — go fix the
               data; <b>No artifact</b> means it has not run yet — use the
               buttons on the card to run it now. The numbers here come from the
-              same artifacts as terminal make — the API never recomputes them,
-              so there is no second source of truth.
+              same artifacts as the terminal task runner — the API never
+              recomputes them, so there is no second source of truth.
             </Tip>
 
             <div class="mt-4 grid [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))] gap-3.5">

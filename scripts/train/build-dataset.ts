@@ -1,6 +1,6 @@
 // train dataset: stratified 80/10/10 split + training-set augmentation (synonym swap / phrasing tweak).
 // Augmentation only expands the training set — validation/test are exam papers and must not change.
-// Run: make train-dataset (requires chat upstream).
+// Run: node main.js train-dataset (requires chat upstream).
 import fs from "node:fs";
 import path from "node:path";
 
@@ -100,7 +100,7 @@ function dist(name: string, samples: CorpusSample[]): void {
 async function main(): Promise<void> {
   const samples = readJsonl(SRC);
   if (samples.length === 0) {
-    console.error(`No corpus at ${SRC}; run make train-corpus first`);
+    console.error(`No corpus at ${SRC}; run node main.js train-corpus first`);
     process.exitCode = 1;
     return;
   }

@@ -1,5 +1,5 @@
 // train pre-label quality gate: the label set must match exactly on >= 80% of golden samples
-// before batch pre-labeling is released. Run: make train-golden (requires chat upstream).
+// before batch pre-labeling is released. Run: node main.js train-golden (requires chat upstream).
 // If it falls below the line, fix the prompt — do not edit the golden samples to inflate the score.
 // Writes reports/golden_report.json for the acceptance page (/acceptance); failures carry gold/pred contrast.
 import fs from "node:fs";
