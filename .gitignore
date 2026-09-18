@@ -220,3 +220,5 @@ milvus-lite.db
 
 .react-router
 **/.react-router
+
+data/checkpoints*
