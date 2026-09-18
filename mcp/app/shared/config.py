@@ -1,8 +1,8 @@
 """Environment-derived application config.
 
-The HTTP bind address (HOST/PORT) is NOT here: the HTTP layer resolves it in
-app/http/config.py next to the public-URL variable, and a second parser for the
-same variables is how defaults drift apart.
+The HTTP bind address (MCP_HOST/MCP_PORT) is NOT here: the HTTP layer
+resolves it in app/http/config.py, and a second parser for the same
+variables is how defaults drift apart.
 """
 
 from __future__ import annotations

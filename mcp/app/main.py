@@ -1,4 +1,4 @@
-"""Entry point: the stdio MCP server.
+"""Entry point: the MCP server over stdio, or over HTTP with --http.
 
 There is no startup credential gate: the github_* tools resolve their
 backend (an authenticated `gh` CLI or the GITHUB_TOKEN env var) per call and
@@ -9,6 +9,7 @@ always starts.
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import Awaitable
 
 import typer
@@ -67,13 +68,46 @@ async def _run_stdio() -> None:
                     )
 
 
+async def _run_http() -> None:
+    import uvicorn
+
+    from app.http.app import create_http_app
+    from app.http.config import load_http_config
+
+    config = load_http_config()
+    logger.info(
+        "starting MCP HTTP server",
+        host=config.host,
+        port=config.port,
+        streamable_http="POST /mcp",
+        sse="GET /sse + POST /messages/?session_id=...",
+    )
+    uvicorn_config = uvicorn.Config(
+        await create_http_app(),
+        host=config.host,
+        port=config.port,
+        # structlog owns stderr; leave the stdlib logging config untouched.
+        log_config=None,
+    )
+    await uvicorn.Server(uvicorn_config).serve()
+
+
+def _http_requested(flag: bool) -> bool:
+    return flag or os.environ.get("MCP_TRANSPORT", "").strip().lower() == "http"
+
+
 @cli.command()
 def main(
     version: bool = typer.Option(
         False, "-v", "--version", help="Show the version and exit."
     ),
+    http: bool = typer.Option(
+        False,
+        "--http",
+        help="Serve over HTTP (Streamable HTTP + SSE) instead of stdio.",
+    ),
 ) -> None:
-    """MCP server exposing GitHub repositories as tools (stdio)."""
+    """MCP server exposing GitHub repositories as tools (stdio, or --http)."""
     if version:
         typer.echo(__version__)
         raise typer.Exit()
@@ -81,7 +115,10 @@ def main(
     load_dotenv()
 
     try:
-        asyncio.run(_run_stdio())
+        if _http_requested(http):
+            asyncio.run(_run_http())
+        else:
+            asyncio.run(_run_stdio())
     except Exception as err:  # noqa: BLE001 — fatal startup errors exit non-zero
         logger.error("fatal error during startup", err=str(err))
         raise typer.Exit(code=1) from err

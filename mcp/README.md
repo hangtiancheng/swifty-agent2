@@ -1,10 +1,13 @@
 # swifty-agent2-mcp (Python)
 
 An MCP (Model Context Protocol) server that exposes GitHub repositories as
-tools for LLM agents, over the stdio transport.
+tools for LLM agents, over stdio (default) or HTTP (Streamable HTTP +
+legacy SSE).
 
 - the official [`mcp` Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-  (stdio transport)
+  (stdio + HTTP transports)
+- **FastAPI** + **uvicorn** host the optional HTTP transports; the SDK's
+  ASGI apps are mounted as plain Starlette routes
 - **httpx** for all outbound HTTP, **pydantic** for schemas and settings,
   **typer** for the CLI, **structlog** for stderr-only JSON logging
 - **uv** for dependency management — this directory is part of the single uv
@@ -44,9 +47,48 @@ cd mcp && uv run python -m app.main
 
 CLI flags:
 
-| Flag            | Description               |
-| --------------- | ------------------------- |
-| `-v, --version` | Show the version and exit |
+| Flag            | Description                                              |
+| --------------- | -------------------------------------------------------- |
+| `-v, --version` | Show the version and exit                                |
+| `--http`        | Serve over HTTP (Streamable HTTP + SSE) instead of stdio |
+
+### HTTP transports (`--http`)
+
+`cd mcp && uv run python -m app.main --http` (or `MCP_TRANSPORT=http`)
+serves the same tools on one port, mirroring the TypeScript server's
+`http.ts`:
+
+| Endpoint                                      | Transport                                                            |
+| --------------------------------------------- | -------------------------------------------------------------------- |
+| `POST /mcp`                                   | Streamable HTTP — stateless, one session per request, JSON responses |
+| `GET /mcp`                                    | 405 — stateless mode has no server-initiated notification stream     |
+| `GET /sse` + `POST /messages/?session_id=...` | Legacy SSE — one long-lived stream per connection                    |
+
+| Variable        | Default     | Description                                               |
+| --------------- | ----------- | --------------------------------------------------------- |
+| `MCP_TRANSPORT` | _(empty)_   | `http` selects the HTTP transports (same as `--http`)     |
+| `MCP_HOST`      | `127.0.0.1` | HTTP bind address                                         |
+| `MCP_PORT`      | `3300`      | HTTP bind port; a malformed value degrades to the default |
+
+The names are namespaced because the shared root `.env` already uses the
+generic `HOST`/`PORT` for the Node-side servers.
+
+**Security**: the HTTP endpoints are **unauthenticated** — keep `MCP_HOST`
+bound to localhost (the default) and only enable HTTP on a trusted machine;
+anyone who can reach the port can call the `github_*` tools with the local
+credentials.
+
+MCP client configuration (HTTP):
+
+```json
+{
+  "mcpServers": {
+    "swifty-agent2-mcp": {
+      "url": "http://127.0.0.1:3300/mcp"
+    }
+  }
+}
+```
 
 ### Environment
 
@@ -184,9 +226,12 @@ All tests live in `tests/` (flat) and run under one `uv run pytest`.
 
 ```
 app/
-├── main.py                  # typer CLI entry (stdio)
+├── main.py                  # typer CLI entry (stdio default, --http for HTTP)
 ├── server.py                # create_server(): registry + tool modules
 ├── version.py
+├── http/
+│   ├── app.py               # FastAPI app: POST /mcp (streamable) + GET /sse, POST /messages/ (SSE)
+│   └── config.py            # MCP_HOST / MCP_PORT env parsing
 ├── shared/
 │   ├── config.py            # GITHUB_TOKEN / GITHUB_BASE_URL env parsing
 │   ├── logger.py            # structlog JSON -> stderr (stdout belongs to stdio MCP)

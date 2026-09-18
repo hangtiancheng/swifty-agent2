@@ -122,3 +122,6 @@ classifier-down:
 
 classify-pool:
 	pnpm exec tsx scripts/train/classify-pool.ts $(if $(FORCE),--force,)
+
+mcp-py:
+	cd mcp && uv run python -m app.main

@@ -14,8 +14,10 @@
   (3.13) cover every Python subtree — `scripts/train/py`, `src/milvus` and the
   `mcp/` server. Do not create per-directory `pyproject.toml` / `uv.lock` /
   `.python-version` files.
-- `mcp/` is the stdio-only GitHub MCP server. The root project is
-  `package = false`, so run it as `cd mcp && uv run python -m app.main`.
+- `mcp/` is the GitHub MCP server: stdio by default, `--http` (or
+  `MCP_TRANSPORT=http`) adds Streamable HTTP (`POST /mcp`) + legacy SSE
+  (`GET /sse`) on `MCP_HOST:MCP_PORT` (default `127.0.0.1:3300`). The root
+  project is `package = false`, so run it as `cd mcp && uv run python -m app.main`.
 - Gates: `uv run ruff check .`, `uv run ruff format --check .`,
   `uv run --with mypy mypy` (strict; scoped via `files`), `uv run pytest`
   (testpaths = `mcp/tests`; the root `tests/` dir is vitest).
