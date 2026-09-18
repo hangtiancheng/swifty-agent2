@@ -1,13 +1,12 @@
-import type { ReactNode } from "react";
-
 import { cn } from "./cn";
 import type { Citation } from "./types";
 
-/** Lightweight markdown → React nodes (zero-dependency, ported from the original
- *  index.html renderer). Text goes through JSX so it is escaped naturally — none of
- *  the original string-concatenated-HTML injection surface; links only allow http(s).
- *  When citations are provided, [n] in the body renders as a clickable superscript and
- *  clicking calls onCite (with the superscript element for positioning the popover). */
+/** Lightweight markdown → lit templates (zero-dependency, ported from the
+ *  original index.html renderer). Text goes through JSX so it is escaped
+ *  naturally — none of the original string-concatenated-HTML injection surface;
+ *  links only allow http(s). When citations are provided, [n] in the body
+ *  renders as a clickable superscript and clicking calls onCite (with the
+ *  superscript element for positioning the popover). */
 
 export interface MarkdownOptions {
   citations?: Map<string, Citation>;
@@ -20,48 +19,34 @@ const INLINE_RE =
 const CITE_CLS =
   "bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary cursor-pointer rounded-full px-1.5 text-[10px] leading-4 font-medium align-super transition-colors duration-150 select-none";
 
-function renderInline(
-  s: string,
-  opts: MarkdownOptions,
-  kp: string,
-): ReactNode[] {
-  const out: ReactNode[] = [];
+function renderInline(s: string, opts: MarkdownOptions): unknown[] {
+  const out: unknown[] = [];
   let last = 0;
-  let k = 0;
   INLINE_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = INLINE_RE.exec(s)) !== null) {
     if (m.index > last) {
       out.push(s.slice(last, m.index));
     }
-    const key = kp + "i" + String(k++);
     if (m[1] !== undefined) {
       out.push(
-        <code
-          key={key}
-          className="bg-surface-container-high text-on-surface-variant rounded-xs px-1.5 py-0.5 font-mono text-[12.5px]"
-        >
+        <code class="bg-surface-container-high text-on-surface-variant rounded-xs px-1.5 py-0.5 font-mono text-[12.5px]">
           {m[1].slice(1, -1)}
         </code>,
       );
     } else if (m[2] !== undefined) {
-      out.push(
-        <strong key={key} className="font-semibold">
-          {m[2].slice(2, -2)}
-        </strong>,
-      );
+      out.push(<strong class="font-semibold">{m[2].slice(2, -2)}</strong>);
     } else if (m[3] !== undefined) {
-      out.push(<em key={key}>{m[3].slice(1, -1)}</em>);
+      out.push(<em>{m[3].slice(1, -1)}</em>);
     } else if (m[4] !== undefined) {
-      out.push(<del key={key}>{m[4].slice(2, -2)}</del>);
+      out.push(<del>{m[4].slice(2, -2)}</del>);
     } else if (m[5] !== undefined) {
       out.push(
         <a
-          key={key}
           href={m[7]}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary decoration-primary/40 hover:decoration-primary underline underline-offset-2 transition-colors duration-150"
+          class="text-primary decoration-primary/40 hover:decoration-primary underline underline-offset-2 transition-colors duration-150"
         >
           {m[6]}
         </a>,
@@ -70,21 +55,23 @@ function renderInline(
       const n = m[9] ?? "";
       const c = opts.citations?.get(n);
       if (c) {
+        const cite = c;
         out.push(
           <sup
-            key={key}
             role="button"
             tabIndex={0}
-            title={c.section_path ?? "View source"}
-            className={CITE_CLS}
-            onClick={(e) => {
+            title={cite.section_path ?? "View source"}
+            class={CITE_CLS}
+            onClick={(e: MouseEvent) => {
               e.stopPropagation();
-              opts.onCite?.(c, e.currentTarget);
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              opts.onCite?.(cite, e.currentTarget as HTMLElement);
             }}
-            onKeyDown={(e) => {
+            onKeyDown={(e: KeyboardEvent) => {
               if (e.key === "Enter") {
                 e.stopPropagation();
-                opts.onCite?.(c, e.currentTarget);
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                opts.onCite?.(cite, e.currentTarget as HTMLElement);
               }
             }}
           >
@@ -103,14 +90,9 @@ function renderInline(
   return out;
 }
 
-export function renderMarkdown(
-  md: string,
-  opts: MarkdownOptions = {},
-): ReactNode[] {
+export function renderMarkdown(md: string, opts: MarkdownOptions = {}): unknown[] {
   const lines = md.split("\n");
-  const out: ReactNode[] = [];
-  let bk = 0;
-  const key = () => "b" + String(bk++);
+  const out: unknown[] = [];
 
   const isTableSep = (l?: string): boolean =>
     l !== undefined && l.includes("-") && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l);
@@ -142,13 +124,8 @@ export function renderMarkdown(
       }
       i++;
       out.push(
-        <pre
-          key={key()}
-          className="scroll-slim bg-surface-container-high my-3 overflow-x-auto rounded-md p-3.5"
-        >
-          <code className="text-on-surface font-mono text-[12.5px] leading-relaxed">
-            {buf.join("\n")}
-          </code>
+        <pre class="scroll-slim bg-surface-container-high my-3 overflow-x-auto rounded-md p-3.5">
+          <code class="text-on-surface font-mono text-[12.5px] leading-relaxed">{buf.join("\n")}</code>
         </pre>,
       );
       continue;
@@ -157,53 +134,27 @@ export function renderMarkdown(
     if (hm) {
       // Heading
       const cls = "text-on-surface mt-3.5 mb-1.5 text-[15px] font-semibold";
-      const inline = renderInline(hm[2] ?? "", opts, key());
+      const inline = renderInline(hm[2] ?? "", opts);
       const level = hm[1]?.length ?? 1;
       if (level === 1) {
-        out.push(
-          <h1 key={key()} className={cls}>
-            {inline}
-          </h1>,
-        );
+        out.push(<h1 class={cls}>{inline}</h1>);
       } else if (level === 2) {
-        out.push(
-          <h2 key={key()} className={cls}>
-            {inline}
-          </h2>,
-        );
+        out.push(<h2 class={cls}>{inline}</h2>);
       } else if (level === 3) {
-        out.push(
-          <h3 key={key()} className={cls}>
-            {inline}
-          </h3>,
-        );
+        out.push(<h3 class={cls}>{inline}</h3>);
       } else if (level === 4) {
-        out.push(
-          <h4 key={key()} className={cls}>
-            {inline}
-          </h4>,
-        );
+        out.push(<h4 class={cls}>{inline}</h4>);
       } else if (level === 5) {
-        out.push(
-          <h5 key={key()} className={cls}>
-            {inline}
-          </h5>,
-        );
+        out.push(<h5 class={cls}>{inline}</h5>);
       } else {
-        out.push(
-          <h6 key={key()} className={cls}>
-            {inline}
-          </h6>,
-        );
+        out.push(<h6 class={cls}>{inline}</h6>);
       }
       i++;
       continue;
     }
     if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
       // Horizontal rule
-      out.push(
-        <hr key={key()} className="border-outline-variant my-3 border-t" />,
-      );
+      out.push(<hr class="border-outline-variant my-3 border-t" />);
       i++;
       continue;
     }
@@ -212,43 +163,24 @@ export function renderMarkdown(
       const headers = splitRow(line);
       i += 2;
       const rows: string[][] = [];
-      while (
-        i < lines.length &&
-        (lines[i] ?? "").includes("|") &&
-        (lines[i] ?? "").trim() !== ""
-      ) {
+      while (i < lines.length && (lines[i] ?? "").includes("|") && (lines[i] ?? "").trim() !== "") {
         rows.push(splitRow(lines[i] ?? ""));
         i++;
       }
       const thCls =
         "border-outline-variant bg-surface-container-low text-on-surface-variant border-b px-2.5 py-1.5 text-left text-label-medium";
-      const tdCls =
-        "border-outline-variant text-on-surface border-b px-2.5 py-1.5 text-left";
+      const tdCls = "border-outline-variant text-on-surface border-b px-2.5 py-1.5 text-left";
       out.push(
-        <div
-          key={key()}
-          className="scroll-slim border-outline-variant my-3 overflow-x-auto rounded-md border"
-        >
-          <table className="w-full border-collapse text-[13px]">
+        <div class="scroll-slim border-outline-variant my-3 overflow-x-auto rounded-md border">
+          <table class="w-full border-collapse text-[13px]">
             <thead>
-              <tr>
-                {headers.map((c, j) => (
-                  <th key={j} className={thCls}>
-                    {renderInline(c, opts, key())}
-                  </th>
-                ))}
-              </tr>
+              <tr>{headers.map((c) => <th class={thCls}>{renderInline(c, opts)}</th>)}</tr>
             </thead>
             <tbody>
-              {rows.map((r, ri) => (
-                <tr
-                  key={ri}
-                  className="hover:bg-on-surface/4 last:[&_td]:border-b-0"
-                >
-                  {r.map((c, ci) => (
-                    <td key={ci} className={tdCls}>
-                      {renderInline(c, opts, key())}
-                    </td>
+              {rows.map((r) => (
+                <tr class="hover:bg-on-surface/4 last:[&_td]:border-b-0">
+                  {r.map((c) => (
+                    <td class={tdCls}>{renderInline(c, opts)}</td>
                   ))}
                 </tr>
               ))}
@@ -260,46 +192,22 @@ export function renderMarkdown(
     }
     if (/^\s*[-*+]\s+/.test(line)) {
       // Unordered list
-      const items: ReactNode[] = [];
+      const items: unknown[] = [];
       while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i] ?? "")) {
-        items.push(
-          <li key={items.length} className="my-0.5">
-            {renderInline(
-              (lines[i] ?? "").replace(/^\s*[-*+]\s+/, ""),
-              opts,
-              key(),
-            )}
-          </li>,
-        );
+        items.push(<li class="my-0.5">{renderInline((lines[i] ?? "").replace(/^\s*[-*+]\s+/, ""), opts)}</li>);
         i++;
       }
-      out.push(
-        <ul key={key()} className="my-1.5 list-disc pl-5">
-          {items}
-        </ul>,
-      );
+      out.push(<ul class="my-1.5 list-disc pl-5">{items}</ul>);
       continue;
     }
     if (/^\s*\d+\.\s+/.test(line)) {
       // Ordered list
-      const items: ReactNode[] = [];
+      const items: unknown[] = [];
       while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? "")) {
-        items.push(
-          <li key={items.length} className="my-0.5">
-            {renderInline(
-              (lines[i] ?? "").replace(/^\s*\d+\.\s+/, ""),
-              opts,
-              key(),
-            )}
-          </li>,
-        );
+        items.push(<li class="my-0.5">{renderInline((lines[i] ?? "").replace(/^\s*\d+\.\s+/, ""), opts)}</li>);
         i++;
       }
-      out.push(
-        <ol key={key()} className="my-1.5 list-decimal pl-5">
-          {items}
-        </ol>,
-      );
+      out.push(<ol class="my-1.5 list-decimal pl-5">{items}</ol>);
       continue;
     }
     if (/^\s*>\s?/.test(line)) {
@@ -310,14 +218,11 @@ export function renderMarkdown(
         i++;
       }
       out.push(
-        <blockquote
-          key={key()}
-          className="border-primary/60 text-on-surface-variant my-2.5 border-l-2 py-0.5 pl-3"
-        >
+        <blockquote class="border-primary/60 text-on-surface-variant my-2.5 border-l-2 py-0.5 pl-3">
           {buf.map((b, j) => (
-            <span key={j}>
+            <span>
               {j > 0 ? <br /> : null}
-              {renderInline(b, opts, key())}
+              {renderInline(b, opts)}
             </span>
           ))}
         </blockquote>,
@@ -330,20 +235,16 @@ export function renderMarkdown(
     }
     // Paragraph
     const para: string[] = [];
-    while (
-      i < lines.length &&
-      (lines[i] ?? "").trim() !== "" &&
-      !isSpecial(lines[i] ?? "", lines[i + 1])
-    ) {
+    while (i < lines.length && (lines[i] ?? "").trim() !== "" && !isSpecial(lines[i] ?? "", lines[i + 1])) {
       para.push(lines[i] ?? "");
       i++;
     }
     out.push(
-      <p key={key()} className="mb-2">
+      <p class="mb-2">
         {para.map((p, j) => (
-          <span key={j}>
+          <span>
             {j > 0 ? <br /> : null}
-            {renderInline(p, opts, key())}
+            {renderInline(p, opts)}
           </span>
         ))}
       </p>,
@@ -352,25 +253,17 @@ export function renderMarkdown(
   return out;
 }
 
-/** Bot bubble body: markdown rendering + optional citation superscripts */
-export function Markdown({
-  text,
-  citations,
-  onCite,
-  className,
-}: {
+export interface MarkdownProps {
   text: string;
   citations?: Map<string, Citation>;
   onCite?: (c: Citation, el: HTMLElement) => void;
-  className?: string;
-}) {
+  class?: string;
+}
+
+/** Bot bubble body: markdown rendering + optional citation superscripts */
+export function Markdown({ text, citations, onCite, class: cls }: MarkdownProps) {
   return (
-    <div
-      className={cn(
-        "[&_p:last-child]:mb-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className,
-      )}
-    >
+    <div class={cn("[&_p:last-child]:mb-0 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", cls)}>
       {renderMarkdown(text, { citations, onCite })}
     </div>
   );

@@ -1,9 +1,8 @@
-import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [tailwindcss(), reactRouter()],
+  plugins: [tailwindcss()],
   resolve: {
     tsconfigPaths: true,
   },
@@ -17,5 +16,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+
+  build: {
+    outDir: "dist",
   },
 });

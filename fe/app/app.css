@@ -352,6 +352,56 @@ body {
   min-height: 100%;
 }
 
+/* App custom elements render into the light DOM (see lib/light-element.ts);
+   unknown tags default to display:inline, so make them layout-visible. */
+app-shell,
+chat-page,
+admin-page,
+kb-page,
+rageval-page,
+review-page,
+observability-page,
+topics-page,
+topic-questions-page,
+acceptance-page,
+acceptance-eval-page,
+acceptance-data-page,
+acceptance-errors-page,
+not-found-page,
+admin-nav,
+theme-toggle,
+toast-host,
+job-row,
+job-button,
+message-bubble,
+lottie-anim,
+grouped-bar-chart,
+scan-line-chart,
+ring-gauge,
+cite-popover,
+ticket-modal,
+refund-modal,
+mobile-drawer,
+conv-sidebar {
+  display: block;
+}
+
+/* Chat typing indicator: three dots bouncing in sequence */
+@keyframes typing-bounce {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+.typing-dot {
+  animation: typing-bounce 1s ease-in-out infinite;
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--on-surface);

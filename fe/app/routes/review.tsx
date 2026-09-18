@@ -1,15 +1,14 @@
-import { RefreshCw } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
-import { useRevalidator, useSearchParams } from "react-router";
+import { createRef, customElement, property, state } from "@swifty.js/lit-jsx";
+import { animate } from "motion";
 
-import type { Route } from "./+types/review";
-
-import { useToast } from "~/components/toast";
-import { Btn, MissingBox, PageShell } from "~/components/ui";
+import { ModalShell } from "~/components/modal-shell";
+import { toast } from "~/components/toast";
+import { Btn, MissingBox, PageLoading, PageShell } from "~/components/ui";
 import { api, errMsg, jsonPost } from "~/lib/api";
 import { cn } from "~/lib/cn";
-import { EASE_STANDARD, enterTransition, softSpring } from "~/lib/motion";
+import { EASE_STANDARD, enterOnce } from "~/lib/motion";
+import { DataLoaderElement } from "~/lib/page-element";
+import { navigate } from "~/lib/router";
 
 /* Flywheel review queue: unanswerable questions → normalize & dedupe → human
    review → write back to the Knowledge Base. Status tabs ride the URL
@@ -45,32 +44,8 @@ interface ReviewDetail {
   raws: ReviewRaw[];
 }
 
-type LoaderData =
-  { ok: true; items: ReviewItem[] } | { ok: false; error: string };
-
-export async function clientLoader({
-  request,
-}: Route.ClientLoaderArgs): Promise<LoaderData> {
-  const url = new URL(request.url);
-  const status = url.searchParams.get("status") ?? "pending_review";
-  const qs = status ? "?status=" + encodeURIComponent(status) : "";
-  try {
-    const d = await api<{ items: ReviewItem[] }>("/api/review/queue" + qs);
-    return { ok: true, items: d.items };
-  } catch (e) {
-    return { ok: false, error: errMsg(e) };
-  }
-}
-
-export function meta() {
-  return [
-    { title: "MeowMeow Select · Review Queue" },
-    {
-      name: "description",
-      content:
-        "Unanswered questions go through human review and are written back to the Knowledge Base",
-    },
-  ];
+interface Queue {
+  items: ReviewItem[];
 }
 
 const SRC_LABEL: Record<string, string> = {
@@ -108,38 +83,32 @@ const TABS: [string, string][] = [
 function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
   if (chunks === null || chunks === undefined) {
     return (
-      <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
+      <div class="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
         Retrieval never ran for this entry — no recall snapshots
       </div>
     );
   }
   if (!chunks.length) {
     return (
-      <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
-        Retrieval ran with zero hits — the Knowledge Base truly has no relevant
-        content
+      <div class="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
+        Retrieval ran with zero hits — the Knowledge Base truly has no relevant content
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-2">
-      {chunks.map((c, i) => {
+    <div class="flex flex-col gap-2">
+      {chunks.map((c) => {
         const score = Number(c.rerank_score ?? 0);
         return (
-          <div
-            key={i}
-            className="bg-surface-container-low rounded-md px-2.5 py-2 text-[12.5px]"
-          >
-            <div className="font-medium">{c.question || "(untitled)"}</div>
-            <div className="text-on-surface-variant my-1">{c.answer ?? ""}</div>
-            <div className="text-on-surface-variant flex items-center gap-2 text-[11.5px]">
+          <div class="bg-surface-container-low rounded-md px-2.5 py-2 text-[12.5px]">
+            <div class="font-medium">{c.question || "(untitled)"}</div>
+            <div class="text-on-surface-variant my-1">{c.answer ?? ""}</div>
+            <div class="text-on-surface-variant flex items-center gap-2 text-[11.5px]">
               <span>Rerank score {score.toFixed(3)}</span>
-              <span className="bg-surface-container-highest h-1.5 w-35 shrink-0 overflow-hidden rounded-full">
+              <span class="bg-surface-container-highest h-1.5 w-35 shrink-0 overflow-hidden rounded-full">
                 <span
-                  className="bg-primary block h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, Math.round(score * 100))}%`,
-                  }}
+                  class="bg-primary block h-full rounded-full"
+                  style={{ width: `${String(Math.min(100, Math.round(score * 100)))}%` }}
                 />
               </span>
               {c.section_path ? <span>{c.section_path}</span> : null}
@@ -151,357 +120,350 @@ function Snapshots({ chunks }: { chunks: SnapshotChunk[] | null }) {
   );
 }
 
-export default function ReviewPage({ loaderData }: Route.ComponentProps) {
-  const { revalidate, state } = useRevalidator();
-  const [params, setParams] = useSearchParams();
-  const curStatus = params.get("status") ?? "pending_review";
-  const toast = useToast();
+/* ---------- Approve dialog ---------- */
 
-  const [openId, setOpenId] = useState<number | null>(null);
-  const [details, setDetails] = useState<Record<number, ReviewDetail>>({});
-  const [detailErr, setDetailErr] = useState<Record<number, string>>({});
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const [approving, setApproving] = useState<ReviewItem | null>(null);
-  const [answer, setAnswer] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [rejecting, setRejecting] = useState<number | null>(null);
+/** Approve dialog: the approved answer is prefilled with the AI suggestion; a human
+    reviews it before it is written back to the Knowledge Base. */
+@customElement("approve-dialog")
+export class ApproveDialog extends ModalShell {
+  @property({ attribute: false }) item: ReviewItem | null = null;
+  @property({ attribute: false }) onApproved?: () => void;
 
-  const toggleDetail = useCallback(
-    async (id: number) => {
-      if (openId === id) {
-        setOpenId(null);
-        return;
-      }
-      setOpenId(id);
-      if (details[id] || detailErr[id] || loadingId === id) {
-        return;
-      }
-      setLoadingId(id);
-      try {
-        const d = await api<ReviewDetail>("/api/review/" + String(id));
-        setDetails((xs) => ({ ...xs, [id]: d }));
-      } catch (e) {
-        setDetailErr((xs) => ({ ...xs, [id]: errMsg(e) }));
-      } finally {
-        setLoadingId(null);
-      }
-    },
-    [openId, details, detailErr, loadingId],
-  );
+  @state() private answer = "";
+  @state() private submitting = false;
+  private textareaRef = createRef<HTMLTextAreaElement>();
 
-  const doReject = async (it: ReviewItem) => {
-    setRejecting(it.id);
-    try {
-      await api("/api/review/" + String(it.id) + "/reject", jsonPost());
-      toast("Rejected");
-      void revalidate();
-    } catch (e) {
-      toast("Failed to reject: " + errMsg(e), true);
-    } finally {
-      setRejecting(null);
+  protected override cardMaxW = "max-w-[560px]";
+
+  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+    super.updated(changed);
+    if (changed.has("open") && this.open) {
+      this.answer = this.item?.ai_suggested_answer ?? "";
+      this.submitting = false;
+      void this.updateComplete.then(() => {
+        this.textareaRef.value?.focus();
+      });
     }
-  };
+  }
 
-  const doApprove = async () => {
-    if (!approving) {
+  private async doApprove(): Promise<void> {
+    if (!this.item) {
       return;
     }
-    if (!answer.trim()) {
+    if (!this.answer.trim()) {
       toast("The approved answer cannot be empty", true);
       return;
     }
-    setSubmitting(true);
+    this.submitting = true;
     try {
-      await api(
-        "/api/review/" + String(approving.id) + "/approve",
-        jsonPost({ approved_answer: answer.trim() }),
-      );
-      setApproving(null);
-      toast(
-        "Written back to the Knowledge Base — similar questions will now recall directly ✓",
-      );
-      void revalidate();
+      await api("/api/review/" + String(this.item.id) + "/approve", jsonPost({ approved_answer: this.answer.trim() }));
+      toast("Written back to the Knowledge Base — similar questions will now recall directly ✓");
+      this.onApproved?.();
     } catch (e) {
       toast("Failed to write back: " + errMsg(e), true);
     } finally {
-      setSubmitting(false);
+      this.submitting = false;
     }
-  };
+  }
 
-  return (
-    <PageShell
-      title="Review Queue"
-      sub="Unanswerable questions → normalize & dedupe → human review → write back to the Knowledge Base"
-      active="/review"
-      maxW="max-w-[1080px]"
-      actions={
-        <>
-          <div className="bg-surface-container-low flex rounded-full p-1">
-            {TABS.map(([st, label]) => (
-              <button
-                key={label}
-                type="button"
-                className={cn(
-                  "text-label-medium cursor-pointer rounded-full px-3.5 py-1.5 font-[inherit] transition-all duration-200",
-                  curStatus === st
-                    ? "bg-primary text-on-primary shadow-e1"
-                    : "text-on-surface-variant hover:bg-on-surface/8",
-                )}
-                onClick={() => {
-                  setParams(
-                    st
-                      ? new URLSearchParams({ status: st })
-                      : new URLSearchParams(),
-                  );
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+  protected override dialogTitle(): string {
+    return "Approve & write back to Knowledge Base";
+  }
+  protected override dialogSub(): string {
+    return "Normalized question: " + (this.item?.normalized_question ?? "");
+  }
+
+  protected override dialogBody() {
+    return (
+      <>
+        <textarea
+          ref={this.textareaRef}
+          class="border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary text-body-medium min-h-32 w-full resize-y rounded-sm border bg-transparent px-3.5 py-2.5 transition-[border-color,box-shadow] duration-200 outline-none focus:ring-1"
+          placeholder="Approved answer (prefilled with the AI suggestion — review it before submitting)"
+          value={this.answer}
+          onInput={(e: Event) => {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            this.answer = (e.target as HTMLTextAreaElement).value;
+          }}
+        />
+        <div class="mt-3 flex justify-end gap-2.5">
+          <Btn onClick={() => this.onClose?.()}>Cancel</Btn>
           <Btn
+            variant="ok"
+            disabled={this.submitting}
             onClick={() => {
-              void revalidate();
+              void this.doApprove();
             }}
-            disabled={state === "loading"}
           >
-            <RefreshCw
-              className={
-                state === "loading" ? "h-4 w-4 animate-spin" : "h-4 w-4"
-              }
-              aria-hidden
-            />
-            Refresh
+            {this.submitting ? "Writing back…" : "Approve"}
           </Btn>
-        </>
-      }
-    >
-      <div className="bg-secondary-container text-on-secondary-container mt-4 rounded-lg px-4 py-3 text-[12.5px] leading-[1.8] [&_b]:font-semibold">
-        Run three gates before reviewing: <b>① Spam filter</b> gibberish, stray
-        test input, inappropriate content → reject; <b>② Timeliness</b>{" "}
-        time-sensitive questions (promo deadlines) expire as soon as they are
-        filled — do not persist them → reject; <b>③ Frequency</b> rare, niche
-        questions are not worth Knowledge Base space or human time → reject.
-        What remains is a real gap: fill in the approved answer and click
-        Approve.
-      </div>
+        </div>
+      </>
+    );
+  }
+}
 
-      {!loaderData.ok ? (
-        <MissingBox className="mt-4">
-          Failed to load: {loaderData.error}
-        </MissingBox>
-      ) : !loaderData.items.length ? (
-        <MissingBox className="mt-4">No items in this status yet</MissingBox>
-      ) : (
-        <div className="mt-4 flex flex-col gap-3.5">
-          {loaderData.items.map((it) => {
-            const open = openId === it.id;
-            const detail = details[it.id];
-            return (
-              <motion.div
-                key={it.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={enterTransition}
-                className="bg-card shadow-e1 overflow-hidden rounded-lg"
-              >
-                <div
-                  className="hover:bg-on-surface/4 flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors duration-150"
+/* ---------- Page ---------- */
+
+@customElement("review-page")
+export class ReviewPage extends DataLoaderElement<Queue> {
+  /** Current location.search, fed in by the route render callback */
+  @property() search = "";
+
+  @state() private openId: number | null = null;
+  @state() private details: Record<number, ReviewDetail> = {};
+  @state() private detailErr: Record<number, string> = {};
+  @state() private loadingId: number | null = null;
+  @state() private approving: ReviewItem | null = null;
+  @state() private rejecting: number | null = null;
+
+  protected override pageTitle = "MeowMeow Select · Review Queue";
+  private searchReady = false;
+  private detailRef = createRef<HTMLDivElement>();
+
+  protected override updated(changed: Map<string | number | symbol, unknown>): void {
+    if (changed.has("search")) {
+      if (this.searchReady) {
+        void this.reload();
+      } else {
+        this.searchReady = true;
+      }
+    }
+  }
+
+  protected override async load(): Promise<Queue> {
+    const status = new URLSearchParams(this.search).get("status") ?? "pending_review";
+    const qs = status ? "?status=" + encodeURIComponent(status) : "";
+    return api<Queue>("/api/review/queue" + qs);
+  }
+
+  private async toggleDetail(id: number): Promise<void> {
+    if (this.openId === id) {
+      // Collapse: animate the height down, then unmount
+      const el = this.detailRef.value;
+      if (el) {
+        await animate(
+          el,
+          { height: [el.offsetHeight, 0], opacity: [1, 0] },
+          { duration: 0.2, ease: EASE_STANDARD },
+        ).then(() => undefined);
+      }
+      this.openId = null;
+      return;
+    }
+    this.openId = id;
+    void this.updateComplete.then(() => {
+      const el = this.detailRef.value;
+      if (el) {
+        void animate(el, { height: [0, "auto"], opacity: [0, 1] }, { duration: 0.2, ease: EASE_STANDARD }).then(() => {
+          // Let the box size naturally again — the detail fetch below changes its height
+          el.style.height = "";
+        });
+      }
+    });
+    if (this.details[id] || this.detailErr[id] || this.loadingId === id) {
+      return;
+    }
+    this.loadingId = id;
+    try {
+      const d = await api<ReviewDetail>("/api/review/" + String(id));
+      this.details = { ...this.details, [id]: d };
+    } catch (e) {
+      this.detailErr = { ...this.detailErr, [id]: errMsg(e) };
+    } finally {
+      this.loadingId = null;
+    }
+  }
+
+  private async doReject(it: ReviewItem): Promise<void> {
+    this.rejecting = it.id;
+    try {
+      await api("/api/review/" + String(it.id) + "/reject", jsonPost());
+      toast("Rejected");
+      void this.reload();
+    } catch (e) {
+      toast("Failed to reject: " + errMsg(e), true);
+    } finally {
+      this.rejecting = null;
+    }
+  }
+
+  protected override render() {
+    const curStatus = new URLSearchParams(this.search).get("status") ?? "pending_review";
+    return (
+      <PageShell
+        title="Review Queue"
+        sub="Unanswerable questions → normalize & dedupe → human review → write back to the Knowledge Base"
+        active="/review"
+        maxW="max-w-[1080px]"
+        actions={
+          <>
+            <div class="bg-surface-container-low flex rounded-full p-1">
+              {TABS.map(([st, label]) => (
+                <button
+                  type="button"
+                  class={cn(
+                    "text-label-medium cursor-pointer rounded-full px-3.5 py-1.5 font-[inherit] transition-all duration-200",
+                    curStatus === st
+                      ? "bg-primary text-on-primary shadow-e1"
+                      : "text-on-surface-variant hover:bg-on-surface/8",
+                  )}
                   onClick={() => {
-                    void toggleDetail(it.id);
+                    navigate(st ? "/review?status=" + encodeURIComponent(st) : "/review");
                   }}
                 >
-                  <span
-                    title="Occurrence count (accumulated by dedupe merging); the higher it is, the sooner this should be filled"
-                    className={cn(
-                      "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
-                      it.occurrence_count >= 3
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container-high text-on-surface-variant",
-                    )}
+                  {label}
+                </button>
+              ))}
+            </div>
+            {this.refreshBtn()}
+          </>
+        }
+      >
+        <div class="bg-secondary-container text-on-secondary-container mt-4 rounded-lg px-4 py-3 text-[12.5px] leading-[1.8] [&_b]:font-semibold">
+          Run three gates before reviewing: <b>① Spam filter</b> gibberish, stray test input, inappropriate content →
+          reject; <b>② Timeliness</b> time-sensitive questions (promo deadlines) expire as soon as they are filled —
+          do not persist them → reject; <b>③ Frequency</b> rare, niche questions are not worth Knowledge Base space
+          or human time → reject. What remains is a real gap: fill in the approved answer and click Approve.
+        </div>
+
+        {this.loadError ? (
+          <MissingBox class="mt-4">Failed to load: {this.loadError}</MissingBox>
+        ) : !this.data ? (
+          <PageLoading />
+        ) : !this.data.items.length ? (
+          <MissingBox class="mt-4">No items in this status yet</MissingBox>
+        ) : (
+          <div class="mt-4 flex flex-col gap-3.5">
+            {this.data.items.map((it) => {
+              const open = this.openId === it.id;
+              const detail = this.details[it.id];
+              return (
+                <div
+                  ref={(el: Element | undefined) => {
+                    enterOnce(el, { y: 8, duration: 0.35 });
+                  }}
+                  class="bg-card shadow-e1 overflow-hidden rounded-lg"
+                >
+                  <div
+                    class="hover:bg-on-surface/4 flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors duration-150"
+                    onClick={() => {
+                      void this.toggleDetail(it.id);
+                    }}
                   >
-                    ×{it.occurrence_count}
-                  </span>
-                  <div className="min-w-60 flex-1 text-[14.5px] font-medium">
-                    {it.normalized_question}
-                  </div>
-                  <div className="text-on-surface-variant hidden max-w-80 truncate text-xs lg:block">
-                    {it.ai_suggested_answer ?? "(no suggested answer)"}
-                  </div>
-                  <span
-                    className={cn(
-                      "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
-                      ST_CLS[it.review_status] ??
-                        "bg-surface-container-high text-on-surface-variant",
-                    )}
-                  >
-                    {ST_LABEL[it.review_status] ?? it.review_status}
-                  </span>
-                  {it.review_status === "pending_review" ? (
-                    <div
-                      className="flex gap-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
+                    <span
+                      title="Occurrence count (accumulated by dedupe merging); the higher it is, the sooner this should be filled"
+                      class={cn(
+                        "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
+                        it.occurrence_count >= 3
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container-high text-on-surface-variant",
+                      )}
                     >
-                      <Btn
-                        size="sm"
-                        variant="ok"
-                        onClick={() => {
-                          setApproving(it);
-                          setAnswer(it.ai_suggested_answer ?? "");
-                        }}
-                      >
-                        Approve
-                      </Btn>
-                      <Btn
-                        size="sm"
-                        variant="no"
-                        disabled={rejecting === it.id}
-                        onClick={() => {
-                          void doReject(it);
-                        }}
-                      >
-                        {rejecting === it.id ? "Rejecting…" : "Reject"}
-                      </Btn>
+                      ×{it.occurrence_count}
+                    </span>
+                    <div class="min-w-60 flex-1 text-[14.5px] font-medium">{it.normalized_question}</div>
+                    <div class="text-on-surface-variant hidden max-w-80 truncate text-xs lg:block">
+                      {it.ai_suggested_answer ?? "(no suggested answer)"}
                     </div>
-                  ) : null}
-                </div>
-                <AnimatePresence initial={false}>
-                  {open ? (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: EASE_STANDARD }}
-                      className="border-outline-variant overflow-hidden border-t"
+                    <span
+                      class={cn(
+                        "text-label-small rounded-full px-2.5 py-0.5 whitespace-nowrap",
+                        ST_CLS[it.review_status] ?? "bg-surface-container-high text-on-surface-variant",
+                      )}
                     >
-                      <div className="bg-surface-container-low px-4 py-3.5">
-                        {loadingId === it.id && !detail ? (
-                          <div className="text-on-surface-variant text-xs">
-                            Loading details…
-                          </div>
-                        ) : detailErr[it.id] ? (
-                          <div className="text-error text-xs">
-                            Failed to load details: {detailErr[it.id]}
-                          </div>
+                      {ST_LABEL[it.review_status] ?? it.review_status}
+                    </span>
+                    {it.review_status === "pending_review" ? (
+                      <div
+                        class="flex gap-2"
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Btn
+                          size="sm"
+                          variant="ok"
+                          onClick={() => {
+                            this.approving = it;
+                          }}
+                        >
+                          Approve
+                        </Btn>
+                        <Btn
+                          size="sm"
+                          variant="no"
+                          disabled={this.rejecting === it.id}
+                          onClick={() => {
+                            void this.doReject(it);
+                          }}
+                        >
+                          {this.rejecting === it.id ? "Rejecting…" : "Reject"}
+                        </Btn>
+                      </div>
+                    ) : null}
+                  </div>
+                  {open ? (
+                    <div ref={this.detailRef} class="border-outline-variant overflow-hidden border-t">
+                      <div class="bg-surface-container-low px-4 py-3.5">
+                        {this.loadingId === it.id && !detail ? (
+                          <div class="text-on-surface-variant text-xs">Loading details…</div>
+                        ) : this.detailErr[it.id] ? (
+                          <div class="text-error text-xs">Failed to load details: {this.detailErr[it.id]}</div>
                         ) : detail ? (
                           <>
-                            <div className="text-on-surface-variant mb-2.5 text-xs">
-                              Judge from the snapshots: is the Knowledge Base
-                              truly missing this, or does it have the answer but
-                              fail to recall it? Merged original questions:{" "}
-                              {detail.raws.length} ↓
+                            <div class="text-on-surface-variant mb-2.5 text-xs">
+                              Judge from the snapshots: is the Knowledge Base truly missing this, or does it have
+                              the answer but fail to recall it? Merged original questions: {detail.raws.length} ↓
                             </div>
                             {detail.raws.length ? (
-                              detail.raws.map((r, i) => (
-                                <div
-                                  key={i}
-                                  className="bg-card shadow-e1 mb-3 rounded-md p-2.5 last:mb-0"
-                                >
-                                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                              detail.raws.map((r) => (
+                                <div class="bg-card shadow-e1 mb-3 rounded-md p-2.5 last:mb-0">
+                                  <div class="mb-1.5 flex flex-wrap items-center gap-2">
                                     <span
-                                      className={cn(
+                                      class={cn(
                                         "text-label-small rounded-full px-2.5 py-0.5",
-                                        SRC_CLS[r.source] ??
-                                          "bg-surface-container-high text-on-surface-variant",
+                                        SRC_CLS[r.source] ?? "bg-surface-container-high text-on-surface-variant",
                                       )}
                                     >
                                       {SRC_LABEL[r.source] ?? r.source}
                                     </span>
-                                    <span className="text-on-surface-variant text-[11.5px]">
-                                      {(r.created_at ?? "")
-                                        .replace("T", " ")
-                                        .slice(0, 16)}
+                                    <span class="text-on-surface-variant text-[11.5px]">
+                                      {(r.created_at ?? "").replace("T", " ").slice(0, 16)}
                                     </span>
                                   </div>
-                                  <div className="mb-2 text-[13.5px]">
-                                    “{r.raw_question}”
-                                  </div>
-                                  <Snapshots chunks={r.retrieved_chunks} />
+                                  <div class="mb-2 text-[13.5px]">“{r.raw_question}”</div>
+                                  {Snapshots({ chunks: r.retrieved_chunks })}
                                 </div>
                               ))
                             ) : (
-                              <div className="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
-                                No merged originals yet (backfilled after the
-                                flywheel batch runs)
+                              <div class="border-outline-variant text-on-surface-variant rounded-md border border-dashed px-2.5 py-1.5 text-xs">
+                                No merged originals yet (backfilled after the flywheel batch runs)
                               </div>
                             )}
                           </>
                         ) : null}
                       </div>
-                    </motion.div>
+                    </div>
                   ) : null}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Approve dialog: the approved answer is prefilled with the AI suggestion; a human reviews it before it is written back to the Knowledge Base */}
-      <AnimatePresence>
-        {approving ? (
-          <motion.div
-            className="bg-scrim/50 fixed inset-0 z-50 flex items-center justify-center p-5 backdrop-blur-[2px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: EASE_STANDARD }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setApproving(null);
-              }
-            }}
-          >
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Approve & write back to Knowledge Base"
-              className="bg-surface-container-high shadow-e5 w-[min(560px,92vw)] rounded-xl p-6"
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 8 }}
-              transition={softSpring}
-            >
-              <h3 className="text-title-medium text-on-surface">
-                Approve & write back to Knowledge Base
-              </h3>
-              <div className="text-on-surface-variant mt-1 mb-2.5 text-[13px]">
-                Normalized question: {approving.normalized_question}
-              </div>
-              <textarea
-                autoFocus
-                className="border-outline text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-primary text-body-medium min-h-32 w-full resize-y rounded-sm border bg-transparent px-3.5 py-2.5 transition-[border-color,box-shadow] duration-200 outline-none focus:ring-1"
-                placeholder="Approved answer (prefilled with the AI suggestion — review it before submitting)"
-                value={answer}
-                onChange={(e) => {
-                  setAnswer(e.target.value);
-                }}
-              />
-              <div className="mt-3 flex justify-end gap-2.5">
-                <Btn
-                  onClick={() => {
-                    setApproving(null);
-                  }}
-                >
-                  Cancel
-                </Btn>
-                <Btn
-                  variant="ok"
-                  disabled={submitting}
-                  onClick={() => {
-                    void doApprove();
-                  }}
-                >
-                  {submitting ? "Writing back…" : "Approve"}
-                </Btn>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </PageShell>
-  );
+        <approve-dialog
+          open={this.approving !== null}
+          item={this.approving}
+          onClose={() => {
+            this.approving = null;
+          }}
+          onApproved={() => {
+            this.approving = null;
+            void this.reload();
+          }}
+        ></approve-dialog>
+      </PageShell>
+    );
+  }
 }

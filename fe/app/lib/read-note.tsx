@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import { cn } from "./cn";
 
 /** Chart-reading note: if the artifact carries the sentence the model wrote about
@@ -12,17 +10,16 @@ import { cn } from "./cn";
 // Recall@10, the 3 in qwen3.7-text-embedding-flash) — matching the boundary rule read_notes.py validates with.
 const NUM_RE = /(?<![A-Za-z@_.\-\d])\d+(?:,\d{3})*(?:\.\d+)?%?(?![A-Za-z_])/g;
 
-function boldNumbers(s: string): ReactNode[] {
-  const parts: ReactNode[] = [];
+function boldNumbers(s: string): unknown[] {
+  const parts: unknown[] = [];
   let last = 0;
-  let k = 0;
   NUM_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = NUM_RE.exec(s)) !== null) {
     if (m.index > last) {
       parts.push(s.slice(last, m.index));
     }
-    parts.push(<b key={k++}>{m[0]}</b>);
+    parts.push(<b>{m[0]}</b>);
     last = m.index + m[0].length;
   }
   if (last < s.length) {
@@ -31,23 +28,21 @@ function boldNumbers(s: string): ReactNode[] {
   return parts;
 }
 
-export function ReadNote({
-  note,
-  fallback,
-  className,
-}: {
+export interface ReadNoteProps {
   note?: string | null;
-  fallback: ReactNode;
-  className?: string;
-}) {
+  fallback: unknown;
+  class?: string;
+}
+
+export function ReadNote({ note, fallback, class: cls }: ReadNoteProps) {
   return (
     <div
-      className={cn(
+      class={cn(
         "bg-secondary-container text-on-secondary-container text-body-small mt-3 rounded-lg px-4 py-3 leading-relaxed [&_b]:font-semibold",
-        className,
+        cls,
       )}
     >
-      <span className="bg-primary text-on-primary mr-2 inline-block rounded-full px-2.5 py-0.5 align-middle text-[11px] font-medium">
+      <span class="bg-primary text-on-primary mr-2 inline-block rounded-full px-2.5 py-0.5 align-middle text-[11px] font-medium">
         Insight
       </span>
       {note ? boldNumbers(note) : fallback}

@@ -1,20 +1,13 @@
-import {
-  Cat,
-  CircleCheck,
-  ClipboardList,
-  ThumbsDown,
-  ThumbsUp,
-  Wrench,
-} from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { memo, useState } from "react";
+import { customElement, nothing, property, state } from "@swifty.js/lit-jsx";
 
-import type { BotMsg, Msg } from "./use-chat";
+import type { BotMsg, Msg } from "./chat-state";
 
 import { Btn } from "~/components/ui";
 import { cn } from "~/lib/cn";
+import { Icon } from "~/lib/icons";
+import { LightElement } from "~/lib/light-element";
 import { Markdown } from "~/lib/markdown";
-import { EASE_DECEL, springTransition } from "~/lib/motion";
+import { enterOnce } from "~/lib/motion";
 import type { Citation, Order, TicketPreview } from "~/lib/types";
 
 /* ticket_type arrives as the backend enum value (after_sales/complaint/inquiry);
@@ -38,441 +31,358 @@ export interface BubbleCallbacks {
 
 function TypingDots() {
   return (
-    <span className="flex items-center gap-1.5 py-1.5">
+    <span class="flex items-center gap-1.5 py-1.5">
       {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="bg-primary h-2 w-2 rounded-full"
-          animate={{ opacity: [0.35, 1, 0.35], y: [0, -3, 0] }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            delay: i * 0.16,
-            ease: "easeInOut",
-          }}
-        />
+        <span class="typing-dot bg-primary h-2 w-2 rounded-full" style={{ animationDelay: `${String(i * 0.16)}s` }} />
       ))}
     </span>
   );
 }
 
-/* ---------- Per-reply satisfaction feedback (thumbs up/down; one-shot, one click highlights + confirms) ---------- */
+@customElement("message-bubble")
+export class MessageBubble extends LightElement {
+  @property({ attribute: false }) msg?: Msg;
+  @property({ attribute: false }) cb?: BubbleCallbacks;
 
-function FbBtn({
-  down,
-  active,
-  dim,
-  disabled,
-  label,
-  onClick,
-}: {
-  down?: boolean;
-  active: boolean;
-  dim: boolean;
-  disabled: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      whileTap={active || disabled ? undefined : { scale: 0.85 }}
-      className={cn(
-        "grid h-8 w-8 cursor-pointer place-items-center rounded-full transition-colors duration-200",
-        active
-          ? "bg-primary-container text-primary hover:bg-primary-container-hover"
-          : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
-        dim && "opacity-40",
-        disabled && !active && "cursor-default",
-      )}
-    >
-      {down ? (
-        <ThumbsDown className="h-4.5 w-4.5" aria-hidden />
-      ) : (
-        <ThumbsUp className="h-4.5 w-4.5" aria-hidden />
-      )}
-    </motion.button>
-  );
-}
+  /** Order card picked in this bubble (interrupt or select_order action) */
+  @state() private pickedOrder: string | null = null;
+  /** Transfer button already used in this bubble */
+  @state() private transferred = false;
 
-function FeedbackBar({
-  msg,
-  onFeedback,
-}: {
-  msg: BotMsg;
-  onFeedback: BubbleCallbacks["onFeedback"];
-}) {
-  const given = msg.feedback;
-  return (
-    <div className="mt-2 flex items-center gap-1.5">
-      <FbBtn
-        active={given === "up"}
-        dim={given === "down"}
-        disabled={given !== undefined}
-        label="This reply was helpful"
-        onClick={() => {
-          onFeedback(msg.id, "up");
-        }}
-      />
-      <FbBtn
-        down
-        active={given === "down"}
-        dim={given === "up"}
-        disabled={given !== undefined}
-        label="This reply was not helpful"
-        onClick={() => {
-          onFeedback(msg.id, "down");
-        }}
-      />
-      <AnimatePresence>
-        {given ? (
-          <motion.span
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.25, ease: EASE_DECEL }}
-            className="text-on-surface-variant text-label-small ml-1"
-          >
-            Thanks for your feedback!
-          </motion.span>
-        ) : null}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ---------- Order picker cards (interrupt missing order id → pick in the chat flow; also offered after a rejection so the user can re-ask) ---------- */
-
-export function OrderCards({
-  orders,
-  decided,
-  onPick,
-}: {
-  orders: Order[];
-  decided?: boolean;
-  onPick: (o: Order) => void;
-}) {
-  const [picked, setPicked] = useState<string | null>(null);
-  const locked = decided || picked !== null;
-  return (
-    <div>
-      <div className="text-body-medium text-on-surface">
-        {orders.length
-          ? "Please select the order you'd like to handle:"
-          : "No selectable orders found. Please provide the order number directly."}
-      </div>
-      {orders.length ? (
-        <div className="mt-2.5 flex flex-col gap-2">
-          {orders.map((o) => (
-            <motion.button
-              key={o.order_id}
-              type="button"
-              disabled={locked}
-              whileHover={locked ? undefined : { y: -1 }}
-              whileTap={locked ? undefined : { scale: 0.985 }}
-              className={cn(
-                "cursor-pointer rounded-lg border px-4 py-3 text-left transition-all duration-200",
-                picked === o.order_id
-                  ? "border-primary bg-primary-container/45 shadow-e1"
-                  : "border-outline-variant bg-card hover:border-primary hover:shadow-e1",
-                locked && picked !== o.order_id && "opacity-50",
-                locked && "cursor-not-allowed",
-              )}
-              onClick={() => {
-                setPicked(o.order_id);
-                onPick(o);
-              }}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-title-small text-on-surface">
-                  Order {o.order_id}
-                </span>
-                {picked === o.order_id ? (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={springTransition}
-                    className="text-primary grid place-items-center"
-                  >
-                    <CircleCheck className="h-5 w-5" aria-hidden />
-                  </motion.span>
-                ) : null}
-              </div>
-              <div className="text-body-small text-on-surface mt-0.5">
-                {o.product ?? ""}
-              </div>
-              <div className="text-label-small text-on-surface-variant mt-0.5">
-                {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/* ---------- Ticket preview confirm card (interrupt confirm_ticket → Confirm/Cancel → resume) ---------- */
-
-function TicketConfirm({
-  preview,
-  decided,
-  onDecide,
-}: {
-  preview: TicketPreview;
-  decided?: boolean;
-  onDecide: (confirmed: boolean) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "border-outline-variant bg-card mt-3 rounded-lg border p-4 transition-opacity",
-        decided && "opacity-70",
-      )}
-    >
-      <div className="text-title-small text-on-surface mb-2 flex items-center gap-2">
-        <span className="bg-primary-container text-primary grid h-7 w-7 place-items-center rounded-full">
-          <ClipboardList className="h-4 w-4" aria-hidden />
-        </span>
-        Ticket preview
-      </div>
-      <div className="text-body-small flex gap-2">
-        <span className="text-on-surface-variant shrink-0">Ticket type</span>
-        <span className="text-on-surface">
-          {preview.ticket_type
-            ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type)
-            : "Inquiry"}
-        </span>
-      </div>
-      <div className="text-body-small mt-1.5 flex gap-2">
-        <span className="text-on-surface-variant shrink-0">Description</span>
-        <span className="text-on-surface wrap-break-word">
-          {preview.description ?? ""}
-        </span>
-      </div>
-      <div className="mt-3.5 flex gap-2">
-        <Btn
-          size="sm"
-          variant="go"
-          disabled={decided}
-          onClick={() => {
-            onDecide(true);
-          }}
-        >
-          Confirm & submit
-        </Btn>
-        <Btn
-          size="sm"
-          variant="text"
-          disabled={decided}
-          onClick={() => {
-            onDecide(false);
-          }}
-        >
-          Cancel
-        </Btn>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Actions frame: transfer to human / create ticket / refund / order picker ---------- */
-
-function ActionBar({ msg, cb }: { msg: BotMsg; cb: BubbleCallbacks }) {
-  const [transferred, setTransferred] = useState(false);
-  const buttons: React.ReactNode[] = [];
-  const extras: React.ReactNode[] = [];
-  for (const a of msg.actions) {
-    if (a.type === "select_order") {
-      // The user quoted an order number that isn't theirs and got rejected; list the orders
-      // under their name to pick from. A rejection needs a way forward, otherwise they can't
-      // look anything up and don't even know their own order number
-      extras.push(
-        <OrderCards
-          key="select_order"
-          orders={a.orders ?? []}
-          decided={msg.decided}
-          onPick={(o) => {
-            cb.onPickOrderAsk(msg.id, o);
-          }}
-        />,
-      );
-      continue;
-    }
-    if (a.type === "transfer_human") {
-      buttons.push(
-        <Btn
-          key="transfer"
-          size="sm"
-          variant="tonal"
-          disabled={transferred}
-          onClick={() => {
-            setTransferred(true);
-            cb.onTransfer();
-          }}
-        >
-          Transfer to a human agent
-        </Btn>,
-      );
-    } else if (a.type === "create_ticket") {
-      buttons.push(
-        <Btn
-          key="ticket"
-          size="sm"
-          variant="tonal"
-          disabled={msg.acted}
-          onClick={() => {
-            cb.onCreateTicket(msg.id);
-          }}
-        >
-          Create ticket
-        </Btn>,
-      );
-    } else if (a.type === "refund_form") {
-      buttons.push(
-        <Btn
-          key="refund"
-          size="sm"
-          variant="tonal"
-          disabled={msg.acted}
-          onClick={() => {
-            cb.onRefund(msg.id, a.draft ?? {});
-          }}
-        >
-          Submit refund ticket
-        </Btn>,
-      );
-    }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    enterOnce(this, { y: 12, duration: 0.3 });
   }
-  return (
-    <>
-      {extras}
-      {buttons.length ? (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: EASE_DECEL }}
-          className="mt-3 flex flex-wrap gap-2"
-        >
-          {buttons}
-        </motion.div>
-      ) : null}
-    </>
-  );
-}
 
-/* ---------- Message bubble ---------- */
+  /* ---------- Per-reply satisfaction feedback (one-shot thumbs up/down) ---------- */
 
-export const MessageBubble = memo(function MessageBubble({
-  msg,
-  cb,
-}: {
-  msg: Msg;
-  cb: BubbleCallbacks;
-}) {
-  if (msg.role === "user") {
+  private fbBtn(opts: {
+    down?: boolean;
+    active: boolean;
+    dim: boolean;
+    disabled: boolean;
+    label: string;
+    onClick: () => void;
+  }) {
+    const { down, active, dim, disabled, label, onClick } = opts;
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 12, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.3, ease: EASE_DECEL }}
-        className="flex items-end justify-end"
-      >
-        <div className="bg-primary-container text-on-primary-container max-w-[85%] rounded-lg rounded-br-md px-4 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap sm:max-w-[74%]">
-          {msg.text}
-        </div>
-      </motion.div>
-    );
-  }
-  const m = msg;
-  const citeMap =
-    !m.streaming && m.citations.length
-      ? new Map(m.citations.map((c) => [String(c.n), c]))
-      : undefined;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: EASE_DECEL }}
-      className="flex items-start justify-start gap-2.5"
-    >
-      <div className="bg-primary-container hidden h-9 w-9 shrink-0 place-items-center rounded-full sm:grid">
-        <Cat className="text-primary h-5 w-5" strokeWidth={1.5} />
-      </div>
-      <div
-        className={cn(
-          "max-w-[85%] rounded-lg rounded-bl-md px-4 py-3 text-[14.5px] leading-relaxed sm:max-w-[78%]",
-          m.error
-            ? "bg-error-container text-on-error-container"
-            : "bg-surface-container-low text-on-surface",
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        disabled={disabled}
+        onClick={onClick}
+        class={cn(
+          "grid h-8 w-8 cursor-pointer place-items-center rounded-full transition-colors duration-200 active:scale-[0.85]",
+          active
+            ? "bg-primary-container text-primary hover:bg-primary-container-hover"
+            : "text-on-surface-variant hover:bg-on-surface/8 hover:text-on-surface",
+          dim && "opacity-40",
+          disabled && !active && "cursor-default",
         )}
       >
-        {m.error ??
-          (m.plain ? (
-            <span className="wrap-break-word whitespace-pre-wrap">{m.raw}</span>
-          ) : (
-            <>
-              {m.tools.length ? (
-                <div className="mb-2 flex flex-col items-start gap-1.5">
-                  {m.tools.map((t, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, ease: EASE_DECEL }}
-                      className="bg-surface-container-high text-on-surface-variant text-label-small inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                    >
-                      <Wrench className="h-3 w-3" aria-hidden />
-                      Called {t}
-                    </motion.span>
-                  ))}
-                </div>
-              ) : null}
-              {m.interrupt ? (
-                m.interrupt.kind === "confirm_ticket" ? (
-                  <TicketConfirm
-                    preview={m.interrupt.preview ?? {}}
-                    decided={m.decided}
-                    onDecide={(confirmed) => {
-                      cb.onConfirmTicket(m.id, confirmed);
-                    }}
-                  />
-                ) : (
-                  <OrderCards
-                    orders={m.interrupt.orders ?? []}
-                    decided={m.decided}
-                    onPick={(o) => {
-                      cb.onPickOrderResume(m.id, o);
-                    }}
-                  />
-                )
-              ) : (
-                <>
-                  {m.streaming && m.raw === "" ? (
-                    <TypingDots />
-                  ) : m.raw === "" ? (
-                    <span className="text-on-surface-variant">(No reply)</span>
-                  ) : (
-                    <Markdown
-                      text={m.raw}
-                      citations={citeMap}
-                      onCite={cb.onCite}
-                    />
-                  )}
-                  {!m.streaming && m.actions.length ? (
-                    <ActionBar msg={m} cb={cb} />
-                  ) : null}
-                  {!m.streaming && m.raw !== "" ? (
-                    <FeedbackBar msg={m} onFeedback={cb.onFeedback} />
-                  ) : null}
-                </>
-              )}
-            </>
-          ))}
+        <Icon name={down ? "thumbs-down" : "thumbs-up"} class="h-4.5 w-4.5" />
+      </button>
+    );
+  }
+
+  private feedbackBar(m: BotMsg) {
+    const given = m.feedback;
+    return (
+      <div class="mt-2 flex items-center gap-1.5">
+        {this.fbBtn({
+          active: given === "up",
+          dim: given === "down",
+          disabled: given !== undefined,
+          label: "This reply was helpful",
+          onClick: () => {
+            this.cb?.onFeedback(m.id, "up");
+          },
+        })}
+        {this.fbBtn({
+          down: true,
+          active: given === "down",
+          dim: given === "up",
+          disabled: given !== undefined,
+          label: "This reply was not helpful",
+          onClick: () => {
+            this.cb?.onFeedback(m.id, "down");
+          },
+        })}
+        {given ? (
+          <span
+            ref={(el: Element | undefined) => {
+              enterOnce(el, { x: -6, duration: 0.25 });
+            }}
+            class="text-on-surface-variant text-label-small ml-1"
+          >
+            Thanks for your feedback!
+          </span>
+        ) : null}
       </div>
-    </motion.div>
-  );
-});
+    );
+  }
+
+  /* ---------- Order picker cards (interrupt missing order id → pick in the chat
+     flow; also offered after a rejection so the user can re-ask) ---------- */
+
+  private orderCards(orders: Order[], decided: boolean | undefined, onPick: (o: Order) => void) {
+    const locked = decided || this.pickedOrder !== null;
+    return (
+      <div>
+        <div class="text-body-medium text-on-surface">
+          {orders.length
+            ? "Please select the order you'd like to handle:"
+            : "No selectable orders found. Please provide the order number directly."}
+        </div>
+        {orders.length ? (
+          <div class="mt-2.5 flex flex-col gap-2">
+            {orders.map((o) => (
+              <button
+                type="button"
+                disabled={locked}
+                class={cn(
+                  "cursor-pointer rounded-lg border px-4 py-3 text-left transition-all duration-200 hover:-translate-y-px active:scale-[0.985]",
+                  this.pickedOrder === o.order_id
+                    ? "border-primary bg-primary-container/45 shadow-e1"
+                    : "border-outline-variant bg-card hover:border-primary hover:shadow-e1",
+                  locked && this.pickedOrder !== o.order_id && "opacity-50",
+                  locked && "cursor-not-allowed",
+                )}
+                onClick={() => {
+                  this.pickedOrder = o.order_id;
+                  onPick(o);
+                }}
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-title-small text-on-surface">Order {o.order_id}</span>
+                  {this.pickedOrder === o.order_id ? (
+                    <span
+                      ref={(el: Element | undefined) => {
+                        enterOnce(el, { scale: 0, duration: 0.3 });
+                      }}
+                      class="text-primary grid place-items-center"
+                    >
+                      <Icon name="circle-check" class="h-5 w-5" />
+                    </span>
+                  ) : null}
+                </div>
+                <div class="text-body-small text-on-surface mt-0.5">{o.product ?? ""}</div>
+                <div class="text-label-small text-on-surface-variant mt-0.5">
+                  {(o.status ?? "") + " · ¥" + String(o.amount ?? "")}
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  /* ---------- Ticket preview confirm card (interrupt confirm_ticket → resume) ---------- */
+
+  private ticketConfirm(preview: TicketPreview, decided: boolean | undefined, m: BotMsg) {
+    return (
+      <div
+        class={cn(
+          "border-outline-variant bg-card mt-3 rounded-lg border p-4 transition-opacity",
+          decided && "opacity-70",
+        )}
+      >
+        <div class="text-title-small text-on-surface mb-2 flex items-center gap-2">
+          <span class="bg-primary-container text-primary grid h-7 w-7 place-items-center rounded-full">
+            <Icon name="clipboard-list" class="h-4 w-4" />
+          </span>
+          Ticket preview
+        </div>
+        <div class="text-body-small flex gap-2">
+          <span class="text-on-surface-variant shrink-0">Ticket type</span>
+          <span class="text-on-surface">
+            {preview.ticket_type ? (TICKET_TYPE_LABEL[preview.ticket_type] ?? preview.ticket_type) : "Inquiry"}
+          </span>
+        </div>
+        <div class="text-body-small mt-1.5 flex gap-2">
+          <span class="text-on-surface-variant shrink-0">Description</span>
+          <span class="text-on-surface wrap-break-word">{preview.description ?? ""}</span>
+        </div>
+        <div class="mt-3.5 flex gap-2">
+          <Btn
+            size="sm"
+            variant="go"
+            disabled={decided}
+            onClick={() => {
+              this.cb?.onConfirmTicket(m.id, true);
+            }}
+          >
+            Confirm & submit
+          </Btn>
+          <Btn
+            size="sm"
+            variant="text"
+            disabled={decided}
+            onClick={() => {
+              this.cb?.onConfirmTicket(m.id, false);
+            }}
+          >
+            Cancel
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- Actions frame: transfer / ticket / refund / order picker ---------- */
+
+  private actionBar(m: BotMsg) {
+    const buttons: unknown[] = [];
+    const extras: unknown[] = [];
+    for (const a of m.actions) {
+      if (a.type === "select_order") {
+        // The user quoted an order number that isn't theirs and got rejected; list the
+        // orders under their name to pick from. A rejection needs a way forward.
+        extras.push(
+          this.orderCards(a.orders ?? [], m.decided, (o) => {
+            this.cb?.onPickOrderAsk(m.id, o);
+          }),
+        );
+        continue;
+      }
+      if (a.type === "transfer_human") {
+        buttons.push(
+          <Btn
+            size="sm"
+            variant="tonal"
+            disabled={this.transferred}
+            onClick={() => {
+              this.transferred = true;
+              this.cb?.onTransfer();
+            }}
+          >
+            Transfer to a human agent
+          </Btn>,
+        );
+      } else if (a.type === "create_ticket") {
+        buttons.push(
+          <Btn
+            size="sm"
+            variant="tonal"
+            disabled={m.acted}
+            onClick={() => {
+              this.cb?.onCreateTicket(m.id);
+            }}
+          >
+            Create ticket
+          </Btn>,
+        );
+      } else if (a.type === "refund_form") {
+        buttons.push(
+          <Btn
+            size="sm"
+            variant="tonal"
+            disabled={m.acted}
+            onClick={() => {
+              this.cb?.onRefund(m.id, a.draft ?? {});
+            }}
+          >
+            Submit refund ticket
+          </Btn>,
+        );
+      }
+    }
+    return (
+      <>
+        {extras}
+        {buttons.length ? (
+          <div
+            ref={(el: Element | undefined) => {
+              enterOnce(el, { y: 6, duration: 0.3 });
+            }}
+            class="mt-3 flex flex-wrap gap-2"
+          >
+            {buttons}
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
+  protected override render() {
+    const msg = this.msg;
+    if (!msg) {
+      return nothing;
+    }
+    if (msg.role === "user") {
+      return (
+        <div class="flex items-end justify-end">
+          <div class="bg-primary-container text-on-primary-container max-w-[85%] rounded-lg rounded-br-md px-4 py-2.5 text-[14.5px] leading-relaxed break-words whitespace-pre-wrap sm:max-w-[74%]">
+            {msg.text}
+          </div>
+        </div>
+      );
+    }
+    const m = msg;
+    const citeMap =
+      !m.streaming && m.citations.length ? new Map(m.citations.map((c) => [String(c.n), c])) : undefined;
+    return (
+      <div class="flex items-start justify-start gap-2.5">
+        <div class="bg-primary-container hidden h-9 w-9 shrink-0 place-items-center rounded-full sm:grid">
+          <Icon name="cat" class="text-primary h-5 w-5" strokeWidth={1.5} />
+        </div>
+        <div
+          class={cn(
+            "max-w-[85%] rounded-lg rounded-bl-md px-4 py-3 text-[14.5px] leading-relaxed sm:max-w-[78%]",
+            m.error ? "bg-error-container text-on-error-container" : "bg-surface-container-low text-on-surface",
+          )}
+        >
+          {m.error ??
+            (m.plain ? (
+              <span class="wrap-break-word whitespace-pre-wrap">{m.raw}</span>
+            ) : (
+              <>
+                {m.tools.length ? (
+                  <div class="mb-2 flex flex-col items-start gap-1.5">
+                    {m.tools.map((t) => (
+                      <span
+                        ref={(el: Element | undefined) => {
+                          enterOnce(el, { scale: 0.9, duration: 0.2 });
+                        }}
+                        class="bg-surface-container-high text-on-surface-variant text-label-small inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                      >
+                        <Icon name="wrench" class="h-3 w-3" />
+                        Called {t}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {m.interrupt ? (
+                  m.interrupt.kind === "confirm_ticket"
+                    ? this.ticketConfirm(m.interrupt.preview ?? {}, m.decided, m)
+                    : this.orderCards(m.interrupt.orders ?? [], m.decided, (o) => {
+                        this.cb?.onPickOrderResume(m.id, o);
+                      })
+                ) : (
+                  <>
+                    {m.streaming && m.raw === "" ? (
+                      <TypingDots />
+                    ) : m.raw === "" ? (
+                      <span class="text-on-surface-variant">(No reply)</span>
+                    ) : (
+                      <Markdown
+                        text={m.raw}
+                        citations={citeMap}
+                        onCite={(c, el) => {
+                          this.cb?.onCite(c, el);
+                        }}
+                      />
+                    )}
+                    {!m.streaming && m.actions.length ? this.actionBar(m) : null}
+                    {!m.streaming && m.raw !== "" ? this.feedbackBar(m) : null}
+                  </>
+                )}
+              </>
+            ))}
+        </div>
+      </div>
+    );
+  }
+}
